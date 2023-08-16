@@ -1263,14 +1263,7 @@
   resolved "https://registry.yarnpkg.com/@ethersproject/logger/-/logger-5.7.0.tgz#6ce9ae168e74fecf287be17062b590852c311892"
   integrity sha512-0odtFdXu/XHtjQXJYA3u9G0G8btm0ND5Cu8M7i5vhEcE8/HmF4Lbdqanwyv4uQTr2tx6b7fQRmgLrsnpQlmnig==
 
-"@ethersproject/networks@5.7.1", "@ethersproject/networks@^5.7.0":
-  version "5.7.1"
-  resolved "https://registry.yarnpkg.com/@ethersproject/networks/-/networks-5.7.1.tgz#118e1a981d757d45ccea6bb58d9fd3d9db14ead6"
-  integrity sha512-n/MufjFYv3yFcUyfhnXotyDlNdFb7onmkSy8aQERi2PjNcnWQ66xXxa3XlS8nCcA8aJKJjIIMNJTC7tu80GwpQ==
-  dependencies:
-    "@ethersproject/logger" "^5.7.0"
-
-"@ethersproject/networks@npm:boa-networks@5.7.1", "@ethersproject/networks@npm:boa-networks@^5.7.0":
+"@ethersproject/networks@5.7.1", "@ethersproject/networks@^5.7.0", "@ethersproject/networks@npm:boa-networks@5.7.1", "@ethersproject/networks@npm:boa-networks@^5.7.0":
   version "5.7.1"
   resolved "https://registry.yarnpkg.com/boa-networks/-/boa-networks-5.7.1.tgz#650077b2b47e343547eb4f5e38231ad72b1bc468"
   integrity sha512-oDB3I61648QubCKuywBGdzOu8nN20uLJ99SjOF5UHVnhv/I8LvrtIisvWCzryOT/fe8ZqfJ5Pi36FMQHLdUFzQ==
@@ -3884,6 +3877,11 @@ dir-glob@^3.0.1:
   integrity sha512-WkrWp9GR4KXfKGYzOLmTuGVi1UWFfws377n9cc55/tb6DuqyF6pcQ5AbiHEshaDpY9v6oaSr2XCDidGmMwdzIA==
   dependencies:
     path-type "^4.0.0"
+
+dms-osx-artifacts@^1.0.3:
+  version "1.0.3"
+  resolved "https://registry.yarnpkg.com/dms-osx-artifacts/-/dms-osx-artifacts-1.0.3.tgz#c45b5e7e78fe2c432e8cd1c5f5a55889d51371ed"
+  integrity sha512-jbj4UJZKnMF1RS7dO3QarWn5zyY0LpApHmJCs/Y1KgPgQhjXwkq4YDLubKZLRe+uqpVukZs0Qur7DiHUjhbDIg==
 
 dns-packet@^5.3.0:
   version "5.6.0"
