@@ -1269,10 +1269,17 @@
   resolved "https://registry.yarnpkg.com/@ethersproject/logger/-/logger-5.7.0.tgz#6ce9ae168e74fecf287be17062b590852c311892"
   integrity sha512-0odtFdXu/XHtjQXJYA3u9G0G8btm0ND5Cu8M7i5vhEcE8/HmF4Lbdqanwyv4uQTr2tx6b7fQRmgLrsnpQlmnig==
 
-"@ethersproject/networks@5.7.1", "@ethersproject/networks@^5.7.0", "@ethersproject/networks@npm:boa-networks@^5.7.0":
+"@ethersproject/networks@5.7.1", "@ethersproject/networks@^5.7.0":
   version "5.7.1"
   resolved "https://registry.yarnpkg.com/boa-networks/-/boa-networks-5.7.1.tgz#650077b2b47e343547eb4f5e38231ad72b1bc468"
   integrity sha512-oDB3I61648QubCKuywBGdzOu8nN20uLJ99SjOF5UHVnhv/I8LvrtIisvWCzryOT/fe8ZqfJ5Pi36FMQHLdUFzQ==
+  dependencies:
+    "@ethersproject/logger" "^5.7.0"
+
+"@ethersproject/networks@npm:boa-networks@^5.7.2":
+  version "5.7.2"
+  resolved "https://registry.yarnpkg.com/boa-networks/-/boa-networks-5.7.2.tgz#eb8f8c1d27f10f1bfd987c25898116376d85e44f"
+  integrity sha512-vIowYIROUFXTjSB2W+ouxVCHtLAbe/w1Aff314rGtgIZgPcsmSLP056RWi5Iu0jyX/fU6YDs9w5lJ+rNCsmbgQ==
   dependencies:
     "@ethersproject/logger" "^5.7.0"
 
@@ -4113,10 +4120,17 @@ dir-glob@^3.0.1:
   dependencies:
     path-type "^4.0.0"
 
-dms-osx-lib@^1.0.6:
-  version "1.0.6"
-  resolved "https://registry.yarnpkg.com/dms-osx-lib/-/dms-osx-lib-1.0.6.tgz#ce0c5c0c62ca910c5a7d8e91296acbc177130b7f"
-  integrity sha512-oXwDVXx2dgHzcVOUMXCozcXX1aZxFJqN+XAvZG6CISA8qRc9I7N4RMtA1VhAQdHEFG3np6nj2KlqaGWyXRIqzg==
+dms-osx-lib@^1.0.7:
+  version "1.0.7"
+  resolved "https://registry.yarnpkg.com/dms-osx-lib/-/dms-osx-lib-1.0.7.tgz#1412471cee0c0cee68c4e503229ed5258dac7fd0"
+  integrity sha512-qT04XdGEV8aNuqDIgBFXG79ewH4GjKqK1L56Wfys4NwQhiZogiUtDvSbtmsROSjfLDl7b4Wl0eJwkwnuiQEdxQ==
+  dependencies:
+    ethers "^5.7.0"
+
+dms-sdk-common@^1.0.1:
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/dms-sdk-common/-/dms-sdk-common-1.0.1.tgz#6975d6807af3802d4abc236d8fb7126f7a25993d"
+  integrity sha512-U+LZygT6/KxDFz6hsue4EBpD2P5yLlyB3scm0PoCzdPr8lyjOTa5QclUb7HUB3fhZwC253YQyq+Qz10rxA2/Tg==
   dependencies:
     ethers "^5.7.0"
 
