@@ -19,18 +19,14 @@ export async function deploy(): Promise<Deployment> {
 
     console.log(deployOwnerWallet.getAddress());
 
-    try {
-        return {
-            linkCollection: "",
-            token: "",
-            validatorCollection: "",
-            tokenPrice: "",
-            franchiseeCollection: "",
-            ledger: ""
-        };
-    } catch (e) {
-        throw e;
-    }
+    return {
+        linkCollection: "",
+        token: "",
+        validatorCollection: "",
+        tokenPrice: "",
+        franchiseeCollection: "",
+        ledger: ""
+    };
 }
 
 export const deployToken = async (deployOwnerWallet: Signer) => {

@@ -49,6 +49,7 @@
     "@ensdomains/ens-contracts": "^0.0.15",
     "@size-limit/preset-small-lib": "^7.0.8",
     "@types/jest": "^29.5.3",
+    "bigint-buffer": "^1.1.5",
     "ganache": "^7.5.0",
     "glob": "^8.0.3",
     "husky": "^7.0.4",
@@ -66,8 +67,13 @@
     "@ethersproject/networks": "npm:boa-networks@^5.7.2",
     "@ethersproject/providers": "^5.7.0",
     "@ethersproject/wallet": "^5.7.0",
-    "dms-osx-lib": "^1.0.7",
+    "del-osx-lib": "^1.0.4",
+    "dms-osx-lib": "^1.0.8",
     "dms-sdk-common": "^1.0.1",
     "dotenv": "^16.3.1"
+  },
+  "jest": {
+    "testEnvironment": "../../test-environment.js",
+    "testTimeout": 120000
   }
 }
