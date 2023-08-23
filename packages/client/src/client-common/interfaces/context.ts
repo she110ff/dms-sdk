@@ -8,6 +8,12 @@ type Web3ContextParams = {
     network: Networkish;
     signer?: Signer;
     web3Providers?: string | JsonRpcProvider | (string | JsonRpcProvider)[];
+    linkCollectionAddress?: string;
+    tokenAddress?: string;
+    validatorCollectionAddress?: string;
+    tokenPriceAddress?: string;
+    franchiseeCollectionAddress?: string;
+    ledgerAddress?: string;
 };
 
 export type ContextParams = Web3ContextParams;
@@ -17,6 +23,12 @@ type Web3ContextState = {
     network: Networkish;
     signer?: Signer;
     web3Providers: JsonRpcProvider[];
+    linkCollectionAddress?: string;
+    tokenAddress?: string;
+    validatorCollectionAddress?: string;
+    tokenPriceAddress?: string;
+    franchiseeCollectionAddress?: string;
+    ledgerAddress?: string;
 };
 
 export type ContextState = Web3ContextState;
