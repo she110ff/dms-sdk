@@ -26,5 +26,13 @@ export const LIVE_CONTRACTS: { [K in SupportedNetworks]: NetworkDeployment } = {
         TokenPrice: dmsActiveContractList.bosagora_devnet.TokenPrice,
         FranchiseeCollection: dmsActiveContractList.bosagora_devnet.FranchiseeCollection,
         Ledger: dmsActiveContractList.bosagora_devnet.Ledger
+    },
+    localhost: {
+        LinkCollection: "",
+        Token: "",
+        ValidatorCollection: "",
+        TokenPrice: "",
+        FranchiseeCollection: "",
+        Ledger: ""
     }
 };

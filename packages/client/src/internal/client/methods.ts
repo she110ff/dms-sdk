@@ -3,6 +3,11 @@ import { IClientMethods } from "../../interface/IClient";
 import { Ledger, Ledger__factory } from "dms-osx-lib";
 import { UnsupportedNetworkError } from "dms-sdk-common";
 import { Provider } from "@ethersproject/providers";
+import { ContractUtils } from "../../utils/ContractUtils";
+import { checkEmail } from "../../utils";
+import { BalanceOfMileageParam } from "../../interfaces";
+import { InvalidEmailParamError } from "../../utils/error";
+import { BigNumber } from "ethers";
 
 /**
  * Methods module the SDK Generic Client
@@ -13,19 +18,21 @@ export class ClientMethods extends ClientCore implements IClientMethods {
         Object.freeze(ClientMethods.prototype);
         Object.freeze(this);
     }
-    public async getMileageBalances(params: any): Promise<any> {
-        //TODO : 마일리지를 조회 기능 추가
-        console.log("EXEC > getMileageBalance : ", params);
+    public async getMileageBalances({ email }: BalanceOfMileageParam): Promise<BigNumber> {
+        if (!checkEmail(email)) throw new InvalidEmailParamError();
 
         const provider = this.web3.getProvider() as Provider;
-
         const network = await provider.getNetwork();
         const networkName = network.name as SupportedNetworks;
         if (!SupportedNetworksArray.includes(networkName)) {
             throw new UnsupportedNetworkError(networkName);
         }
+
         const ledgerInstance: Ledger = Ledger__factory.connect(LIVE_CONTRACTS[networkName].Ledger, provider);
-        return ledgerInstance.mileageBalanceOf(params.email);
+        const emailHash = ContractUtils.sha256String(email);
+
+        const mileage = await ledgerInstance.mileageBalanceOf(emailHash);
+        return mileage;
     }
 
     public async getTokenBalances(params: any): Promise<any> {

@@ -1,11 +1,13 @@
 import { IClientCore } from "../client-common";
+import { BalanceOfMileageParam } from "../interfaces";
+import { BigNumber } from "ethers";
 
 export interface IClient {
     methods: IClientMethods;
 }
 /** Defines the shape of the general purpose Client class */
 export interface IClientMethods extends IClientCore {
-    getMileageBalances: (params: any) => Promise<any[] | null>;
+    getMileageBalances: (params: BalanceOfMileageParam) => Promise<BigNumber>;
     getTokenBalances: (params: any) => Promise<any[] | null>;
     payMileage: (params: any) => Promise<any[] | null>;
     payToken: (params: any) => Promise<any[] | null>;
