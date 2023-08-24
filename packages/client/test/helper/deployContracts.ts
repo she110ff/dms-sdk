@@ -18,12 +18,12 @@ import { BigNumber } from "ethers";
 import { LinkCollection, LinkCollection__factory } from "del-osx-lib";
 
 export interface Deployment {
-    linkCollection: string;
-    token: string;
-    validatorCollection: string;
-    tokenPrice: string;
-    franchiseeCollection: string;
-    ledger: string;
+    linkCollection: Contract;
+    token: Contract;
+    validatorCollection: Contract;
+    tokenPrice: Contract;
+    franchiseeCollection: Contract;
+    ledger: Contract;
 }
 
 export const depositAmount = Amount.make(50_000, 18);
@@ -64,14 +64,13 @@ export async function deployAll(): Promise<Deployment> {
             tokenPriceContract,
             franchiseeCollectionContract
         );
-
         return {
-            linkCollection: linkCollectionContract.address,
-            token: tokenContract.address,
-            validatorCollection: validatorCollectionContract.address,
-            tokenPrice: tokenPriceContract.address,
-            franchiseeCollection: franchiseeCollectionContract.address,
-            ledger: ledgerContract.address
+            linkCollection: linkCollectionContract,
+            token: tokenContract,
+            validatorCollection: validatorCollectionContract,
+            tokenPrice: tokenPriceContract,
+            franchiseeCollection: franchiseeCollectionContract,
+            ledger: ledgerContract
         };
     } catch (e) {
         throw e;

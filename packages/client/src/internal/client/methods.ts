@@ -31,8 +31,7 @@ export class ClientMethods extends ClientCore implements IClientMethods {
         const ledgerInstance: Ledger = Ledger__factory.connect(LIVE_CONTRACTS[networkName].Ledger, provider);
         const emailHash = ContractUtils.sha256String(email);
 
-        const mileage = await ledgerInstance.mileageBalanceOf(emailHash);
-        return mileage;
+        return await ledgerInstance.mileageBalanceOf(emailHash);
     }
 
     public async getTokenBalances(params: any): Promise<any> {
