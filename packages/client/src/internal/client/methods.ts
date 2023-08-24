@@ -4,10 +4,10 @@ import { Ledger, Ledger__factory } from "dms-osx-lib";
 import { UnsupportedNetworkError } from "dms-sdk-common";
 import { Provider } from "@ethersproject/providers";
 import { ContractUtils } from "../../utils/ContractUtils";
-import { checkEmail } from "../../utils";
-import { BalanceOfMileageParam } from "../../interfaces";
+import { BalanceParam } from "../../interfaces";
 import { InvalidEmailParamError } from "../../utils/error";
 import { BigNumber } from "ethers";
+import { checkEmail } from "../../utils";
 
 /**
  * Methods module the SDK Generic Client
@@ -18,7 +18,13 @@ export class ClientMethods extends ClientCore implements IClientMethods {
         Object.freeze(ClientMethods.prototype);
         Object.freeze(this);
     }
-    public async getMileageBalances({ email }: BalanceOfMileageParam): Promise<BigNumber> {
+
+    /**
+     * 마일리지의 잔고를 리턴한다
+     * @param {BalanceParam} email - 이메일 주소
+     * @return {Promise<BigNumber>} 마일리지 잔고
+     */
+    public async getMileageBalances({ email }: BalanceParam): Promise<BigNumber> {
         if (!checkEmail(email)) throw new InvalidEmailParamError();
 
         const provider = this.web3.getProvider() as Provider;
@@ -34,9 +40,25 @@ export class ClientMethods extends ClientCore implements IClientMethods {
         return await ledgerInstance.mileageBalanceOf(emailHash);
     }
 
-    public async getTokenBalances(params: any): Promise<any> {
-        //TODO : 토큰 조회 기능 추가
-        return params;
+    /**
+     * 토큰의 잔고를 리턴한다.
+     * @param {BalanceParam} email - 이메일
+     * @return {Promise<BigNumber>} 토큰 잔고
+     */
+    public async getTokenBalances({ email }: BalanceParam): Promise<BigNumber> {
+        if (!checkEmail(email)) throw new InvalidEmailParamError();
+
+        const provider = this.web3.getProvider() as Provider;
+        const network = await provider.getNetwork();
+        const networkName = network.name as SupportedNetworks;
+        if (!SupportedNetworksArray.includes(networkName)) {
+            throw new UnsupportedNetworkError(networkName);
+        }
+
+        const ledgerInstance: Ledger = Ledger__factory.connect(LIVE_CONTRACTS[networkName].Ledger, provider);
+        const emailHash = ContractUtils.sha256String(email);
+
+        return await ledgerInstance.tokenBalanceOf(emailHash);
     }
 
     public async payMileage(params: any): Promise<any> {

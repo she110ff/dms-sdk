@@ -34,6 +34,10 @@ export type relayToPayMileageParam = {
     signature: string;
 };
 
+export type BalanceParam = BalanceOfMileageParam | BalanceOfTokenParam;
 export type BalanceOfMileageParam = {
+    email: string;
+};
+export type BalanceOfTokenParam = {
     email: string;
 };

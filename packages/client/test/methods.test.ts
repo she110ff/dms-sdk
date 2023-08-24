@@ -62,9 +62,16 @@ describe("Client", () => {
                 client = new Client(ctx);
             });
 
-            it("Check mileage to zero", async () => {
+            it("Test getting the mileage balance", async () => {
                 const purchase = purchaseData[0];
                 const mileage = await client.methods.getMileageBalances({ email: purchase.userEmail });
+                const amt = BigNumber.from(0);
+                expect(mileage).toEqual(amt);
+            });
+
+            it("Test getting the token balance", async () => {
+                const purchase = purchaseData[0];
+                const mileage = await client.methods.getTokenBalances({ email: purchase.userEmail });
                 const amt = BigNumber.from(0);
                 expect(mileage).toEqual(amt);
             });
