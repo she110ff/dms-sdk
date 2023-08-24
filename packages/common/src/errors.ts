@@ -13,11 +13,6 @@ export class GraphQLError extends Error {
     super("Cannot fetch the " + model + " data from GraphQL");
   }
 }
-export class IpfsError extends Error {
-  constructor() {
-    super("Cannot add or get data from ipfs");
-  }
-}
 export class InvalidAddressOrEnsError extends Error {
   constructor() {
     super("Invalid address or ENS");
@@ -33,11 +28,7 @@ export class InvalidCidError extends Error {
     super("The value does not contain a valid CiD");
   }
 }
-export class InvalidProposalIdError extends Error {
-  constructor() {
-    super("Invalid proposal ID");
-  }
-}
+
 export class NoProviderError extends Error {
   constructor() {
     super("A web3 provider is needed");
@@ -60,30 +51,6 @@ export class NoTokenAddress extends Error {
   }
 }
 
-export class NoDaoFactory extends Error {
-  constructor() {
-    super("A dao factory address is needed");
-  }
-}
-
-export class NoPluginRepoRegistry extends Error {
-  constructor() {
-    super("A plugin repo registry address is needed");
-  }
-}
-
-export class NoDaoRegistry extends Error {
-  constructor() {
-    super("A dao registry address is needed");
-  }
-}
-
-export class IpfsPinError extends Error {
-  constructor() {
-    super("Failed to pin data on IPFS");
-  }
-}
-
 export class ProposalCreationError extends Error {
   constructor() {
     super("Failed to create proposal");
@@ -93,16 +60,6 @@ export class ProposalCreationError extends Error {
 export class MissingExecPermissionError extends Error {
   constructor() {
     super("No plugin requests EXECUTE_PERMISSION");
-  }
-}
-export class IpfsFetchError extends Error {
-  constructor() {
-    super("Failed to fetch data from IPFS");
-  }
-}
-export class InvalidVotingModeError extends Error {
-  constructor() {
-    super("Invalid voting mode");
   }
 }
 export class UpdateAllowanceError extends Error {
@@ -123,7 +80,7 @@ export class FailedDepositError extends Error {
 export class AmountMismatchError extends Error {
   constructor(expected: bigint, received: bigint) {
     super(
-      `Deposited amount mismatch. Expected: ${expected}, received: ${received}`,
+      `Deposited amount mismatch. Expected: ${expected}, received: ${received}`
     );
   }
 }
