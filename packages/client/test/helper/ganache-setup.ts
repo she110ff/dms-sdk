@@ -16,7 +16,9 @@ export async function start() {
         logging: {
             quiet: true
         },
-        accounts: getAccounts()
+        wallet: {
+            accounts: getAccounts()
+        }
     });
     await server.listen(7545);
     return server;

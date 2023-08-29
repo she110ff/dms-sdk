@@ -16,8 +16,10 @@ type Web3ContextParams = {
     franchiseeCollection?: Contract;
     ledger?: Contract;
 };
-
-export type ContextParams = Web3ContextParams;
+type HttpContextParams = {
+    relayEndpoint?: string | URL;
+};
+export type ContextParams = Web3ContextParams & HttpContextParams;
 
 // Context state data
 type Web3ContextState = {
@@ -31,7 +33,10 @@ type Web3ContextState = {
     franchiseeCollection?: Contract;
     ledger?: Contract;
 };
+type HTTPContextState = {
+    relayEndpoint?: string | URL;
+};
 
-export type ContextState = Web3ContextState;
+export type ContextState = Web3ContextState & HTTPContextState;
 export type ContextPluginState = {};
 export type ContextPluginParams = ContextParams;

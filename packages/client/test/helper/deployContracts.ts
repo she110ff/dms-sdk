@@ -18,6 +18,7 @@ import { BigNumber } from "ethers";
 import { LinkCollection, LinkCollection__factory } from "del-osx-lib";
 
 export interface Deployment {
+    provider: JsonRpcProvider;
     linkCollection: Contract;
     token: Contract;
     validatorCollection: Contract;
@@ -30,8 +31,7 @@ export const depositAmount = Amount.make(50_000, 18);
 export const foundationEmail = "foundation@example.com";
 export const foundationAccount = ContractUtils.sha256String(foundationEmail);
 
-export async function deployAll(): Promise<Deployment> {
-    const provider = new JsonRpcProvider("http://127.0.0.1:7545");
+export async function deployAll(provider: JsonRpcProvider): Promise<Deployment> {
     let accounts = getSigners(provider);
     const [deployer, validator1, validator2, validator3] = accounts;
     const validators = [validator1, validator2, validator3];
@@ -65,6 +65,7 @@ export async function deployAll(): Promise<Deployment> {
             franchiseeCollectionContract
         );
         return {
+            provider: provider,
             linkCollection: linkCollectionContract,
             token: tokenContract,
             validatorCollection: validatorCollectionContract,
@@ -200,6 +201,7 @@ export const getSigners = (provider: JsonRpcProvider): JsonRpcSigner[] => {
     }
     return accounts;
 };
+
 export const getSignersToAddress = async (singers: JsonRpcSigner[]): Promise<string[]> => {
     let accounts = [];
     for (let idx = 0; idx < singers.length; idx++) {
@@ -209,8 +211,61 @@ export const getSignersToAddress = async (singers: JsonRpcSigner[]): Promise<str
     }
     return accounts;
 };
+
 export function delay(interval: number): Promise<void> {
     return new Promise<void>((resolve) => {
         setTimeout(resolve, interval);
     });
 }
+
+export interface PurchaseData {
+    purchaseId: string;
+    timestamp: number;
+    amount: number;
+    userEmail: string;
+    franchiseeId: string;
+    method: number;
+}
+
+export const purchaseData: PurchaseData[] = [
+    {
+        purchaseId: "P000001",
+        timestamp: 1672844400,
+        amount: 10000,
+        userEmail: "a@example.com",
+        franchiseeId: "F000100",
+        method: 0
+    },
+    {
+        purchaseId: "P000002",
+        timestamp: 1675522800,
+        amount: 10000,
+        userEmail: "b@example.com",
+        franchiseeId: "F000100",
+        method: 0
+    },
+    {
+        purchaseId: "P000003",
+        timestamp: 1677942000,
+        amount: 10000,
+        userEmail: "c@example.com",
+        franchiseeId: "F000200",
+        method: 0
+    },
+    {
+        purchaseId: "P000004",
+        timestamp: 1680620400,
+        amount: 10000,
+        userEmail: "d@example.com",
+        franchiseeId: "F000300",
+        method: 0
+    },
+    {
+        purchaseId: "P000005",
+        timestamp: 1683212400,
+        amount: 10000,
+        userEmail: "a@example.com",
+        franchiseeId: "F000200",
+        method: 0
+    }
+];

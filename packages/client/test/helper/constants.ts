@@ -16,9 +16,10 @@ export const contextParamsMainnet: ContextParams = {
 };
 
 export const contextParamsLocalChain: ContextParams = {
-    network: "localhost",
+    network: "bosagora_devnet",
     signer: new Wallet(TEST_WALLET),
-    web3Providers: ["http://localhost:7545"]
+    web3Providers: ["http://localhost:7545"],
+    relayEndpoint: "http://localhost:7070"
 };
 
 export const contextParamsFailing: ContextParams = {

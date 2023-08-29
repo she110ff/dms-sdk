@@ -3,4 +3,4 @@ export * from "./client-common";
 export * from "./interfaces";
 export * from "./utils/ContractUtils";
 export * from "./utils/Amount";
-export * from "./utils/error";
+export * from "./utils/errors";

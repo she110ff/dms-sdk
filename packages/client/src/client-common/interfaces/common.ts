@@ -9,11 +9,6 @@ export type NetworkDeployment = {
     Ledger: string;
 };
 
-export type GasFeeEstimation = {
-    average: bigint;
-    max: bigint;
-};
-
 export interface IPagination {
     skip?: number;
     limit?: number;
@@ -35,4 +30,11 @@ export interface IInterfaceParams {
     id: string;
     functionName: string;
     hash: string;
+}
+export type GenericRecord = Record<string, string | number | boolean | null | undefined>;
+export interface IHttpConfig {
+    /** IPFS Cluster URL */
+    url: URL;
+    /** Additional headers to be included with requests */
+    headers?: Record<string, string>;
 }

@@ -88,4 +88,27 @@ export class ContractUtils {
         const message = arrayify(ethers.utils.keccak256(encodedResult));
         return signer.signMessage(message);
     }
+
+    public static verifyPayment(
+        purchaseId: string,
+        amount: BigNumberish,
+        userEmail: string,
+        franchiseeId: string,
+        signerAddress: string,
+        nonce: BigNumberish,
+        signature: string
+    ): boolean {
+        const encodedResult = ethers.utils.defaultAbiCoder.encode(
+            ["string", "uint256", "bytes32", "string", "address", "uint256"],
+            [purchaseId, amount, userEmail, franchiseeId, signerAddress, nonce]
+        );
+        const message = arrayify(ethers.utils.keccak256(encodedResult));
+        let res: string;
+        try {
+            res = ethers.utils.verifyMessage(message, signature);
+        } catch (error) {
+            return false;
+        }
+        return res.toLowerCase() === signerAddress.toLowerCase();
+    }
 }

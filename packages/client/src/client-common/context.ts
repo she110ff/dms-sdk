@@ -31,8 +31,6 @@ export class Context {
     /**
      * Does set and parse the given context configuration object
      *
-     * @method setFullContext
-     *
      * @returns {void}
      *
      * @private
@@ -62,6 +60,9 @@ export class Context {
         }
         if (contextParams.web3Providers) {
             this.state.web3Providers = Context.resolveWeb3Providers(contextParams.web3Providers, this.state.network);
+        }
+        if (contextParams.relayEndpoint) {
+            this.state.relayEndpoint = contextParams.relayEndpoint;
         }
     }
     // GETTERS
@@ -105,6 +106,10 @@ export class Context {
         return this.state.web3Providers || defaultState.web3Providers;
     }
 
+    get relayEndpoint() {
+        return this.state.relayEndpoint || defaultState.relayEndpoint;
+    }
+
     // DEFAULT CONTEXT STATE
     static setDefault(params: Partial<ContextParams>) {
         if (params.signer) {
@@ -114,8 +119,6 @@ export class Context {
     static getDefault() {
         return defaultState;
     }
-
-    // INTERNAL HELPERS
 
     private static resolveWeb3Providers(
         endpoints: string | JsonRpcProvider | (string | JsonRpcProvider)[],
