@@ -66,6 +66,9 @@ export class TestRelayServer {
         this.app.get("/", [], this.getHealthStatus.bind(this));
         // 마일리지를 이용하여 구매
         this.app.post("/payMileage", this.payMileage.bind(this));
+        this.app.post("/payToken", this.payToken.bind(this));
+        this.app.post("/exchangeTokenToMileage", this.exchangeTokenToMileage.bind(this));
+        this.app.post("/exchangeMileageToToken", this.exchangeMileageToToken.bind(this));
 
         // Listen on provided this.port on this.address.
         return new Promise<void>((resolve, reject) => {
@@ -105,6 +108,113 @@ export class TestRelayServer {
             });
 
         return res.status(200).send({ txHash: "0X1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ" });
+    }
+
+    /**
+     * 사용자 토큰 지불
+     * POST /payToken
+     * @private
+     */
+    private async payToken(req: express.Request, res: express.Response) {
+        const purchaseId: string = String(req.body.purchaseId); // 구매 아이디
+        const amount: string = String(req.body.amount); // 구매 금액
+        const email: string = String(req.body.email); // 구매한 사용자의 이메일 해시
+        const franchiseeId: string = String(req.body.franchiseeId); // 구매한 가맹점 아이디
+        const signer: string = String(req.body.signer); // 구매자의 주소
+        const signature: string = String(req.body.signature); // 서명
+        const userNonce = await this.deployment.ledger.nonceOf(signer);
+
+        if (!ContractUtils.verifyPayment(purchaseId, amount, email, franchiseeId, signer, userNonce, signature))
+            return res.status(200).json({
+                code: 500,
+                data: undefined,
+                error: { message: "Signature is not valid." }
+            });
+
+        return res.status(200).send({ txHash: "0X1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ" });
+    }
+
+    /**
+     * 토큰을 마일리지로 교환합니다
+     * POST /exchangeTokenToMileage
+     * @private
+     */
+    private async exchangeTokenToMileage(req: express.Request, res: express.Response) {
+        try {
+            const email: string = String(req.body.email); // 구매한 사용자의 이메일 해시
+            const amountToken: string = String(req.body.amountToken); // 교환할 마일리지의 량
+            const signer: string = String(req.body.signer); // 구매자의 주소
+            const signature: string = String(req.body.signature); // 서명
+
+            // TODO amountToken > 0 조건 검사
+            // 서명검증
+            const userNonce = await this.deployment.ledger.nonceOf(signer);
+            if (!ContractUtils.verifyExchange(signer, email, amountToken, userNonce, signature))
+                return res.status(200).json({
+                    code: 500,
+                    data: undefined,
+                    error: { message: "Signature is not valid." }
+                });
+
+            // 이메일 EmailLinkerContract에 이메일 등록여부 체크 및 구매자 주소와 동일여부
+            const emailToAddress: string = await this.deployment.linkCollection.toAddrss(email);
+            if (emailToAddress !== signer) {
+                return res.status(200).json({
+                    code: 500,
+                    data: undefined,
+                    error: { message: "Email is not valid." }
+                });
+            }
+
+            return res.status(200).send({ txHash: "0X1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ" });
+        } catch (error) {
+            return res.status(200).json({
+                code: 500,
+                data: undefined,
+                error: { message: "Failed exchange Token To Mileage." }
+            });
+        }
+    }
+
+    /**
+     * 마일리지를 토큰으로 교환합니다
+     * POST /exchangeMileageToToken
+     * @private
+     */
+    private async exchangeMileageToToken(req: express.Request, res: express.Response) {
+        try {
+            const email: string = String(req.body.email); // 구매한 사용자의 이메일 해시
+            const amountMileage: string = String(req.body.amountMileage); // 교환할 마일리지의 량
+            const signer: string = String(req.body.signer); // 구매자의 주소
+            const signature: string = String(req.body.signature); // 서명
+
+            // TODO amountMileage > 0 조건 검사
+            // 서명검증
+            const userNonce = await this.deployment.ledger.nonceOf(signer);
+            if (!ContractUtils.verifyExchange(signer, email, amountMileage, userNonce, signature))
+                return res.status(200).json({
+                    code: 500,
+                    data: undefined,
+                    error: { message: "Signature is not valid." }
+                });
+            // 이메일 EmailLinkerContract에 이메일 등록여부 체크 및 구매자 주소와 동일여부
+            const emailToAddress: string = await this.deployment.linkCollection.toAddrss(email);
+            if (emailToAddress !== signer) {
+                return res.status(200).json({
+                    code: 500,
+                    data: undefined,
+                    error: { message: "Email is not valid." }
+                });
+            }
+
+            return res.status(200).send({ txHash: "0X1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ" });
+        } catch (error) {
+            return res.status(200).json({
+                code: 500,
+                data: undefined,
+                error: { message: "Failed exchange Mileage To Token." }
+            });
+        }
     }
 
     public stop(): Promise<void> {

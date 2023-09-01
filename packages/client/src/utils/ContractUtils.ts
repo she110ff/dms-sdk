@@ -111,4 +111,25 @@ export class ContractUtils {
         }
         return res.toLowerCase() === signerAddress.toLowerCase();
     }
+
+    public static verifyExchange(
+        signerAddress: string,
+        userEmail: string,
+        amount: BigNumberish,
+        nonce: BigNumberish,
+        signature: string
+    ): boolean {
+        const encodedResult = ethers.utils.defaultAbiCoder.encode(
+            ["bytes32", "uint256", "address", "uint256"],
+            [userEmail, amount, signerAddress, nonce]
+        );
+        const message = arrayify(ethers.utils.keccak256(encodedResult));
+        let res: string;
+        try {
+            res = ethers.utils.verifyMessage(message, signature);
+        } catch (error) {
+            return false;
+        }
+        return res.toLowerCase() === signerAddress.toLowerCase();
+    }
 }
