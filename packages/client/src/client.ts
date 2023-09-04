@@ -1,6 +1,6 @@
 import { ClientCore, Context, IClientHttpCore } from "./client-common";
-import { ClientMethods } from "./internal/client/methods";
 import { IClient, IClientMethods } from "./interface/IClient";
+import { ClientMethods } from "./internal/client/methods";
 import { HttpModule } from "./client-common/modules/http";
 
 /**

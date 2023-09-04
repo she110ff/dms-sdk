@@ -157,7 +157,7 @@ export class TestRelayServer {
                 });
 
             // 이메일 EmailLinkerContract에 이메일 등록여부 체크 및 구매자 주소와 동일여부
-            const emailToAddress: string = await this.deployment.linkCollection.toAddrss(email);
+            const emailToAddress: string = await this.deployment.linkCollection.toAddress(email);
             if (emailToAddress !== signer) {
                 return res.status(200).json({
                     code: 500,
@@ -198,7 +198,7 @@ export class TestRelayServer {
                     error: { message: "Signature is not valid." }
                 });
             // 이메일 EmailLinkerContract에 이메일 등록여부 체크 및 구매자 주소와 동일여부
-            const emailToAddress: string = await this.deployment.linkCollection.toAddrss(email);
+            const emailToAddress: string = await this.deployment.linkCollection.toAddress(email);
             if (emailToAddress !== signer) {
                 return res.status(200).json({
                     code: 500,

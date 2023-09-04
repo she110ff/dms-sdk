@@ -7,8 +7,8 @@ import { Client, Context, ContractUtils, LIVE_CONTRACTS, PayMileageParams } from
 import { JsonRpcProvider, JsonRpcSigner } from "@ethersproject/providers";
 import { restoreBlockTime } from "./helper/block-times";
 import { BigNumber, Signer } from "ethers";
-import { TestRelayServer } from "./helper/Utils";
 import { Wallet } from "@ethersproject/wallet";
+import { TestRelayServer } from "./helper/Utils";
 
 describe("Client", () => {
     let node: Server;
@@ -84,23 +84,29 @@ describe("Client", () => {
                 expect(isUp).toEqual(true);
             });
 
-            it("Test of Pay mileage", async () => {
+            it("Register user email", async () => {
                 const validator1 = accounts[1];
                 const validator2 = accounts[2];
                 const user = await accounts[4].getAddress();
                 const userWallet = new Wallet(initAccount[user.toLowerCase()].secretKey, provider);
                 const userAddress = await userWallet.getAddress();
                 const exampleData = purchaseData[0];
-
                 const nonce = await deployment.linkCollection.nonceOf(userAddress);
                 const emailHash = ContractUtils.sha256String(exampleData.userEmail);
                 const signature = await ContractUtils.sign(userWallet, emailHash, nonce);
-
                 //Add Email
                 await deployment.linkCollection.connect(userWallet).addRequest(emailHash, userAddress, signature);
                 // Vote
                 await deployment.linkCollection.connect(validator1).voteRequest(0, 1);
                 await deployment.linkCollection.connect(validator2).voteRequest(0, 1);
+            });
+
+            it("Test of Pay mileage", async () => {
+                const userWallet = new Wallet(
+                    initAccount[(await accounts[4].getAddress()).toLowerCase()].secretKey,
+                    provider
+                );
+                const exampleData = purchaseData[0];
 
                 const param: PayMileageParams = {
                     signer: userWallet as Signer,
@@ -115,7 +121,26 @@ describe("Client", () => {
 
                 expect(responseData).toEqual({ txHash: "0X1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ" });
             });
-            // it("Test of Pay Token", async () => {});
+            it("Test of Pay Token", async () => {
+                const userWallet = new Wallet(
+                    initAccount[(await accounts[4].getAddress()).toLowerCase()].secretKey,
+                    provider
+                );
+                const exampleData = purchaseData[0];
+
+                const param: PayMileageParams = {
+                    signer: userWallet as Signer,
+                    purchaseId: exampleData.purchaseId,
+                    purchaseAmount: exampleData.amount,
+                    email: exampleData.userEmail,
+                    franchiseeId: exampleData.franchiseeId
+                };
+
+                const option = await client.methods.getPayTokenOption(param);
+                const responseData = await client.http.fetchPayMileage(option);
+
+                expect(responseData).toEqual({ txHash: "0X1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ" });
+            });
         });
     });
 });

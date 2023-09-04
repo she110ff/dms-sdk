@@ -4,7 +4,14 @@ import { Ledger, Ledger__factory } from "dms-osx-lib";
 import { UnsupportedNetworkError } from "dms-sdk-common";
 import { Provider } from "@ethersproject/providers";
 import { ContractUtils } from "../../utils/ContractUtils";
-import { BalanceParam, FetchPayOption, PayMileageOption, PayMileageParams } from "../../interfaces";
+import {
+    BalanceParam,
+    FetchPayOption,
+    PayMileageOption,
+    PayMileageParams,
+    PayTokenOption,
+    PayTokenParams
+} from "../../interfaces";
 import { InvalidEmailParamError, MismatchApproveAddressError } from "../../utils/errors";
 import { BigNumber } from "ethers";
 import { checkEmail } from "../../utils";
@@ -64,7 +71,7 @@ export class ClientMethods extends ClientCore implements IClientMethods {
     }
 
     /**
-     * 마일리지 사용승인을 위해 Relay 서버로 전송하기위한 서명값을 생성한다.
+     * 마일리지 사용승인 하여 Relay 서버로 전송하기 위한 서명값을 생성한다.
      * @param signer - Signer
      * @param purchaseId - 거래 아이디
      * @param purchaseAmount - 거래 금액
@@ -115,9 +122,56 @@ export class ClientMethods extends ClientCore implements IClientMethods {
         return Promise.resolve(relayParam);
     }
 
-    public async getPayTokenOption(params: any): Promise<any> {
-        //TODO : 토큰 사용 승인 기능 추가
-        return params;
+    /**
+     * 토큰 사용승인 하여 Relay 서버로 전송하기 위한 서명값을 생성한다.
+     * @param signer - Signer
+     * @param purchaseId - 거래 아이디
+     * @param purchaseAmount - 거래 금액
+     * @param email - 사용자 이메일 주소
+     * @param franchiseeId - 거래처 아이디
+     * @return {Promise<PayTokenOption>}
+     */
+    public async getPayTokenOption({
+        signer,
+        purchaseId,
+        purchaseAmount,
+        email,
+        franchiseeId
+    }: PayTokenParams): Promise<PayTokenOption> {
+        const provider = this.web3.getProvider() as Provider;
+        const network = await provider.getNetwork();
+        const networkName = network.name as SupportedNetworks;
+        if (!SupportedNetworksArray.includes(networkName)) {
+            throw new UnsupportedNetworkError(networkName);
+        }
+
+        const emailHash = ContractUtils.sha256String(email);
+        const ledgerContract: Ledger = Ledger__factory.connect(LIVE_CONTRACTS[networkName].Ledger, provider);
+        const linkContract: LinkCollection = LinkCollection__factory.connect(
+            LIVE_CONTRACTS[networkName].LinkCollection,
+            provider
+        );
+
+        const emailToAddress = await linkContract.toAddress(emailHash);
+        const signerAddress = await signer.getAddress();
+
+        if (emailToAddress !== signerAddress) {
+            throw new MismatchApproveAddressError();
+        }
+
+        const nonce = await ledgerContract.nonceOf(emailToAddress);
+        const amount = Amount.make(purchaseAmount, 18).value;
+        const signature = await ContractUtils.signPayment(signer, purchaseId, amount, emailHash, franchiseeId, nonce);
+
+        const relayParam: FetchPayOption = {
+            purchaseId,
+            amount: amount.toString(),
+            email: emailHash,
+            franchiseeId,
+            signer: signerAddress,
+            signature
+        };
+        return Promise.resolve(relayParam);
     }
 
     public async tokenToMileage(params: any): Promise<any> {
