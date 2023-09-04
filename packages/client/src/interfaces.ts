@@ -77,14 +77,26 @@ export type PayTokenOption = {
     signature: string;
 };
 
-export type FetchExchangeTokenToMileageParams = {
+export type ExchangeParams = ExchangeTokenToMileageParams | ExchangeMileageToTokenParams;
+export type ExchangeTokenToMileageParams = {
+    signer: Signer;
+    email: string;
+    amount: number;
+};
+export type ExchangeMileageToTokenParams = {
+    signer: Signer;
+    email: string;
+    amount: number;
+};
+
+export type ExchangeTokenToMileageOption = {
     email: string;
     amountToken: string;
     signer: string;
     signature: string;
 };
 
-export type FetchExchangeMileageToTokenParams = {
+export type ExchangeMileageToTokenOption = {
     email: string;
     amountMileage: string;
     signer: string;

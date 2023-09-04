@@ -6,6 +6,8 @@ import { Provider } from "@ethersproject/providers";
 import { ContractUtils } from "../../utils/ContractUtils";
 import {
     BalanceParam,
+    ExchangeTokenToMileageParams,
+    ExchangeTokenToMileageOption,
     FetchPayOption,
     PayMileageOption,
     PayMileageParams,
@@ -174,12 +176,44 @@ export class ClientMethods extends ClientCore implements IClientMethods {
         return Promise.resolve(relayParam);
     }
 
-    public async tokenToMileage(params: any): Promise<any> {
-        //TODO : 토큰을 마일리지로 전환 기능 추가
-        return params;
+    public async getTokenToMileageOption({
+        signer,
+        email,
+        amount
+    }: ExchangeTokenToMileageParams): Promise<ExchangeTokenToMileageOption> {
+        const provider = this.web3.getProvider() as Provider;
+        const network = await provider.getNetwork();
+        const networkName = network.name as SupportedNetworks;
+        if (!SupportedNetworksArray.includes(networkName)) {
+            throw new UnsupportedNetworkError(networkName);
+        }
+
+        const emailHash = ContractUtils.sha256String(email);
+        const ledgerContract: Ledger = Ledger__factory.connect(LIVE_CONTRACTS[networkName].Ledger, provider);
+        const linkContract: LinkCollection = LinkCollection__factory.connect(
+            LIVE_CONTRACTS[networkName].LinkCollection,
+            provider
+        );
+
+        const emailToAddress: string = await linkContract.toAddress(emailHash);
+        const signerAddress: string = await signer.getAddress();
+
+        if (emailToAddress !== signerAddress) {
+            throw new MismatchApproveAddressError();
+        }
+        const amountToken: BigNumber = Amount.make(amount, 18).value;
+        const nonce: BigNumber = await ledgerContract.nonceOf(emailToAddress);
+        const signature: string = await ContractUtils.signExchange(signer, emailHash, amountToken, nonce);
+
+        return {
+            email: emailHash,
+            amountToken: amountToken.toString(),
+            signer: signerAddress,
+            signature
+        };
     }
 
-    public async mileageToToken(params: any): Promise<any> {
+    public async getMileageToTokenOption(params: any): Promise<any> {
         //TODO : 마일리지를 토큰으로 전환 기능 추가
         return params;
     }

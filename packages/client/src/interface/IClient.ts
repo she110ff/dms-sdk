@@ -1,5 +1,14 @@
 import { IClientCore } from "../client-common";
-import { BalanceOfMileageParam, BalanceOfTokenParam, PayMileageOption, PayParams } from "../interfaces";
+import {
+    BalanceOfMileageParam,
+    BalanceOfTokenParam,
+    ExchangeMileageToTokenParams,
+    ExchangeTokenToMileageParams,
+    ExchangeMileageToTokenOption,
+    ExchangeTokenToMileageOption,
+    PayMileageOption,
+    PayParams
+} from "../interfaces";
 import { BigNumber } from "ethers";
 
 export interface IClient {
@@ -11,8 +20,8 @@ export interface IClientMethods extends IClientCore {
     getTokenBalances: (params: BalanceOfTokenParam) => Promise<BigNumber>;
     getPayMileageOption: (params: PayParams) => Promise<PayMileageOption>;
     getPayTokenOption: (params: PayParams) => Promise<PayMileageOption>;
-    tokenToMileage: (params: any) => Promise<any[] | null>;
-    mileageToToken: (params: any) => Promise<any[] | null>;
+    getMileageToTokenOption: (params: ExchangeMileageToTokenParams) => Promise<ExchangeMileageToTokenOption>;
+    getTokenToMileageOption: (params: ExchangeTokenToMileageParams) => Promise<ExchangeTokenToMileageOption>;
     deposit: (params: any) => Promise<any>;
     withdraw: (params: any) => Promise<any>;
 }

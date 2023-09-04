@@ -1,4 +1,4 @@
-import { FetchExchangeMileageToTokenParams, FetchExchangeTokenToMileageParams, FetchPayOption } from "../../interfaces";
+import { ExchangeMileageToTokenOption, ExchangeTokenToMileageOption, FetchPayOption } from "../../interfaces";
 import { Context } from "../context";
 import { IClientHttpCore } from "../interfaces/core";
 import { Network } from "../interfaces/network";
@@ -25,11 +25,11 @@ export class HttpModule implements IClientHttpCore {
         return Network.post(this, "payToken", param);
     }
 
-    public fetchExchangeMileageToTokenTo(param: FetchExchangeMileageToTokenParams): Promise<any> {
+    public fetchExchangeMileageToToken(param: ExchangeMileageToTokenOption): Promise<any> {
         return Network.post(this, "exchangeMileageToToken", param);
     }
 
-    public fetchExchangeTokenToMileage(param: FetchExchangeTokenToMileageParams): Promise<any> {
+    public fetchExchangeTokenToMileage(param: ExchangeTokenToMileageOption): Promise<any> {
         return Network.post(this, "exchangeTokenToMileage", param);
     }
 

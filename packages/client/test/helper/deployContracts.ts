@@ -19,12 +19,12 @@ import { LinkCollection, LinkCollection__factory } from "del-osx-lib";
 
 export interface Deployment {
     provider: JsonRpcProvider;
-    linkCollection: Contract;
-    token: Contract;
-    validatorCollection: Contract;
-    tokenPrice: Contract;
-    franchiseeCollection: Contract;
-    ledger: Contract;
+    linkCollection: LinkCollection;
+    token: Token;
+    validatorCollection: ValidatorCollection;
+    tokenPrice: TokenPrice;
+    franchiseeCollection: FranchiseeCollection;
+    ledger: Ledger;
 }
 
 export const depositAmount = Amount.make(50_000, 18);
@@ -38,7 +38,7 @@ export async function deployAll(provider: JsonRpcProvider): Promise<Deployment> 
     const validatorsAddress: string[] = await getSignersToAddress(validators);
 
     try {
-        const tokenContract = await deployToken(deployer, validatorsAddress);
+        const tokenContract = await deployToken(deployer, accounts);
         const validatorCollectionContract: ValidatorCollection = (await deployValidatorCollection(
             deployer,
             tokenContract,
@@ -78,13 +78,13 @@ export async function deployAll(provider: JsonRpcProvider): Promise<Deployment> 
     }
 }
 
-export const deployToken = async (deployer: Signer, validators: String[]): Promise<Token> => {
+export const deployToken = async (deployer: Signer, accounts: JsonRpcSigner[]): Promise<Token> => {
     const tokenFactory = new ContractFactory(Token__factory.abi, Token__factory.bytecode);
     const tokenContract = (await tokenFactory.connect(deployer).deploy("Sample", "SAM")) as Token;
     await tokenContract.deployed();
     await tokenContract.deployTransaction.wait();
-    for (const elem of validators) {
-        await tokenContract.connect(deployer).transfer(elem.toString(), depositAmount.value);
+    for (const elem of accounts) {
+        await tokenContract.connect(deployer).transfer(await elem.getAddress(), depositAmount.value);
     }
     return tokenContract;
 };
