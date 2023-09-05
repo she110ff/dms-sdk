@@ -12,7 +12,8 @@ import {
     PayMileageOption,
     PayMileageParams,
     PayTokenOption,
-    PayTokenParams
+    PayTokenParams,
+    ExchangeMileageToTokenOption
 } from "../../interfaces";
 import { InvalidEmailParamError, MismatchApproveAddressError } from "../../utils/errors";
 import { BigNumber } from "ethers";
@@ -213,9 +214,41 @@ export class ClientMethods extends ClientCore implements IClientMethods {
         };
     }
 
-    public async getMileageToTokenOption(params: any): Promise<any> {
-        //TODO : 마일리지를 토큰으로 전환 기능 추가
-        return params;
+    public async getMileageToTokenOption({
+        signer,
+        email,
+        amount
+    }: ExchangeTokenToMileageParams): Promise<ExchangeMileageToTokenOption> {
+        const provider = this.web3.getProvider() as Provider;
+        const network = await provider.getNetwork();
+        const networkName = network.name as SupportedNetworks;
+        if (!SupportedNetworksArray.includes(networkName)) {
+            throw new UnsupportedNetworkError(networkName);
+        }
+
+        const emailHash = ContractUtils.sha256String(email);
+        const ledgerContract: Ledger = Ledger__factory.connect(LIVE_CONTRACTS[networkName].Ledger, provider);
+        const linkContract: LinkCollection = LinkCollection__factory.connect(
+            LIVE_CONTRACTS[networkName].LinkCollection,
+            provider
+        );
+
+        const emailToAddress: string = await linkContract.toAddress(emailHash);
+        const signerAddress: string = await signer.getAddress();
+
+        if (emailToAddress !== signerAddress) {
+            throw new MismatchApproveAddressError();
+        }
+        const amountMileage: BigNumber = Amount.make(amount, 18).value;
+        const nonce: BigNumber = await ledgerContract.nonceOf(emailToAddress);
+        const signature: string = await ContractUtils.signExchange(signer, emailHash, amountMileage, nonce);
+
+        return {
+            email: emailHash,
+            amountMileage: amountMileage.toString(),
+            signer: signerAddress,
+            signature
+        };
     }
 
     public async deposit(params: any): Promise<any> {

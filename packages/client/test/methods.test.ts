@@ -114,7 +114,7 @@ describe("Client", () => {
                     await deployment.linkCollection.connect(validator2).voteRequest(0, 1);
                 });
 
-                it("Test of Pay mileage", async () => {
+                it("Test of pay mileage", async () => {
                     const userWallet = new Wallet(
                         initAccount[(await accounts[4].getAddress()).toLowerCase()].secretKey,
                         provider
@@ -135,7 +135,7 @@ describe("Client", () => {
                     expect(responseData).toEqual({ txHash: "0X1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ" });
                 });
 
-                it("Test of Pay Token", async () => {
+                it("Test of pay token", async () => {
                     const userWallet = new Wallet(
                         initAccount[(await accounts[4].getAddress()).toLowerCase()].secretKey,
                         provider
@@ -175,6 +175,18 @@ describe("Client", () => {
                     };
                     const option = await client.methods.getTokenToMileageOption(params);
                     const responseData = await client.http.fetchExchangeTokenToMileage(option);
+                    expect(responseData).toEqual({ txHash: "0X1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ" });
+                });
+
+                it("Test of mileage to token exchange", async () => {
+                    const exampleData = purchaseData[0];
+                    const params: ExchangeParams = {
+                        signer: userWallet,
+                        email: exampleData.userEmail,
+                        amount: 5000
+                    };
+                    const option = await client.methods.getMileageToTokenOption(params);
+                    const responseData = await client.http.fetchExchangeMileageToToken(option);
                     expect(responseData).toEqual({ txHash: "0X1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ" });
                 });
             });
