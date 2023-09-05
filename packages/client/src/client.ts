@@ -7,8 +7,8 @@ import { HttpModule } from "./client-common/modules/http";
  * Provider a generic client with high level methods to manage and interact
  */
 export class Client extends ClientCore implements IClient {
-    private privateMethods: IClientMethods;
-    private privateHttp: IClientHttpCore;
+    private readonly privateMethods: IClientMethods;
+    private readonly privateHttp: IClientHttpCore;
 
     constructor(context: Context) {
         super(context);
