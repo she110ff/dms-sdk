@@ -15,8 +15,8 @@ import {
     PayTokenParams,
     ExchangeMileageToTokenOption
 } from "../../interfaces";
-import { InvalidEmailParamError, MismatchApproveAddressError } from "../../utils/errors";
-import { BigNumber } from "ethers";
+import { InvalidEmailParamError, MismatchApproveAddressError, UnregisteredEmailError } from "../../utils/errors";
+import { BigNumber, ethers } from "ethers";
 import { checkEmail } from "../../utils";
 import { Amount } from "../../utils/Amount";
 import { LinkCollection, LinkCollection__factory } from "del-osx-lib";
@@ -103,12 +103,11 @@ export class ClientMethods extends ClientCore implements IClientMethods {
             provider
         );
 
-        const emailToAddress = await linkContract.toAddress(emailHash);
-        const signerAddress = await signer.getAddress();
+        const emailToAddress: string = await linkContract.toAddress(emailHash);
+        if (emailToAddress === ethers.constants.AddressZero) throw new UnregisteredEmailError();
 
-        if (emailToAddress !== signerAddress) {
-            throw new MismatchApproveAddressError();
-        }
+        const signerAddress: string = await signer.getAddress();
+        if (emailToAddress !== signerAddress) throw new MismatchApproveAddressError();
 
         const nonce = await ledgerContract.nonceOf(emailToAddress);
         const amount = Amount.make(purchaseAmount, 18).value;
@@ -155,12 +154,11 @@ export class ClientMethods extends ClientCore implements IClientMethods {
             provider
         );
 
-        const emailToAddress = await linkContract.toAddress(emailHash);
-        const signerAddress = await signer.getAddress();
+        const emailToAddress: string = await linkContract.toAddress(emailHash);
+        if (emailToAddress === ethers.constants.AddressZero) throw new UnregisteredEmailError();
 
-        if (emailToAddress !== signerAddress) {
-            throw new MismatchApproveAddressError();
-        }
+        const signerAddress: string = await signer.getAddress();
+        if (emailToAddress !== signerAddress) throw new MismatchApproveAddressError();
 
         const nonce = await ledgerContract.nonceOf(emailToAddress);
         const amount = Amount.make(purchaseAmount, 18).value;
@@ -197,11 +195,11 @@ export class ClientMethods extends ClientCore implements IClientMethods {
         );
 
         const emailToAddress: string = await linkContract.toAddress(emailHash);
-        const signerAddress: string = await signer.getAddress();
+        if (emailToAddress === ethers.constants.AddressZero) throw new UnregisteredEmailError();
 
-        if (emailToAddress !== signerAddress) {
-            throw new MismatchApproveAddressError();
-        }
+        const signerAddress: string = await signer.getAddress();
+        if (emailToAddress !== signerAddress) throw new MismatchApproveAddressError();
+
         const amountToken: BigNumber = Amount.make(amount, 18).value;
         const nonce: BigNumber = await ledgerContract.nonceOf(emailToAddress);
         const signature: string = await ContractUtils.signExchange(signer, emailHash, amountToken, nonce);
@@ -234,11 +232,11 @@ export class ClientMethods extends ClientCore implements IClientMethods {
         );
 
         const emailToAddress: string = await linkContract.toAddress(emailHash);
-        const signerAddress: string = await signer.getAddress();
+        if (emailToAddress === ethers.constants.AddressZero) throw new UnregisteredEmailError();
 
-        if (emailToAddress !== signerAddress) {
-            throw new MismatchApproveAddressError();
-        }
+        const signerAddress: string = await signer.getAddress();
+        if (emailToAddress !== signerAddress) throw new MismatchApproveAddressError();
+
         const amountMileage: BigNumber = Amount.make(amount, 18).value;
         const nonce: BigNumber = await ledgerContract.nonceOf(emailToAddress);
         const signature: string = await ContractUtils.signExchange(signer, emailHash, amountMileage, nonce);

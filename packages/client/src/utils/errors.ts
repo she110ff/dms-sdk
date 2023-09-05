@@ -3,11 +3,19 @@ export class InvalidEmailParamError extends Error {
         super("The param does not email");
     }
 }
+
 export class MismatchApproveAddressError extends Error {
     constructor() {
         super("Customer and approver mismatch");
     }
 }
+
+export class UnregisteredEmailError extends Error {
+    constructor() {
+        super("Unregistered email error");
+    }
+}
+
 export class NoHttpModuleError extends Error {
     constructor() {
         super("A Http Module is needed");
