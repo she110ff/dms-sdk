@@ -5,15 +5,11 @@ import { UnsupportedNetworkError } from "dms-sdk-common";
 import { Provider } from "@ethersproject/providers";
 import { ContractUtils } from "../../utils/ContractUtils";
 import {
-    BalanceParam,
-    ExchangeTokenToMileageParams,
+    ExchangeMileageToTokenOption,
     ExchangeTokenToMileageOption,
     FetchPayOption,
     PayMileageOption,
-    PayMileageParams,
-    PayTokenOption,
-    PayTokenParams,
-    ExchangeMileageToTokenOption
+    PayTokenOption
 } from "../../interfaces";
 import { InvalidEmailParamError, MismatchApproveAddressError, UnregisteredEmailError } from "../../utils/errors";
 import { BigNumber, ethers } from "ethers";
@@ -33,10 +29,10 @@ export class ClientMethods extends ClientCore implements IClientMethods {
 
     /**
      * 마일리지의 잔고를 리턴한다
-     * @param {BalanceParam} email - 이메일 주소
+     * @param {string} email - 이메일 주소
      * @return {Promise<BigNumber>} 마일리지 잔고
      */
-    public async getMileageBalances({ email }: BalanceParam): Promise<BigNumber> {
+    public async getMileageBalances(email: string): Promise<BigNumber> {
         if (!checkEmail(email)) throw new InvalidEmailParamError();
 
         const provider = this.web3.getProvider() as Provider;
@@ -54,10 +50,10 @@ export class ClientMethods extends ClientCore implements IClientMethods {
 
     /**
      * 토큰의 잔고를 리턴한다.
-     * @param {BalanceParam} email - 이메일
+     * @param {string} email - 이메일
      * @return {Promise<BigNumber>} 토큰 잔고
      */
-    public async getTokenBalances({ email }: BalanceParam): Promise<BigNumber> {
+    public async getTokenBalances(email: string): Promise<BigNumber> {
         if (!checkEmail(email)) throw new InvalidEmailParamError();
 
         const provider = this.web3.getProvider() as Provider;
@@ -75,22 +71,22 @@ export class ClientMethods extends ClientCore implements IClientMethods {
 
     /**
      * 마일리지 사용승인 하여 Relay 서버로 전송하기 위한 서명값을 생성한다.
-     * @param signer - Signer
      * @param purchaseId - 거래 아이디
-     * @param purchaseAmount - 거래 금액
+     * @param amount - 거래금액
      * @param email - 사용자 이메일 주소
      * @param franchiseeId - 거래처 아이디
-     * @return {Promise<RelayPayMileageOption>}
+     * @return {Promise<PayMileageOption>}
      */
-    public async getPayMileageOption({
-        signer,
-        purchaseId,
-        purchaseAmount,
-        email,
-        franchiseeId
-    }: PayMileageParams): Promise<PayMileageOption> {
+    public async getPayMileageOption(
+        purchaseId: string,
+        amount: number,
+        email: string,
+        franchiseeId: string
+    ): Promise<PayMileageOption> {
         const provider = this.web3.getProvider() as Provider;
         const network = await provider.getNetwork();
+        const signer = this.web3.getConnectedSigner();
+
         const networkName = network.name as SupportedNetworks;
         if (!SupportedNetworksArray.includes(networkName)) {
             throw new UnsupportedNetworkError(networkName);
@@ -110,12 +106,12 @@ export class ClientMethods extends ClientCore implements IClientMethods {
         if (emailToAddress !== signerAddress) throw new MismatchApproveAddressError();
 
         const nonce = await ledgerContract.nonceOf(emailToAddress);
-        const amount = Amount.make(purchaseAmount, 18).value;
-        const signature = await ContractUtils.signPayment(signer, purchaseId, amount, emailHash, franchiseeId, nonce);
+        const amountBN = Amount.make(amount, 18).value;
+        const signature = await ContractUtils.signPayment(signer, purchaseId, amountBN, emailHash, franchiseeId, nonce);
 
         const relayParam: FetchPayOption = {
             purchaseId,
-            amount: amount.toString(),
+            amount: amountBN.toString(),
             email: emailHash,
             franchiseeId,
             signer: signerAddress,
@@ -126,22 +122,22 @@ export class ClientMethods extends ClientCore implements IClientMethods {
 
     /**
      * 토큰 사용승인 하여 Relay 서버로 전송하기 위한 서명값을 생성한다.
-     * @param signer - Signer
      * @param purchaseId - 거래 아이디
-     * @param purchaseAmount - 거래 금액
+     * @param amount - 거래금액
      * @param email - 사용자 이메일 주소
      * @param franchiseeId - 거래처 아이디
      * @return {Promise<PayTokenOption>}
      */
-    public async getPayTokenOption({
-        signer,
-        purchaseId,
-        purchaseAmount,
-        email,
-        franchiseeId
-    }: PayTokenParams): Promise<PayTokenOption> {
+    public async getPayTokenOption(
+        purchaseId: string,
+        amount: number,
+        email: string,
+        franchiseeId: string
+    ): Promise<PayTokenOption> {
         const provider = this.web3.getProvider() as Provider;
         const network = await provider.getNetwork();
+        const signer = this.web3.getConnectedSigner();
+
         const networkName = network.name as SupportedNetworks;
         if (!SupportedNetworksArray.includes(networkName)) {
             throw new UnsupportedNetworkError(networkName);
@@ -161,12 +157,12 @@ export class ClientMethods extends ClientCore implements IClientMethods {
         if (emailToAddress !== signerAddress) throw new MismatchApproveAddressError();
 
         const nonce = await ledgerContract.nonceOf(emailToAddress);
-        const amount = Amount.make(purchaseAmount, 18).value;
-        const signature = await ContractUtils.signPayment(signer, purchaseId, amount, emailHash, franchiseeId, nonce);
+        const amountBN = Amount.make(amount, 18).value;
+        const signature = await ContractUtils.signPayment(signer, purchaseId, amountBN, emailHash, franchiseeId, nonce);
 
         const relayParam: FetchPayOption = {
             purchaseId,
-            amount: amount.toString(),
+            amount: amountBN.toString(),
             email: emailHash,
             franchiseeId,
             signer: signerAddress,
@@ -175,13 +171,17 @@ export class ClientMethods extends ClientCore implements IClientMethods {
         return Promise.resolve(relayParam);
     }
 
-    public async getTokenToMileageOption({
-        signer,
-        email,
-        amount
-    }: ExchangeTokenToMileageParams): Promise<ExchangeTokenToMileageOption> {
+    /**
+     * 토큰을 마일리지로 전환 하기위한 서명값을 생성한다.
+     * @param {string} email - 이메일주소
+     * @param {number} amount - 거래금액
+     * @return {Promise<ExchangeTokenToMileageOption>}
+     */
+    public async getTokenToMileageOption(email: string, amount: number): Promise<ExchangeTokenToMileageOption> {
         const provider = this.web3.getProvider() as Provider;
         const network = await provider.getNetwork();
+        const signer = this.web3.getConnectedSigner();
+
         const networkName = network.name as SupportedNetworks;
         if (!SupportedNetworksArray.includes(networkName)) {
             throw new UnsupportedNetworkError(networkName);
@@ -212,13 +212,17 @@ export class ClientMethods extends ClientCore implements IClientMethods {
         };
     }
 
-    public async getMileageToTokenOption({
-        signer,
-        email,
-        amount
-    }: ExchangeTokenToMileageParams): Promise<ExchangeMileageToTokenOption> {
+    /**
+     * 마일리지를 토큰으로 전환 하기위한 서명값을 생성한다.
+     * @param {string} email - 이메일주소
+     * @param {number} amount - 거래금액
+     * @return {Promise<ExchangeMileageToTokenOption>}
+     */
+    public async getMileageToTokenOption(email: string, amount: number): Promise<ExchangeMileageToTokenOption> {
         const provider = this.web3.getProvider() as Provider;
         const network = await provider.getNetwork();
+        const signer = this.web3.getConnectedSigner();
+
         const networkName = network.name as SupportedNetworks;
         if (!SupportedNetworksArray.includes(networkName)) {
             throw new UnsupportedNetworkError(networkName);
