@@ -50,6 +50,14 @@ export class ContractUtils {
         return "0x" + data.toString("hex");
     }
 
+    public static getRequestId(emailHash: string, address: string, nonce: BigNumberish): string {
+        const encodedResult = ethers.utils.defaultAbiCoder.encode(
+            ["bytes32", "address", "uint256", "bytes32"],
+            [emailHash, address, nonce, crypto.randomBytes(32)]
+        );
+        return ethers.utils.keccak256(encodedResult);
+    }
+
     public static async sign(signer: Signer, hash: string, nonce: BigNumberish): Promise<string> {
         const encodedResult = ethers.utils.defaultAbiCoder.encode(
             ["bytes32", "address", "uint256"],

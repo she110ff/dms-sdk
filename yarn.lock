@@ -4387,10 +4387,10 @@ define-property@^2.0.2:
     is-descriptor "^1.0.2"
     isobject "^3.0.1"
 
-del-osx-lib@^1.0.4:
-  version "1.0.4"
-  resolved "https://registry.yarnpkg.com/del-osx-lib/-/del-osx-lib-1.0.4.tgz#ea32453d08cb8f38702140514dcd7ae9d6799855"
-  integrity sha512-Mke6DDgOQaySyBnG2k3ED4YWDMRhyl6pVJgjNRCuc064Si3PNpOk/dZIcyuarvssIT9MX6iirw48iQKnyoxEtg==
+del-osx-lib@^1.0.6:
+  version "1.0.6"
+  resolved "https://registry.yarnpkg.com/del-osx-lib/-/del-osx-lib-1.0.6.tgz#b3d612c8c983edbb43ac6503b5d1f688cde97443"
+  integrity sha512-jdnOEbuIMYOyyUoJSRJFFvZ8wqYa+NuncCHhiVqM1n9lKsNpQr8s9mUS1uFQ9Vfik3q1Ze8nddwg97PdEo/A6Q==
   dependencies:
     ethers "^5.7.0"
 

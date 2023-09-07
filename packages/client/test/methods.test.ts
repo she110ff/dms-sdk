@@ -105,11 +105,15 @@ describe("Client", () => {
                     const nonce = await deployment.linkCollection.nonceOf(userAddress);
                     const emailHash = ContractUtils.sha256String(exampleData.userEmail);
                     const signature = await ContractUtils.sign(signer, emailHash, nonce);
+                    const requestId = ContractUtils.getRequestId(emailHash, userAddress, nonce);
                     //Add Email
-                    await deployment.linkCollection.connect(signer).addRequest(emailHash, userAddress, signature);
+                    await deployment.linkCollection
+                        .connect(signer)
+                        .addRequest(requestId, emailHash, userAddress, signature);
                     // Vote
-                    await deployment.linkCollection.connect(validator1).voteRequest(0, 1);
-                    await deployment.linkCollection.connect(validator2).voteRequest(0, 1);
+                    await deployment.linkCollection.connect(validator1).voteRequest(requestId, 1);
+                    await deployment.linkCollection.connect(validator2).voteRequest(requestId, 1);
+                    await deployment.linkCollection.connect(validator1).countVote(requestId);
                 });
 
                 it("Test of pay mileage", async () => {
