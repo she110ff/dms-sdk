@@ -174,6 +174,14 @@ describe("Client", () => {
                     const afterBalance = await deployment.ledger.tokenBalanceOf(emailHash);
                     expect(afterBalance.toString()).toEqual(beforeBalance.add(amountToTrade.value).toString());
                 });
+                it("Test of the withdraw", async () => {
+                    const email = purchaseData[0].userEmail;
+                    const emailHash = ContractUtils.sha256String(email);
+                    const beforeBalance = await deployment.ledger.tokenBalanceOf(emailHash);
+                    await client.methods.withdraw(email, tradeAmount);
+                    const afterBalance = await deployment.ledger.tokenBalanceOf(emailHash);
+                    expect(afterBalance.toString()).toEqual(beforeBalance.sub(amountToTrade.value).toString());
+                });
             });
         });
     });

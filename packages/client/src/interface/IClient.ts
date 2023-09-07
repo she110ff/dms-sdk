@@ -1,6 +1,6 @@
 import { IClientCore } from "../client-common";
 import { ExchangeMileageToTokenOption, ExchangeTokenToMileageOption, PayMileageOption } from "../interfaces";
-import { BigNumber } from "ethers";
+import { BigNumber, ContractTransaction } from "ethers";
 
 export interface IClient {
     methods: IClientMethods;
@@ -23,6 +23,6 @@ export interface IClientMethods extends IClientCore {
     ) => Promise<PayMileageOption>;
     getMileageToTokenOption: (email: string, amount: number) => Promise<ExchangeMileageToTokenOption>;
     getTokenToMileageOption: (email: string, amount: number) => Promise<ExchangeTokenToMileageOption>;
-    deposit: (email: string, amount: number) => Promise<any>;
-    withdraw: (params: any) => Promise<any>;
+    deposit: (email: string, amount: number) => Promise<ContractTransaction[]>;
+    withdraw: (email: string, amount: number) => Promise<ContractTransaction>;
 }

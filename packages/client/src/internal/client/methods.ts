@@ -300,8 +300,36 @@ export class ClientMethods extends ClientCore implements IClientMethods {
         return actions;
     }
 
-    public async withdraw(params: any): Promise<any> {
-        //TODO : 토큰 출금
-        return params;
+    public async withdraw(email: string, amount: number): Promise<ContractTransaction> {
+        const provider = this.web3.getProvider() as Provider;
+        const network = await provider.getNetwork();
+        const signer = this.web3.getConnectedSigner();
+
+        const networkName = network.name as SupportedNetworks;
+        if (!SupportedNetworksArray.includes(networkName)) {
+            throw new UnsupportedNetworkError(networkName);
+        }
+
+        const emailHash = ContractUtils.sha256String(email);
+        const linkContract: LinkCollection = LinkCollection__factory.connect(
+            LIVE_CONTRACTS[networkName].LinkCollection,
+            provider
+        );
+
+        const emailToAddress: string = await linkContract.toAddress(emailHash);
+        if (emailToAddress === ethers.constants.AddressZero) throw new UnregisteredEmailError();
+
+        const signerAddress: string = await signer.getAddress();
+        if (emailToAddress !== signerAddress) throw new MismatchApproveAddressError();
+
+        const amountBN: BigNumber = Amount.make(amount, 18).value;
+        const ledgerContract: Ledger = Ledger__factory.connect(LIVE_CONTRACTS[networkName].Ledger, provider);
+
+        const currentDepositAmount = await ledgerContract.tokenBalanceOf(emailHash);
+        if (currentDepositAmount.lte(amountBN)) throw new InsufficientBalanceError();
+
+        const tx = await ledgerContract.connect(signer).withdraw(amountBN);
+        await tx.wait();
+        return tx;
     }
 }
