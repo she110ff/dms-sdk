@@ -1,4 +1,4 @@
-import fetch from "unfetch";
+import fetch, { UnfetchResponse } from "unfetch";
 import { GenericRecord, IHttpConfig } from "./common";
 import { InvalidResponseError } from "../../utils/errors";
 
@@ -15,7 +15,7 @@ export namespace Network {
                 endpoint.searchParams.set(key, String(value));
             }
         }
-        const response = await fetch(endpoint.href, {
+        const response: UnfetchResponse = await fetch(endpoint.href, {
             method: "GET",
             headers
         });
@@ -28,7 +28,7 @@ export namespace Network {
     export async function post(config: IHttpConfig, path: string, data?: any) {
         const { url, headers } = config;
         const endpoint: URL = new URL(path, url);
-        const response = await fetch(endpoint.href, {
+        const response: UnfetchResponse = await fetch(endpoint.href, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",

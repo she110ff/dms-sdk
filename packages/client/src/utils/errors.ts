@@ -1,3 +1,5 @@
+import { UnfetchResponse } from "unfetch";
+
 export class InvalidEmailParamError extends Error {
     constructor() {
         super("The param does not email");
@@ -27,8 +29,8 @@ export class NoHttpModuleError extends Error {
     }
 }
 export class ClientError extends Error {
-    public response: Response;
-    constructor(res: Response) {
+    public response: UnfetchResponse;
+    constructor(res: UnfetchResponse) {
         super(res.statusText);
         this.name = "ClientError";
         this.response = res;
@@ -36,19 +38,19 @@ export class ClientError extends Error {
 }
 
 export class InvalidResponseError extends ClientError {
-    constructor(res: Response) {
+    constructor(res: UnfetchResponse) {
         super(res);
         this.message = "Invalid response";
     }
 }
 export class MissingBodyeError extends ClientError {
-    constructor(res: Response) {
+    constructor(res: UnfetchResponse) {
         super(res);
         this.message = "Missing response body";
     }
 }
 export class BodyParseError extends ClientError {
-    constructor(res: Response) {
+    constructor(res: UnfetchResponse) {
         super(res);
         this.message = "Error parsing body";
     }
