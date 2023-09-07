@@ -16,33 +16,31 @@ export async function start() {
         logging: {
             quiet: true
         },
-        wallet: {
-            accounts: getAccounts()
-        }
+        accounts: getAccounts()
     });
     await server.listen(7545);
     return server;
 }
 
 function getAccounts(): any[] {
-    const accounts: string[] = [];
+    const accounts: { balance: any; secretKey: string }[] = [];
     const reg_bytes64: RegExp = /^(0x)[0-9a-f]{64}$/i;
     if (
         process.env.DEPLOYER !== undefined &&
         process.env.DEPLOYER.trim() !== "" &&
         reg_bytes64.test(process.env.DEPLOYER)
     ) {
-        accounts.push(process.env.DEPLOYER);
+        accounts.push(createAccount(process.env.DEPLOYER));
     } else {
         process.env.DEPLOYER = Wallet.createRandom().privateKey;
-        accounts.push(process.env.DEPLOYER);
+        accounts.push(createAccount(process.env.DEPLOYER));
     }
 
     if (process.env.OWNER !== undefined && process.env.OWNER.trim() !== "" && reg_bytes64.test(process.env.OWNER)) {
-        accounts.push(process.env.OWNER);
+        accounts.push(createAccount(process.env.OWNER));
     } else {
         process.env.OWNER = Wallet.createRandom().privateKey;
-        accounts.push(process.env.OWNER);
+        accounts.push(createAccount(process.env.OWNER));
     }
 
     if (
@@ -50,10 +48,10 @@ function getAccounts(): any[] {
         process.env.VALIDATOR1.trim() !== "" &&
         reg_bytes64.test(process.env.VALIDATOR1)
     ) {
-        accounts.push(process.env.VALIDATOR1);
+        accounts.push(createAccount(process.env.VALIDATOR1));
     } else {
         process.env.VALIDATOR1 = Wallet.createRandom().privateKey;
-        accounts.push(process.env.VALIDATOR1);
+        accounts.push(createAccount(process.env.VALIDATOR1));
     }
 
     if (
@@ -61,10 +59,10 @@ function getAccounts(): any[] {
         process.env.VALIDATOR2.trim() !== "" &&
         reg_bytes64.test(process.env.VALIDATOR2)
     ) {
-        accounts.push(process.env.VALIDATOR2);
+        accounts.push(createAccount(process.env.VALIDATOR2));
     } else {
         process.env.VALIDATOR2 = Wallet.createRandom().privateKey;
-        accounts.push(process.env.VALIDATOR2);
+        accounts.push(createAccount(process.env.VALIDATOR2));
     }
 
     if (
@@ -72,24 +70,27 @@ function getAccounts(): any[] {
         process.env.VALIDATOR3.trim() !== "" &&
         reg_bytes64.test(process.env.VALIDATOR3)
     ) {
-        accounts.push(process.env.VALIDATOR3);
+        accounts.push(createAccount(process.env.VALIDATOR3));
     } else {
         process.env.VALIDATOR3 = Wallet.createRandom().privateKey;
-        accounts.push(process.env.VALIDATOR3);
+        accounts.push(createAccount(process.env.VALIDATOR3));
     }
 
     if (process.env.USER1 !== undefined && process.env.USER1.trim() !== "" && reg_bytes64.test(process.env.USER1)) {
-        accounts.push(process.env.USER1);
+        accounts.push(createAccount(process.env.USER1));
     } else {
         process.env.USER1 = Wallet.createRandom().privateKey;
-        accounts.push(process.env.USER1);
+        accounts.push(createAccount(process.env.USER1));
     }
 
     if (process.env.USER2 !== undefined && process.env.USER2.trim() !== "" && reg_bytes64.test(process.env.USER2)) {
-        accounts.push(process.env.USER2);
+        accounts.push(createAccount(process.env.USER2));
     } else {
         process.env.USER2 = Wallet.createRandom().privateKey;
-        accounts.push(process.env.USER2);
+        accounts.push(createAccount(process.env.USER2));
     }
     return accounts;
+}
+function createAccount(secretKey: string): { balance: any; secretKey: string } {
+    return { balance: "0x100000000000000000000", secretKey };
 }
