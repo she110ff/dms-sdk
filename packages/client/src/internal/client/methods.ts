@@ -19,7 +19,6 @@ import {
 } from "../../utils/errors";
 import { BigNumber, ContractTransaction, ethers } from "ethers";
 import { checkEmail } from "../../utils";
-import { Amount } from "../../utils/Amount";
 import { LinkCollection, LinkCollection__factory } from "del-osx-lib";
 
 /**
@@ -84,7 +83,7 @@ export class ClientMethods extends ClientCore implements IClientMethods {
      */
     public async getPayMileageOption(
         purchaseId: string,
-        amount: number,
+        amount: BigNumber,
         email: string,
         franchiseeId: string
     ): Promise<PayMileageOption> {
@@ -111,12 +110,11 @@ export class ClientMethods extends ClientCore implements IClientMethods {
         if (emailToAddress !== signerAddress) throw new MismatchApproveAddressError();
 
         const nonce = await ledgerContract.nonceOf(emailToAddress);
-        const amountBN = Amount.make(amount, 18).value;
-        const signature = await ContractUtils.signPayment(signer, purchaseId, amountBN, emailHash, franchiseeId, nonce);
+        const signature = await ContractUtils.signPayment(signer, purchaseId, amount, emailHash, franchiseeId, nonce);
 
         const relayParam: FetchPayOption = {
             purchaseId,
-            amount: amountBN.toString(),
+            amount: amount.toString(),
             email: emailHash,
             franchiseeId,
             signer: signerAddress,
@@ -135,7 +133,7 @@ export class ClientMethods extends ClientCore implements IClientMethods {
      */
     public async getPayTokenOption(
         purchaseId: string,
-        amount: number,
+        amount: BigNumber,
         email: string,
         franchiseeId: string
     ): Promise<PayTokenOption> {
@@ -162,12 +160,11 @@ export class ClientMethods extends ClientCore implements IClientMethods {
         if (emailToAddress !== signerAddress) throw new MismatchApproveAddressError();
 
         const nonce = await ledgerContract.nonceOf(emailToAddress);
-        const amountBN = Amount.make(amount, 18).value;
-        const signature = await ContractUtils.signPayment(signer, purchaseId, amountBN, emailHash, franchiseeId, nonce);
+        const signature = await ContractUtils.signPayment(signer, purchaseId, amount, emailHash, franchiseeId, nonce);
 
         const relayParam: FetchPayOption = {
             purchaseId,
-            amount: amountBN.toString(),
+            amount: amount.toString(),
             email: emailHash,
             franchiseeId,
             signer: signerAddress,
@@ -182,7 +179,7 @@ export class ClientMethods extends ClientCore implements IClientMethods {
      * @param {number} amount - 거래금액
      * @return {Promise<ExchangeTokenToMileageOption>}
      */
-    public async getTokenToMileageOption(email: string, amount: number): Promise<ExchangeTokenToMileageOption> {
+    public async getTokenToMileageOption(email: string, amount: BigNumber): Promise<ExchangeTokenToMileageOption> {
         const provider = this.web3.getProvider() as Provider;
         const network = await provider.getNetwork();
         const signer = this.web3.getConnectedSigner();
@@ -205,13 +202,12 @@ export class ClientMethods extends ClientCore implements IClientMethods {
         const signerAddress: string = await signer.getAddress();
         if (emailToAddress !== signerAddress) throw new MismatchApproveAddressError();
 
-        const amountToken: BigNumber = Amount.make(amount, 18).value;
         const nonce: BigNumber = await ledgerContract.nonceOf(emailToAddress);
-        const signature: string = await ContractUtils.signExchange(signer, emailHash, amountToken, nonce);
+        const signature: string = await ContractUtils.signExchange(signer, emailHash, amount, nonce);
 
         return {
             email: emailHash,
-            amountToken: amountToken.toString(),
+            amountToken: amount.toString(),
             signer: signerAddress,
             signature
         };
@@ -223,7 +219,7 @@ export class ClientMethods extends ClientCore implements IClientMethods {
      * @param {number} amount - 거래금액
      * @return {Promise<ExchangeMileageToTokenOption>}
      */
-    public async getMileageToTokenOption(email: string, amount: number): Promise<ExchangeMileageToTokenOption> {
+    public async getMileageToTokenOption(email: string, amount: BigNumber): Promise<ExchangeMileageToTokenOption> {
         const provider = this.web3.getProvider() as Provider;
         const network = await provider.getNetwork();
         const signer = this.web3.getConnectedSigner();
@@ -246,19 +242,18 @@ export class ClientMethods extends ClientCore implements IClientMethods {
         const signerAddress: string = await signer.getAddress();
         if (emailToAddress !== signerAddress) throw new MismatchApproveAddressError();
 
-        const amountMileage: BigNumber = Amount.make(amount, 18).value;
         const nonce: BigNumber = await ledgerContract.nonceOf(emailToAddress);
-        const signature: string = await ContractUtils.signExchange(signer, emailHash, amountMileage, nonce);
+        const signature: string = await ContractUtils.signExchange(signer, emailHash, amount, nonce);
 
         return {
             email: emailHash,
-            amountMileage: amountMileage.toString(),
+            amountMileage: amount.toString(),
             signer: signerAddress,
             signature
         };
     }
 
-    public async deposit(email: string, amount: number): Promise<ContractTransaction[]> {
+    public async deposit(email: string, amount: BigNumber): Promise<ContractTransaction[]> {
         const provider = this.web3.getProvider() as Provider;
         const network = await provider.getNetwork();
         const signer = this.web3.getConnectedSigner();
@@ -280,27 +275,26 @@ export class ClientMethods extends ClientCore implements IClientMethods {
         const signerAddress: string = await signer.getAddress();
         if (emailToAddress !== signerAddress) throw new MismatchApproveAddressError();
 
-        const amountBN: BigNumber = Amount.make(amount, 18).value;
         const ledgerContract: Ledger = Ledger__factory.connect(LIVE_CONTRACTS[networkName].Ledger, provider);
         const tokenContract: Token = Token__factory.connect(LIVE_CONTRACTS[networkName].Token, provider);
 
         const balance = await tokenContract.balanceOf(signerAddress);
-        if (amountBN.gte(balance)) throw new InsufficientBalanceError();
+        if (amount.gte(balance)) throw new InsufficientBalanceError();
 
         const actions = [];
         const allowanceBalance = await tokenContract.allowance(signerAddress, ledgerContract.address);
-        if (allowanceBalance.lte(amountBN)) {
-            const approveTx = await tokenContract.connect(signer).approve(ledgerContract.address, amountBN);
+        if (allowanceBalance.lte(amount)) {
+            const approveTx = await tokenContract.connect(signer).approve(ledgerContract.address, amount);
             actions.push(approveTx);
             await approveTx.wait();
         }
-        const depositTx = await ledgerContract.connect(signer).deposit(amountBN);
+        const depositTx = await ledgerContract.connect(signer).deposit(amount);
         await depositTx.wait();
         actions.push(depositTx);
         return actions;
     }
 
-    public async withdraw(email: string, amount: number): Promise<ContractTransaction> {
+    public async withdraw(email: string, amount: BigNumber): Promise<ContractTransaction> {
         const provider = this.web3.getProvider() as Provider;
         const network = await provider.getNetwork();
         const signer = this.web3.getConnectedSigner();
@@ -322,13 +316,12 @@ export class ClientMethods extends ClientCore implements IClientMethods {
         const signerAddress: string = await signer.getAddress();
         if (emailToAddress !== signerAddress) throw new MismatchApproveAddressError();
 
-        const amountBN: BigNumber = Amount.make(amount, 18).value;
         const ledgerContract: Ledger = Ledger__factory.connect(LIVE_CONTRACTS[networkName].Ledger, provider);
 
         const currentDepositAmount = await ledgerContract.tokenBalanceOf(emailHash);
-        if (currentDepositAmount.lte(amountBN)) throw new InsufficientBalanceError();
+        if (currentDepositAmount.lte(amount)) throw new InsufficientBalanceError();
 
-        const tx = await ledgerContract.connect(signer).withdraw(amountBN);
+        const tx = await ledgerContract.connect(signer).withdraw(amount);
         await tx.wait();
         return tx;
     }

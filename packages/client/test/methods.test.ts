@@ -120,7 +120,7 @@ describe("Client", () => {
                     const exampleData = purchaseData[0];
                     const option = await client.methods.getPayMileageOption(
                         exampleData.purchaseId,
-                        exampleData.amount,
+                        Amount.make(exampleData.amount, 18).value,
                         exampleData.userEmail,
                         exampleData.franchiseeId
                     );
@@ -133,7 +133,7 @@ describe("Client", () => {
                     const exampleData = purchaseData[0];
                     const option = await client.methods.getPayTokenOption(
                         exampleData.purchaseId,
-                        exampleData.amount,
+                        Amount.make(exampleData.amount, 18).value,
                         exampleData.userEmail,
                         exampleData.franchiseeId
                     );
@@ -153,14 +153,20 @@ describe("Client", () => {
 
                 it("Test of token to mileage exchange", async () => {
                     const exampleData = purchaseData[0];
-                    const option = await client.methods.getTokenToMileageOption(exampleData.userEmail, 5000);
+                    const option = await client.methods.getTokenToMileageOption(
+                        exampleData.userEmail,
+                        amountDepositToken.value
+                    );
                     const responseData = await client.http.fetchExchangeTokenToMileage(option);
                     expect(responseData).toEqual({ txHash: "0X1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ" });
                 });
 
                 it("Test of mileage to token exchange", async () => {
                     const exampleData = purchaseData[0];
-                    const option = await client.methods.getMileageToTokenOption(exampleData.userEmail, 5000);
+                    const option = await client.methods.getMileageToTokenOption(
+                        exampleData.userEmail,
+                        amountDepositToken.value
+                    );
                     const responseData = await client.http.fetchExchangeMileageToToken(option);
                     expect(responseData).toEqual({ txHash: "0X1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ" });
                 });
@@ -174,7 +180,7 @@ describe("Client", () => {
                     const email = purchaseData[0].userEmail;
                     const emailHash = ContractUtils.sha256String(email);
                     const beforeBalance = await deployment.ledger.tokenBalanceOf(emailHash);
-                    await client.methods.deposit(email, tradeAmount);
+                    await client.methods.deposit(email, amountToTrade.value);
                     const afterBalance = await deployment.ledger.tokenBalanceOf(emailHash);
                     expect(afterBalance.toString()).toEqual(beforeBalance.add(amountToTrade.value).toString());
                 });
@@ -182,7 +188,7 @@ describe("Client", () => {
                     const email = purchaseData[0].userEmail;
                     const emailHash = ContractUtils.sha256String(email);
                     const beforeBalance = await deployment.ledger.tokenBalanceOf(emailHash);
-                    await client.methods.withdraw(email, tradeAmount);
+                    await client.methods.withdraw(email, amountToTrade.value);
                     const afterBalance = await deployment.ledger.tokenBalanceOf(emailHash);
                     expect(afterBalance.toString()).toEqual(beforeBalance.sub(amountToTrade.value).toString());
                 });

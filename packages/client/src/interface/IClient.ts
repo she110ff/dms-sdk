@@ -11,18 +11,18 @@ export interface IClientMethods extends IClientCore {
     getTokenBalances: (email: string) => Promise<BigNumber>;
     getPayMileageOption: (
         purchaseId: string,
-        amount: number,
+        amount: BigNumber,
         email: string,
         franchiseeId: string
     ) => Promise<PayMileageOption>;
     getPayTokenOption: (
         purchaseId: string,
-        amount: number,
+        amount: BigNumber,
         email: string,
         franchiseeId: string
     ) => Promise<PayMileageOption>;
-    getMileageToTokenOption: (email: string, amount: number) => Promise<ExchangeMileageToTokenOption>;
-    getTokenToMileageOption: (email: string, amount: number) => Promise<ExchangeTokenToMileageOption>;
-    deposit: (email: string, amount: number) => Promise<ContractTransaction[]>;
-    withdraw: (email: string, amount: number) => Promise<ContractTransaction>;
+    getMileageToTokenOption: (email: string, amount: BigNumber) => Promise<ExchangeMileageToTokenOption>;
+    getTokenToMileageOption: (email: string, amount: BigNumber) => Promise<ExchangeTokenToMileageOption>;
+    deposit: (email: string, amount: BigNumber) => Promise<ContractTransaction[]>;
+    withdraw: (email: string, amount: BigNumber) => Promise<ContractTransaction>;
 }
