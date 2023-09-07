@@ -15,6 +15,11 @@ export class UnregisteredEmailError extends Error {
         super("Unregistered email error");
     }
 }
+export class InsufficientBalanceError extends Error {
+    constructor() {
+        super("Insufficient balance error");
+    }
+}
 
 export class NoHttpModuleError extends Error {
     constructor() {

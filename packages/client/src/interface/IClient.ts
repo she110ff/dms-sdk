@@ -23,6 +23,6 @@ export interface IClientMethods extends IClientCore {
     ) => Promise<PayMileageOption>;
     getMileageToTokenOption: (email: string, amount: number) => Promise<ExchangeMileageToTokenOption>;
     getTokenToMileageOption: (email: string, amount: number) => Promise<ExchangeTokenToMileageOption>;
-    deposit: (params: any) => Promise<any>;
+    deposit: (email: string, amount: number) => Promise<any>;
     withdraw: (params: any) => Promise<any>;
 }

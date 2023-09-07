@@ -1,6 +1,6 @@
 import { ClientCore, Context, LIVE_CONTRACTS, SupportedNetworks, SupportedNetworksArray } from "../../client-common";
 import { IClientMethods } from "../../interface/IClient";
-import { Ledger, Ledger__factory } from "dms-osx-lib";
+import { Ledger, Ledger__factory, Token, Token__factory } from "dms-osx-lib";
 import { UnsupportedNetworkError } from "dms-sdk-common";
 import { Provider } from "@ethersproject/providers";
 import { ContractUtils } from "../../utils/ContractUtils";
@@ -11,8 +11,13 @@ import {
     PayMileageOption,
     PayTokenOption
 } from "../../interfaces";
-import { InvalidEmailParamError, MismatchApproveAddressError, UnregisteredEmailError } from "../../utils/errors";
-import { BigNumber, ethers } from "ethers";
+import {
+    InsufficientBalanceError,
+    InvalidEmailParamError,
+    MismatchApproveAddressError,
+    UnregisteredEmailError
+} from "../../utils/errors";
+import { BigNumber, ContractTransaction, ethers } from "ethers";
 import { checkEmail } from "../../utils";
 import { Amount } from "../../utils/Amount";
 import { LinkCollection, LinkCollection__factory } from "del-osx-lib";
@@ -253,9 +258,46 @@ export class ClientMethods extends ClientCore implements IClientMethods {
         };
     }
 
-    public async deposit(params: any): Promise<any> {
-        //TODO : 토큰 입금
-        return params;
+    public async deposit(email: string, amount: number): Promise<ContractTransaction[]> {
+        const provider = this.web3.getProvider() as Provider;
+        const network = await provider.getNetwork();
+        const signer = this.web3.getConnectedSigner();
+
+        const networkName = network.name as SupportedNetworks;
+        if (!SupportedNetworksArray.includes(networkName)) {
+            throw new UnsupportedNetworkError(networkName);
+        }
+
+        const emailHash = ContractUtils.sha256String(email);
+        const linkContract: LinkCollection = LinkCollection__factory.connect(
+            LIVE_CONTRACTS[networkName].LinkCollection,
+            provider
+        );
+
+        const emailToAddress: string = await linkContract.toAddress(emailHash);
+        if (emailToAddress === ethers.constants.AddressZero) throw new UnregisteredEmailError();
+
+        const signerAddress: string = await signer.getAddress();
+        if (emailToAddress !== signerAddress) throw new MismatchApproveAddressError();
+
+        const amountBN: BigNumber = Amount.make(amount, 18).value;
+        const ledgerContract: Ledger = Ledger__factory.connect(LIVE_CONTRACTS[networkName].Ledger, provider);
+        const tokenContract: Token = Token__factory.connect(LIVE_CONTRACTS[networkName].Token, provider);
+
+        const balance = await tokenContract.balanceOf(signerAddress);
+        if (amountBN.gte(balance)) throw new InsufficientBalanceError();
+
+        const actions = [];
+        const allowanceBalance = await tokenContract.allowance(signerAddress, ledgerContract.address);
+        if (allowanceBalance.lte(amountBN)) {
+            const approveTx = await tokenContract.connect(signer).approve(ledgerContract.address, amountBN);
+            actions.push(approveTx);
+            await approveTx.wait();
+        }
+        const depositTx = await ledgerContract.connect(signer).deposit(amountBN);
+        await depositTx.wait();
+        actions.push(depositTx);
+        return actions;
     }
 
     public async withdraw(params: any): Promise<any> {

@@ -161,6 +161,20 @@ describe("Client", () => {
                     expect(responseData).toEqual({ txHash: "0X1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ" });
                 });
             });
+
+            describe("Deposit & withdraw", () => {
+                const tradeAmount = 10_000;
+                const amountToTrade = Amount.make(tradeAmount, 18);
+
+                it("Test of the deposit", async () => {
+                    const email = purchaseData[0].userEmail;
+                    const emailHash = ContractUtils.sha256String(email);
+                    const beforeBalance = await deployment.ledger.tokenBalanceOf(emailHash);
+                    await client.methods.deposit(email, tradeAmount);
+                    const afterBalance = await deployment.ledger.tokenBalanceOf(emailHash);
+                    expect(afterBalance.toString()).toEqual(beforeBalance.add(amountToTrade.value).toString());
+                });
+            });
         });
     });
 });
