@@ -12,7 +12,8 @@ if (typeof process !== "undefined" && process.env?.TESTING) {
 // State
 const defaultState: ContextState = {
     network: "mainnet",
-    web3Providers: []
+    web3Providers: [],
+    relayEndpoint: undefined
 };
 
 export class Context {

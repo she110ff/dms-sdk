@@ -7,6 +7,7 @@ export type NetworkDeployment = {
     TokenPrice: string;
     FranchiseeCollection: string;
     Ledger: string;
+    relayEndpoint?: string | URL;
 };
 
 export interface IPagination {

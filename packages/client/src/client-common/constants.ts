@@ -1,6 +1,9 @@
 import { NetworkDeployment, SupportedNetworks } from "./interfaces/common";
 import { activeContractsList as dmsActiveContractList } from "dms-osx-lib";
 import { activeContractsList as delActiveContractList } from "del-osx-lib";
+import * as dotenv from "dotenv";
+
+dotenv.config({ path: "env/.env" });
 
 export const LIVE_CONTRACTS: { [K in SupportedNetworks]: NetworkDeployment } = {
     bosagora_mainnet: {
@@ -9,7 +12,8 @@ export const LIVE_CONTRACTS: { [K in SupportedNetworks]: NetworkDeployment } = {
         ValidatorCollection: dmsActiveContractList.bosagora_mainnet.ValidatorCollection,
         TokenPrice: dmsActiveContractList.bosagora_mainnet.TokenPrice,
         FranchiseeCollection: dmsActiveContractList.bosagora_mainnet.FranchiseeCollection,
-        Ledger: dmsActiveContractList.bosagora_mainnet.Ledger
+        Ledger: dmsActiveContractList.bosagora_mainnet.Ledger,
+        relayEndpoint: process.env.MAINNET_RELAY_SERVER_URL
     },
     bosagora_testnet: {
         LinkCollection: delActiveContractList.bosagora_testnet.LinkCollection,
@@ -17,7 +21,8 @@ export const LIVE_CONTRACTS: { [K in SupportedNetworks]: NetworkDeployment } = {
         ValidatorCollection: dmsActiveContractList.bosagora_testnet.ValidatorCollection,
         TokenPrice: dmsActiveContractList.bosagora_testnet.TokenPrice,
         FranchiseeCollection: dmsActiveContractList.bosagora_testnet.FranchiseeCollection,
-        Ledger: dmsActiveContractList.bosagora_testnet.Ledger
+        Ledger: dmsActiveContractList.bosagora_testnet.Ledger,
+        relayEndpoint: process.env.TESTNET_RELAY_SERVER_URL
     },
     bosagora_devnet: {
         LinkCollection: delActiveContractList.bosagora_devnet.LinkCollection,
@@ -25,7 +30,8 @@ export const LIVE_CONTRACTS: { [K in SupportedNetworks]: NetworkDeployment } = {
         ValidatorCollection: dmsActiveContractList.bosagora_devnet.ValidatorCollection,
         TokenPrice: dmsActiveContractList.bosagora_devnet.TokenPrice,
         FranchiseeCollection: dmsActiveContractList.bosagora_devnet.FranchiseeCollection,
-        Ledger: dmsActiveContractList.bosagora_devnet.Ledger
+        Ledger: dmsActiveContractList.bosagora_devnet.Ledger,
+        relayEndpoint: process.env.DEVNET_RELAY_SERVER_URL
     },
     localhost: {
         LinkCollection: "",
@@ -33,6 +39,7 @@ export const LIVE_CONTRACTS: { [K in SupportedNetworks]: NetworkDeployment } = {
         ValidatorCollection: "",
         TokenPrice: "",
         FranchiseeCollection: "",
-        Ledger: ""
+        Ledger: "",
+        relayEndpoint: ""
     }
 };

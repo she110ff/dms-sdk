@@ -16,8 +16,8 @@ export interface IClientWeb3Core {
     attachContract: <T>(address: string, abi: ContractInterface) => Contract & T;
 }
 export interface IClientHttpCore {
-    isUp: () => Promise<boolean>;
-    getEndpoint: () => URL | undefined;
+    isRelayUp: () => Promise<boolean>;
+    getEndpoint: (path: string) => Promise<URL>;
     fetchExchangeTokenToMileage: (params: ExchangeTokenToMileageOption) => Promise<any>;
     fetchExchangeMileageToToken: (params: ExchangeMileageToTokenOption) => Promise<any>;
     fetchPayToken: (param: FetchPayOption) => Promise<any>;

@@ -1,5 +1,5 @@
 import fetch, { UnfetchResponse } from "unfetch";
-import { GenericRecord, IHttpConfig } from "./common";
+import { GenericRecord } from "./common";
 import { InvalidResponseError } from "../../utils/errors";
 
 export namespace Network {
@@ -7,17 +7,14 @@ export namespace Network {
      * Performs a request and returns a JSON object with the response
      */
 
-    export async function get(config: IHttpConfig, path: string, data?: GenericRecord) {
-        const { url, headers } = config;
-        const endpoint: URL = new URL(path, url);
+    export async function get(endpoint: URL, data?: GenericRecord) {
         for (const [key, value] of Object.entries(data ?? {})) {
             if (value != null) {
                 endpoint.searchParams.set(key, String(value));
             }
         }
         const response: UnfetchResponse = await fetch(endpoint.href, {
-            method: "GET",
-            headers
+            method: "GET"
         });
         if (!response.ok) {
             throw new InvalidResponseError(response);
@@ -25,14 +22,11 @@ export namespace Network {
         return response.json();
     }
 
-    export async function post(config: IHttpConfig, path: string, data?: any) {
-        const { url, headers } = config;
-        const endpoint: URL = new URL(path, url);
+    export async function post(endpoint: URL, data?: any) {
         const response: UnfetchResponse = await fetch(endpoint.href, {
             method: "POST",
             headers: {
-                "Content-Type": "application/json",
-                ...headers
+                "Content-Type": "application/json"
             },
             body: JSON.stringify(data)
         });

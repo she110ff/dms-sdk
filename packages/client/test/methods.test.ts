@@ -75,7 +75,7 @@ describe("Client", () => {
             });
 
             it("Server Health Checking", async () => {
-                const isUp = await client.http.isUp();
+                const isUp = await client.methods.isRelayUp();
                 expect(isUp).toEqual(true);
             });
 
@@ -124,7 +124,7 @@ describe("Client", () => {
                         exampleData.userEmail,
                         exampleData.franchiseeId
                     );
-                    const responseData = await client.http.fetchPayMileage(option);
+                    const responseData = await client.methods.fetchPayMileage(option);
 
                     expect(responseData).toEqual({ txHash: "0X1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ" });
                 });
@@ -137,7 +137,7 @@ describe("Client", () => {
                         exampleData.userEmail,
                         exampleData.franchiseeId
                     );
-                    const responseData = await client.http.fetchPayToken(option);
+                    const responseData = await client.methods.fetchPayToken(option);
 
                     expect(responseData).toEqual({ txHash: "0X1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ" });
                 });
@@ -157,7 +157,7 @@ describe("Client", () => {
                         exampleData.userEmail,
                         amountDepositToken.value
                     );
-                    const responseData = await client.http.fetchExchangeTokenToMileage(option);
+                    const responseData = await client.methods.fetchExchangeTokenToMileage(option);
                     expect(responseData).toEqual({ txHash: "0X1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ" });
                 });
 
@@ -167,7 +167,7 @@ describe("Client", () => {
                         exampleData.userEmail,
                         amountDepositToken.value
                     );
-                    const responseData = await client.http.fetchExchangeMileageToToken(option);
+                    const responseData = await client.methods.fetchExchangeMileageToToken(option);
                     expect(responseData).toEqual({ txHash: "0X1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ" });
                 });
             });

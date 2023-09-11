@@ -1,4 +1,11 @@
-import { ClientCore, Context, LIVE_CONTRACTS, SupportedNetworks, SupportedNetworksArray } from "../../client-common";
+import {
+    ClientCore,
+    Context,
+    IClientHttpCore,
+    LIVE_CONTRACTS,
+    SupportedNetworks,
+    SupportedNetworksArray
+} from "../../client-common";
 import { IClientMethods } from "../../interface/IClient";
 import { Ledger, Ledger__factory, Token, Token__factory } from "dms-osx-lib";
 import { UnsupportedNetworkError } from "dms-sdk-common";
@@ -15,18 +22,25 @@ import {
     InsufficientBalanceError,
     InvalidEmailParamError,
     MismatchApproveAddressError,
+    NoHttpModuleError,
     UnregisteredEmailError
 } from "../../utils/errors";
 import { BigNumber, ContractTransaction, ethers } from "ethers";
 import { checkEmail } from "../../utils";
 import { LinkCollection, LinkCollection__factory } from "del-osx-lib";
+import { Network } from "../../client-common/interfaces/network";
 
 /**
  * Methods module the SDK Generic Client
  */
-export class ClientMethods extends ClientCore implements IClientMethods {
+export class ClientMethods extends ClientCore implements IClientMethods, IClientHttpCore {
+    private relayEndpoint: string | URL | undefined;
+
     constructor(context: Context) {
         super(context);
+        if (context.relayEndpoint) {
+            this.relayEndpoint = context.relayEndpoint;
+        }
         Object.freeze(ClientMethods.prototype);
         Object.freeze(this);
     }
@@ -324,5 +338,54 @@ export class ClientMethods extends ClientCore implements IClientMethods {
         const tx = await ledgerContract.connect(signer).withdraw(amount);
         await tx.wait();
         return tx;
+    }
+
+    public async fetchPayMileage(param: FetchPayOption): Promise<any> {
+        return Network.post(await this.getEndpoint("payMileage"), param);
+    }
+
+    public async fetchPayToken(param: FetchPayOption): Promise<any> {
+        return Network.post(await this.getEndpoint("payToken"), param);
+    }
+
+    public async fetchExchangeMileageToToken(param: ExchangeMileageToTokenOption): Promise<any> {
+        return Network.post(await this.getEndpoint("exchangeMileageToToken"), param);
+    }
+
+    public async fetchExchangeTokenToMileage(param: ExchangeTokenToMileageOption): Promise<any> {
+        return Network.post(await this.getEndpoint("exchangeTokenToMileage"), param);
+    }
+
+    public async isRelayUp(): Promise<boolean> {
+        try {
+            const res = await Network.get(await this.getEndpoint("/"));
+            return res === "OK";
+        } catch {
+            return false;
+        }
+    }
+
+    public async getEndpoint(path: string): Promise<URL> {
+        if (!path) throw Error("Not path");
+        let endpoint;
+        if (this.relayEndpoint) {
+            endpoint = this.relayEndpoint;
+        } else {
+            const provider = this.web3.getProvider() as Provider;
+            const network = await provider.getNetwork();
+            const networkName = network.name as SupportedNetworks;
+            if (!SupportedNetworksArray.includes(networkName)) {
+                throw new UnsupportedNetworkError(networkName);
+            }
+            endpoint = LIVE_CONTRACTS[networkName].relayEndpoint;
+        }
+
+        if (!endpoint) throw new NoHttpModuleError();
+
+        const newUrl = typeof endpoint === "string" ? new URL(endpoint) : endpoint;
+        if (newUrl && !newUrl?.pathname.endsWith("/")) {
+            newUrl.pathname += "/";
+        }
+        return new URL(path, newUrl);
     }
 }
