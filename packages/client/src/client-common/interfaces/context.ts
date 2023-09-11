@@ -38,5 +38,3 @@ type HTTPContextState = {
 };
 
 export type ContextState = Web3ContextState & HTTPContextState;
-export type ContextPluginState = {};
-export type ContextPluginParams = ContextParams;

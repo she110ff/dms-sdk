@@ -6,7 +6,6 @@ export namespace Network {
     /**
      * Performs a request and returns a JSON object with the response
      */
-
     export async function get(endpoint: URL, data?: GenericRecord) {
         for (const [key, value] of Object.entries(data ?? {})) {
             if (value != null) {

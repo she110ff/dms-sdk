@@ -9,29 +9,6 @@ export type NetworkDeployment = {
     Ledger: string;
     relayEndpoint?: string | URL;
 };
-
-export interface IPagination {
-    skip?: number;
-    limit?: number;
-    direction?: SortDirection;
-}
-
-export type Pagination = {
-    skip?: number;
-    limit?: number;
-    direction?: SortDirection;
-};
-
-export enum SortDirection {
-    ASC = "asc",
-    DESC = "desc"
-}
-
-export interface IInterfaceParams {
-    id: string;
-    functionName: string;
-    hash: string;
-}
 export type GenericRecord = Record<string, string | number | boolean | null | undefined>;
 export interface IHttpConfig {
     /** IPFS Cluster URL */
