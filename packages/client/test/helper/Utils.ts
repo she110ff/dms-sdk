@@ -1,15 +1,15 @@
 /*******************************************************************************
 
-    Includes fake agora, stoa and sample data needed for testing.
+ Includes fake agora, stoa and sample data needed for testing.
 
-    Copyright:
-        Copyright (c) 2020-2021 BOSAGORA Foundation
-        All rights reserved.
+ Copyright:
+ Copyright (c) 2020-2021 BOSAGORA Foundation
+ All rights reserved.
 
-    License:
-        MIT License. See LICENSE for details.
+ License:
+ MIT License. See LICENSE for details.
 
-*******************************************************************************/
+ *******************************************************************************/
 
 // tslint:disable-next-line:no-implicit-dependencies
 import * as bodyParser from "body-parser";
@@ -26,21 +26,19 @@ import { Deployment } from "./deployContracts";
  */
 export class TestRelayServer {
     /**
-     * The bind port
-     */
-    private readonly port: number;
-
-    /**
      * The application of express module
      */
     protected app: express.Application;
-
     /**
      * The Http server
      */
     protected server: http.Server | null = null;
-
     protected deployment: Deployment;
+    /**
+     * The bind port
+     */
+    private readonly port: number;
+
     /**
      * Constructor
      * @param port The bind port
@@ -78,6 +76,16 @@ export class TestRelayServer {
             this.server.listen(this.port, () => {
                 resolve();
             });
+        });
+    }
+
+    public stop(): Promise<void> {
+        return new Promise<void>((resolve, reject) => {
+            if (this.server != null)
+                this.server.close((err?) => {
+                    err === undefined ? resolve() : reject(err);
+                });
+            else resolve();
         });
     }
 
@@ -216,16 +224,6 @@ export class TestRelayServer {
             });
         }
     }
-
-    public stop(): Promise<void> {
-        return new Promise<void>((resolve, reject) => {
-            if (this.server != null)
-                this.server.close((err?) => {
-                    err === undefined ? resolve() : reject(err);
-                });
-            else resolve();
-        });
-    }
 }
 
 export function delay(interval: number): Promise<void> {
@@ -233,6 +231,7 @@ export function delay(interval: number): Promise<void> {
         setTimeout(resolve, interval);
     });
 }
+
 export function isAmount(value: string): Promise<string> {
     return new Promise<string>((resolve, reject) => {
         if (!isPositiveInteger(value)) {
@@ -246,6 +245,7 @@ export function isAmount(value: string): Promise<string> {
         return resolve(value);
     });
 }
+
 function isPositiveInteger(value: string): boolean {
     return /^(\+)?([0-9]+)$/.test(value);
 }

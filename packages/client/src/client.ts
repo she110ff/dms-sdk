@@ -14,6 +14,7 @@ export class Client extends ClientCore implements IClient {
         Object.freeze(Client.prototype);
         Object.freeze(this);
     }
+
     public get methods(): IClientMethods {
         return this.privateMethods;
     }

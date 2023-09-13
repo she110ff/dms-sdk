@@ -12,7 +12,5 @@ export const MUMBAI_PROVIDER_URI = "https://rpc-mumbai.matic.today";
 
 export declare const AVAX_FUJI_CHAIN_ID = 43113;
 export declare const AVAX_CHAIN_ID = 43114;
-export declare const AVAX_FUJI_PROVIDER =
-  "https://api.avax-test.network/ext/bc/C/rpc";
-export declare const AVAX_PROVIDER =
-  "https://api.avax-test.network/ext/bc/C/rpc";
+export declare const AVAX_FUJI_PROVIDER = "https://api.avax-test.network/ext/bc/C/rpc";
+export declare const AVAX_PROVIDER = "https://api.avax-test.network/ext/bc/C/rpc";

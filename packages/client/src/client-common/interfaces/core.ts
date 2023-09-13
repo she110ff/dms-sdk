@@ -15,6 +15,7 @@ export interface IClientWeb3Core {
     ensureOnline: () => Promise<void>;
     attachContract: <T>(address: string, abi: ContractInterface) => Contract & T;
 }
+
 export interface IClientHttpCore {
     isRelayUp: () => Promise<boolean>;
     getEndpoint: (path: string) => Promise<URL>;
@@ -23,6 +24,7 @@ export interface IClientHttpCore {
     fetchPayToken: (param: FetchPayOption) => Promise<any>;
     fetchPayMileage: (param: FetchPayOption) => Promise<any>;
 }
+
 export interface IClientCore {
     web3: IClientWeb3Core;
 }

@@ -29,9 +29,11 @@ export class Web3Module implements IClientWeb3Core {
     private get providers(): JsonRpcProvider[] {
         return providersMap.get(this) || [];
     }
+
     private get providerIdx(): number {
         return providerIdxMap.get(this)!;
     }
+
     private get signer(): Signer | undefined {
         return signerMap.get(this);
     }

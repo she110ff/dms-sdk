@@ -105,9 +105,11 @@ export class Amount {
  */
 export class BOACoin extends Amount {
     public static DECIMAL = 18;
+
     constructor(value: BigNumber) {
         super(value, BOACoin.DECIMAL);
     }
+
     public static make(value: string | number): BOACoin {
         return Amount.make(value, BOACoin.DECIMAL);
     }

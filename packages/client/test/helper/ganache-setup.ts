@@ -93,6 +93,7 @@ function getAccounts(): any[] {
     }
     return accounts;
 }
+
 function createAccount(secretKey: string): { balance: any; secretKey: string } {
     return { balance: "0x100000000000000000000", secretKey };
 }

@@ -17,6 +17,7 @@ export class UnregisteredEmailError extends Error {
         super("Unregistered email error");
     }
 }
+
 export class InsufficientBalanceError extends Error {
     constructor() {
         super("Insufficient balance error");
@@ -28,8 +29,10 @@ export class NoHttpModuleError extends Error {
         super("A Http Module is needed");
     }
 }
+
 export class ClientError extends Error {
     public response: UnfetchResponse;
+
     constructor(res: UnfetchResponse) {
         super(res.statusText);
         this.name = "ClientError";
@@ -43,12 +46,14 @@ export class InvalidResponseError extends ClientError {
         this.message = "Invalid response";
     }
 }
+
 export class MissingBodyeError extends ClientError {
     constructor(res: UnfetchResponse) {
         super(res);
         this.message = "Missing response body";
     }
 }
+
 export class BodyParseError extends ClientError {
     constructor(res: UnfetchResponse) {
         super(res);

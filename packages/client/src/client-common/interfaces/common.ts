@@ -10,6 +10,7 @@ export type NetworkDeployment = {
     relayEndpoint?: string | URL;
 };
 export type GenericRecord = Record<string, string | number | boolean | null | undefined>;
+
 export interface IHttpConfig {
     /** IPFS Cluster URL */
     url: URL;

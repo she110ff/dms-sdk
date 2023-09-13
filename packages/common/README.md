@@ -1,6 +1,7 @@
 # DMS SDK Common
 
 dms-sdk-common provides general purpose components to use across the entire Aragon SDK:
+
 - Interfaces
 - Constants
 - Types
@@ -26,7 +27,7 @@ yarn add dms-sdk-common
 ### Converting buffers and hex strings
 
 ```ts
-import { hexToBytes, bytesToHex } from "dms-sdk-common";
+import {hexToBytes, bytesToHex} from "dms-sdk-common";
 
 const buff = hexToBytes("0xffffffff");
 // [255, 255, 255, 255]
@@ -41,7 +42,7 @@ const str = bytesToHex(new Uint8Array([100, 100, 100, 100, 100, 100]), true);
 ### Converting between buffers and big integers
 
 ```ts
-import { bigIntToBuffer, bigIntToLeBuffer } from "dms-sdk-common";
+import {bigIntToBuffer, bigIntToLeBuffer} from "dms-sdk-common";
 
 const bi = BigInt("111122223333444455556666777788889999000011112222333344445555666677778888999900")
 const buff = bigIntToBuffer(bi);
@@ -52,22 +53,22 @@ const buffLe = bigIntToLeBuffer(bi);
 ```
 
 ```ts
-import { bufferToBigInt, bufferLeToBigInt } from "dms-sdk-common";
+import {bufferToBigInt, bufferLeToBigInt} from "dms-sdk-common";
 
 const buff = new Uint8Array([
-  245, 172, 243,  22, 170, 44,  13,  78,
-  106,  70,  70, 147, 249, 71, 137, 190,
-  155,  21, 186,  14, 206, 88,  97, 129,
-  103, 154,  50,  21, 224, 63,  67, 220
+    245, 172, 243, 22, 170, 44, 13, 78,
+    106, 70, 70, 147, 249, 71, 137, 190,
+    155, 21, 186, 14, 206, 88, 97, 129,
+    103, 154, 50, 21, 224, 63, 67, 220
 ]);
 const hex = bufferToBigInt(buff);
 // 111122223333444455556666777788889999000011112222333344445555666677778888999900n
 
 const buffLe = new Uint8Array([
-  220,  67, 63, 224,  21,  50, 154, 103,
-  129,  97, 88, 206,  14, 186,  21, 155,
-  190, 137, 71, 249, 147,  70,  70, 106,
-   78,  13, 44, 170,  22, 243, 172, 245
+    220, 67, 63, 224, 21, 50, 154, 103,
+    129, 97, 88, 206, 14, 186, 21, 155,
+    190, 137, 71, 249, 147, 70, 70, 106,
+    78, 13, 44, 170, 22, 243, 172, 245
 ]);
 const hex = bufferLeToBigInt(buffLe);
 // 111122223333444455556666777788889999000011112222333344445555666677778888999900n
@@ -78,7 +79,7 @@ const hex = bufferLeToBigInt(buffLe);
 Encodes ratio values between 0 and 1 translated into an integer range with the given digit precision
 
 ```ts
-import { encodeRatio, decodeRatio } from "dms-sdk-common";
+import {encodeRatio, decodeRatio} from "dms-sdk-common";
 
 let digits = 1
 encodeRatio(0.5, digits) // 5
@@ -94,7 +95,7 @@ encodeRatio(0.57625, digits) // 5762
 ### Hex prefix guards
 
 ```ts
-import { strip0x, ensure0x } from "dms-sdk-common";
+import {strip0x, ensure0x} from "dms-sdk-common";
 
 strip0x("1234")
 // "1234"
@@ -112,7 +113,7 @@ ensure0x("0x1234")
 For nonce based proposal ID's
 
 ```ts
-import { encodeProposalId, decodeProposalId } from "dms-sdk-common";
+import {encodeProposalId, decodeProposalId} from "dms-sdk-common";
 
 encodeProposalId(pluginAddr, nonce)
 // 0x1234567890123456789012345678901234567890_0x7

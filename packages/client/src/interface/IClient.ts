@@ -5,6 +5,7 @@ import { BigNumber, ContractTransaction } from "ethers";
 export interface IClient {
     methods: IClientMethods;
 }
+
 /** Defines the shape of the general purpose Client class */
 export interface IClientMethods extends IClientCore, IClientHttpCore {
     getMileageBalances: (email: string) => Promise<BigNumber>;
