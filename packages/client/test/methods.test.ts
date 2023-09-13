@@ -65,11 +65,6 @@ describe("Client", () => {
         describe("Method Check", () => {
             let client: Client;
             beforeAll(async () => {
-                const networkSpy = jest.spyOn(JsonRpcProvider, "getNetwork");
-                networkSpy.mockReturnValueOnce({
-                    name: "bosagora_devnet",
-                    chainId: 24680
-                });
                 const ctx = new Context(contextParamsLocalChain);
                 client = new Client(ctx);
             });
