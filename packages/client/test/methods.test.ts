@@ -3,7 +3,7 @@ import { GanacheServer } from "./helper/GanacheServer";
 import * as deployContracts from "./helper/deployContracts";
 import { purchaseData } from "./helper/deployContracts";
 import { contextParamsLocalChain } from "./helper/constants";
-import { Amount, Client, Context, ContractUtils, LIVE_CONTRACTS } from "../src";
+import { Amount, Client, Context, ContractUtils } from "../src";
 import { BigNumber } from "ethers";
 import { TestRelayServer } from "./helper/Utils";
 
@@ -20,22 +20,15 @@ describe("Client", () => {
             GanacheServer.setTestProvider(provider);
 
             deployment = await deployContracts.deployAll(provider);
-            contextParamsLocalChain.token = deployment.token;
-            contextParamsLocalChain.linkCollection = deployment.linkCollection;
-            contextParamsLocalChain.validatorCollection = deployment.validatorCollection;
-            contextParamsLocalChain.tokenPrice = deployment.tokenPrice;
-            contextParamsLocalChain.franchiseeCollection = deployment.franchiseeCollection;
-            contextParamsLocalChain.ledger = deployment.ledger;
+            contextParamsLocalChain.tokenAddress = deployment.token.address;
+            contextParamsLocalChain.linkCollectionAddress = deployment.linkCollection.address;
+            contextParamsLocalChain.validatorCollectionAddress = deployment.validatorCollection.address;
+            contextParamsLocalChain.tokenPriceAddress = deployment.tokenPrice.address;
+            contextParamsLocalChain.franchiseeCollectionAddress = deployment.franchiseeCollection.address;
+            contextParamsLocalChain.ledgerAddress = deployment.ledger.address;
             contextParamsLocalChain.web3Providers = deployment.provider;
 
             GanacheServer.setTestWeb3Signer(user1);
-
-            LIVE_CONTRACTS.bosagora_devnet.LinkCollection = deployment.linkCollection.address;
-            LIVE_CONTRACTS.bosagora_devnet.Token = deployment.token.address;
-            LIVE_CONTRACTS.bosagora_devnet.Ledger = deployment.ledger.address;
-            LIVE_CONTRACTS.bosagora_devnet.FranchiseeCollection = deployment.franchiseeCollection.address;
-            LIVE_CONTRACTS.bosagora_devnet.TokenPrice = deployment.tokenPrice.address;
-            LIVE_CONTRACTS.bosagora_devnet.ValidatorCollection = deployment.validatorCollection.address;
 
             fakerServer = new TestRelayServer(7070, deployment);
             await fakerServer.start();

@@ -8,7 +8,7 @@ import {
 } from "../../client-common";
 import { IClientMethods } from "../../interface/IClient";
 import { Ledger, Ledger__factory, Token, Token__factory } from "dms-osx-lib";
-import { UnsupportedNetworkError } from "dms-sdk-common";
+import { NoProviderError, NoSignerError, UnsupportedNetworkError } from "dms-sdk-common";
 import { Provider } from "@ethersproject/providers";
 import { ContractUtils } from "../../utils/ContractUtils";
 import {
@@ -54,13 +54,15 @@ export class ClientMethods extends ClientCore implements IClientMethods, IClient
         if (!checkEmail(email)) throw new InvalidEmailParamError();
 
         const provider = this.web3.getProvider() as Provider;
+        if (!provider) throw new NoProviderError();
+
         const network = await provider.getNetwork();
         const networkName = network.name as SupportedNetworks;
         if (!SupportedNetworksArray.includes(networkName)) {
             throw new UnsupportedNetworkError(networkName);
         }
 
-        const ledgerInstance: Ledger = Ledger__factory.connect(LIVE_CONTRACTS[networkName].Ledger, provider);
+        const ledgerInstance: Ledger = Ledger__factory.connect(this.web3.getLedgerAddress(), provider);
         const emailHash = ContractUtils.sha256String(email);
 
         return await ledgerInstance.mileageBalanceOf(emailHash);
@@ -75,13 +77,15 @@ export class ClientMethods extends ClientCore implements IClientMethods, IClient
         if (!checkEmail(email)) throw new InvalidEmailParamError();
 
         const provider = this.web3.getProvider() as Provider;
+        if (!provider) throw new NoProviderError();
+
         const network = await provider.getNetwork();
         const networkName = network.name as SupportedNetworks;
         if (!SupportedNetworksArray.includes(networkName)) {
             throw new UnsupportedNetworkError(networkName);
         }
 
-        const ledgerInstance: Ledger = Ledger__factory.connect(LIVE_CONTRACTS[networkName].Ledger, provider);
+        const ledgerInstance: Ledger = Ledger__factory.connect(this.web3.getLedgerAddress(), provider);
         const emailHash = ContractUtils.sha256String(email);
 
         return await ledgerInstance.tokenBalanceOf(emailHash);
@@ -101,20 +105,24 @@ export class ClientMethods extends ClientCore implements IClientMethods, IClient
         email: string,
         franchiseeId: string
     ): Promise<PayMileageOption> {
-        const provider = this.web3.getProvider() as Provider;
-        const network = await provider.getNetwork();
         const signer = this.web3.getConnectedSigner();
+        if (!signer) {
+            throw new NoSignerError();
+        } else if (!signer.provider) {
+            throw new NoProviderError();
+        }
 
+        const network = await signer.provider.getNetwork();
         const networkName = network.name as SupportedNetworks;
         if (!SupportedNetworksArray.includes(networkName)) {
             throw new UnsupportedNetworkError(networkName);
         }
 
         const emailHash = ContractUtils.sha256String(email);
-        const ledgerContract: Ledger = Ledger__factory.connect(LIVE_CONTRACTS[networkName].Ledger, provider);
+        const ledgerContract: Ledger = Ledger__factory.connect(this.web3.getLedgerAddress(), signer);
         const linkContract: LinkCollection = LinkCollection__factory.connect(
-            LIVE_CONTRACTS[networkName].LinkCollection,
-            provider
+            this.web3.getLinkCollectionAddress(),
+            signer
         );
 
         const emailToAddress: string = await linkContract.toAddress(emailHash);
@@ -151,20 +159,24 @@ export class ClientMethods extends ClientCore implements IClientMethods, IClient
         email: string,
         franchiseeId: string
     ): Promise<PayTokenOption> {
-        const provider = this.web3.getProvider() as Provider;
-        const network = await provider.getNetwork();
         const signer = this.web3.getConnectedSigner();
+        if (!signer) {
+            throw new NoSignerError();
+        } else if (!signer.provider) {
+            throw new NoProviderError();
+        }
 
+        const network = await signer.provider.getNetwork();
         const networkName = network.name as SupportedNetworks;
         if (!SupportedNetworksArray.includes(networkName)) {
             throw new UnsupportedNetworkError(networkName);
         }
 
         const emailHash = ContractUtils.sha256String(email);
-        const ledgerContract: Ledger = Ledger__factory.connect(LIVE_CONTRACTS[networkName].Ledger, provider);
+        const ledgerContract: Ledger = Ledger__factory.connect(this.web3.getLedgerAddress(), signer);
         const linkContract: LinkCollection = LinkCollection__factory.connect(
-            LIVE_CONTRACTS[networkName].LinkCollection,
-            provider
+            this.web3.getLinkCollectionAddress(),
+            signer
         );
 
         const emailToAddress: string = await linkContract.toAddress(emailHash);
@@ -194,20 +206,24 @@ export class ClientMethods extends ClientCore implements IClientMethods, IClient
      * @return {Promise<ExchangeTokenToMileageOption>}
      */
     public async getTokenToMileageOption(email: string, amount: BigNumber): Promise<ExchangeTokenToMileageOption> {
-        const provider = this.web3.getProvider() as Provider;
-        const network = await provider.getNetwork();
         const signer = this.web3.getConnectedSigner();
+        if (!signer) {
+            throw new NoSignerError();
+        } else if (!signer.provider) {
+            throw new NoProviderError();
+        }
 
+        const network = await signer.provider.getNetwork();
         const networkName = network.name as SupportedNetworks;
         if (!SupportedNetworksArray.includes(networkName)) {
             throw new UnsupportedNetworkError(networkName);
         }
 
         const emailHash = ContractUtils.sha256String(email);
-        const ledgerContract: Ledger = Ledger__factory.connect(LIVE_CONTRACTS[networkName].Ledger, provider);
+        const ledgerContract: Ledger = Ledger__factory.connect(this.web3.getLedgerAddress(), signer);
         const linkContract: LinkCollection = LinkCollection__factory.connect(
-            LIVE_CONTRACTS[networkName].LinkCollection,
-            provider
+            this.web3.getLinkCollectionAddress(),
+            signer
         );
 
         const emailToAddress: string = await linkContract.toAddress(emailHash);
@@ -234,20 +250,24 @@ export class ClientMethods extends ClientCore implements IClientMethods, IClient
      * @return {Promise<ExchangeMileageToTokenOption>}
      */
     public async getMileageToTokenOption(email: string, amount: BigNumber): Promise<ExchangeMileageToTokenOption> {
-        const provider = this.web3.getProvider() as Provider;
-        const network = await provider.getNetwork();
         const signer = this.web3.getConnectedSigner();
+        if (!signer) {
+            throw new NoSignerError();
+        } else if (!signer.provider) {
+            throw new NoProviderError();
+        }
 
+        const network = await signer.provider.getNetwork();
         const networkName = network.name as SupportedNetworks;
         if (!SupportedNetworksArray.includes(networkName)) {
             throw new UnsupportedNetworkError(networkName);
         }
 
         const emailHash = ContractUtils.sha256String(email);
-        const ledgerContract: Ledger = Ledger__factory.connect(LIVE_CONTRACTS[networkName].Ledger, provider);
+        const ledgerContract: Ledger = Ledger__factory.connect(this.web3.getLedgerAddress(), signer);
         const linkContract: LinkCollection = LinkCollection__factory.connect(
-            LIVE_CONTRACTS[networkName].LinkCollection,
-            provider
+            this.web3.getLinkCollectionAddress(),
+            signer
         );
 
         const emailToAddress: string = await linkContract.toAddress(emailHash);
@@ -268,10 +288,14 @@ export class ClientMethods extends ClientCore implements IClientMethods, IClient
     }
 
     public async deposit(email: string, amount: BigNumber): Promise<ContractTransaction[]> {
-        const provider = this.web3.getProvider() as Provider;
-        const network = await provider.getNetwork();
         const signer = this.web3.getConnectedSigner();
+        if (!signer) {
+            throw new NoSignerError();
+        } else if (!signer.provider) {
+            throw new NoProviderError();
+        }
 
+        const network = await signer.provider.getNetwork();
         const networkName = network.name as SupportedNetworks;
         if (!SupportedNetworksArray.includes(networkName)) {
             throw new UnsupportedNetworkError(networkName);
@@ -279,8 +303,8 @@ export class ClientMethods extends ClientCore implements IClientMethods, IClient
 
         const emailHash = ContractUtils.sha256String(email);
         const linkContract: LinkCollection = LinkCollection__factory.connect(
-            LIVE_CONTRACTS[networkName].LinkCollection,
-            provider
+            this.web3.getLinkCollectionAddress(),
+            signer
         );
 
         const emailToAddress: string = await linkContract.toAddress(emailHash);
@@ -289,8 +313,8 @@ export class ClientMethods extends ClientCore implements IClientMethods, IClient
         const signerAddress: string = await signer.getAddress();
         if (emailToAddress !== signerAddress) throw new MismatchApproveAddressError();
 
-        const ledgerContract: Ledger = Ledger__factory.connect(LIVE_CONTRACTS[networkName].Ledger, provider);
-        const tokenContract: Token = Token__factory.connect(LIVE_CONTRACTS[networkName].Token, provider);
+        const ledgerContract: Ledger = Ledger__factory.connect(this.web3.getLedgerAddress(), signer);
+        const tokenContract: Token = Token__factory.connect(this.web3.getTokenAddress(), signer);
 
         const balance = await tokenContract.balanceOf(signerAddress);
         if (amount.gte(balance)) throw new InsufficientBalanceError();
@@ -309,10 +333,14 @@ export class ClientMethods extends ClientCore implements IClientMethods, IClient
     }
 
     public async withdraw(email: string, amount: BigNumber): Promise<ContractTransaction> {
-        const provider = this.web3.getProvider() as Provider;
-        const network = await provider.getNetwork();
         const signer = this.web3.getConnectedSigner();
+        if (!signer) {
+            throw new NoSignerError();
+        } else if (!signer.provider) {
+            throw new NoProviderError();
+        }
 
+        const network = await signer.provider.getNetwork();
         const networkName = network.name as SupportedNetworks;
         if (!SupportedNetworksArray.includes(networkName)) {
             throw new UnsupportedNetworkError(networkName);
@@ -320,8 +348,8 @@ export class ClientMethods extends ClientCore implements IClientMethods, IClient
 
         const emailHash = ContractUtils.sha256String(email);
         const linkContract: LinkCollection = LinkCollection__factory.connect(
-            LIVE_CONTRACTS[networkName].LinkCollection,
-            provider
+            this.web3.getLinkCollectionAddress(),
+            signer
         );
 
         const emailToAddress: string = await linkContract.toAddress(emailHash);
@@ -330,7 +358,7 @@ export class ClientMethods extends ClientCore implements IClientMethods, IClient
         const signerAddress: string = await signer.getAddress();
         if (emailToAddress !== signerAddress) throw new MismatchApproveAddressError();
 
-        const ledgerContract: Ledger = Ledger__factory.connect(LIVE_CONTRACTS[networkName].Ledger, provider);
+        const ledgerContract: Ledger = Ledger__factory.connect(this.web3.getLedgerAddress(), signer);
 
         const currentDepositAmount = await ledgerContract.tokenBalanceOf(emailHash);
         if (currentDepositAmount.lte(amount)) throw new InsufficientBalanceError();
@@ -371,7 +399,9 @@ export class ClientMethods extends ClientCore implements IClientMethods, IClient
         if (this.relayEndpoint) {
             endpoint = this.relayEndpoint;
         } else {
-            const provider = this.web3.getProvider() as Provider;
+            const provider = this.web3.getProvider();
+            if (!provider) throw new NoProviderError();
+
             const network = await provider.getNetwork();
             const networkName = network.name as SupportedNetworks;
             if (!SupportedNetworksArray.includes(networkName)) {

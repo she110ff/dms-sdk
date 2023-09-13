@@ -2,19 +2,18 @@
 
 import { Signer } from "@ethersproject/abstract-signer";
 import { JsonRpcProvider, Networkish } from "@ethersproject/providers";
-import { Contract } from "@ethersproject/contracts";
 
 // Context input parameters
 type Web3ContextParams = {
     network: Networkish;
     signer?: Signer;
     web3Providers?: string | JsonRpcProvider | (string | JsonRpcProvider)[];
-    linkCollection?: Contract;
-    token?: Contract;
-    validatorCollection?: Contract;
-    tokenPrice?: Contract;
-    franchiseeCollection?: Contract;
-    ledger?: Contract;
+    linkCollectionAddress?: string;
+    tokenAddress?: string;
+    validatorCollectionAddress?: string;
+    tokenPriceAddress?: string;
+    franchiseeCollectionAddress?: string;
+    ledgerAddress?: string;
 };
 type HttpContextParams = {
     relayEndpoint?: string | URL;
@@ -26,12 +25,12 @@ type Web3ContextState = {
     network: Networkish;
     signer?: Signer;
     web3Providers: JsonRpcProvider[];
-    linkCollection?: Contract;
-    token?: Contract;
-    validatorCollection?: Contract;
-    tokenPrice?: Contract;
-    franchiseeCollection?: Contract;
-    ledger?: Contract;
+    linkCollectionAddress?: string;
+    tokenAddress?: string;
+    validatorCollectionAddress?: string;
+    tokenPriceAddress?: string;
+    franchiseeCollectionAddress?: string;
+    ledgerAddress?: string;
 };
 type HTTPContextState = {
     relayEndpoint?: string | URL;

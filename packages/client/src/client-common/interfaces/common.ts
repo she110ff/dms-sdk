@@ -1,12 +1,12 @@
 export const SupportedNetworksArray = ["bosagora_mainnet", "bosagora_testnet", "bosagora_devnet", "localhost"] as const;
 export type SupportedNetworks = typeof SupportedNetworksArray[number];
 export type NetworkDeployment = {
-    LinkCollection: string;
-    Token: string;
-    ValidatorCollection: string;
-    TokenPrice: string;
-    FranchiseeCollection: string;
-    Ledger: string;
+    LinkCollectionAddress: string;
+    TokenAddress: string;
+    ValidatorCollectionAddress: string;
+    TokenPriceAddress: string;
+    FranchiseeCollectionAddress: string;
+    LedgerAddress: string;
     relayEndpoint?: string | URL;
 };
 export type GenericRecord = Record<string, string | number | boolean | null | undefined>;

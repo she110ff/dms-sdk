@@ -60,3 +60,39 @@ export class BodyParseError extends ClientError {
         this.message = "Error parsing body";
     }
 }
+
+export class NoTokenAddress extends Error {
+    constructor() {
+        super("A token address is needed");
+    }
+}
+
+export class NoLinkCollectionAddress extends Error {
+    constructor() {
+        super("A link collection address is needed");
+    }
+}
+
+export class NoValidatorCollectionAddress extends Error {
+    constructor() {
+        super("A validator collection address is needed");
+    }
+}
+
+export class NoTokenPriceAddress extends Error {
+    constructor() {
+        super("A token price address is needed");
+    }
+}
+
+export class NoFranchiseeCollectionAddress extends Error {
+    constructor() {
+        super("A franchisee collection address is needed");
+    }
+}
+
+export class NoLedgerAddress extends Error {
+    constructor() {
+        super("A ledger address is needed");
+    }
+}

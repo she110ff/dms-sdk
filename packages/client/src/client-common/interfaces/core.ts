@@ -14,6 +14,12 @@ export interface IClientWeb3Core {
     isUp: () => Promise<boolean>;
     ensureOnline: () => Promise<void>;
     attachContract: <T>(address: string, abi: ContractInterface) => Contract & T;
+    getTokenAddress: () => string;
+    getLinkCollectionAddress: () => string;
+    getValidatorCollectionAddress: () => string;
+    getTokenPriceAddress: () => string;
+    getFranchiseeCollectionAddress: () => string;
+    getLedgerAddress: () => string;
 }
 
 export interface IClientHttpCore {

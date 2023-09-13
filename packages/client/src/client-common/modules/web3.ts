@@ -4,10 +4,25 @@ import { Contract, ContractInterface } from "@ethersproject/contracts";
 import { Signer } from "@ethersproject/abstract-signer";
 import { IClientWeb3Core } from "../interfaces/core";
 import { Context } from "../context";
+import {
+    NoFranchiseeCollectionAddress,
+    NoLedgerAddress,
+    NoLinkCollectionAddress,
+    NoTokenAddress,
+    NoTokenPriceAddress,
+    NoValidatorCollectionAddress
+} from "../../utils/errors";
 
 const providersMap = new Map<Web3Module, JsonRpcProvider[]>();
 const providerIdxMap = new Map<Web3Module, number>();
 const signerMap = new Map<Web3Module, Signer>();
+
+const tokenAddressMap = new Map<Web3Module, string>();
+const linkCollectionAddressMap = new Map<Web3Module, string>();
+const validatorCollectionAddressMap = new Map<Web3Module, string>();
+const tokenPriceAddressMap = new Map<Web3Module, string>();
+const franchiseeCollectionAddressMap = new Map<Web3Module, string>();
+const ledgerAddressMap = new Map<Web3Module, string>();
 
 export class Web3Module implements IClientWeb3Core {
     constructor(context: Context) {
@@ -22,8 +37,56 @@ export class Web3Module implements IClientWeb3Core {
             this.useSigner(context.signer);
         }
 
+        if (context.tokenAddress) {
+            tokenAddressMap.set(this, context.tokenAddress);
+        }
+
+        if (context.linkCollectionAddress) {
+            linkCollectionAddressMap.set(this, context.linkCollectionAddress);
+        }
+
+        if (context.validatorCollectionAddress) {
+            validatorCollectionAddressMap.set(this, context.validatorCollectionAddress);
+        }
+
+        if (context.tokenPriceAddress) {
+            tokenPriceAddressMap.set(this, context.tokenPriceAddress);
+        }
+
+        if (context.franchiseeCollectionAddress) {
+            franchiseeCollectionAddressMap.set(this, context.franchiseeCollectionAddress);
+        }
+
+        if (context.ledgerAddress) {
+            ledgerAddressMap.set(this, context.ledgerAddress);
+        }
+
         Object.freeze(Web3Module.prototype);
         Object.freeze(this);
+    }
+
+    private get tokenAddress(): string {
+        return tokenAddressMap.get(this) || "";
+    }
+
+    private get linkCollectionAddress(): string {
+        return linkCollectionAddressMap.get(this) || "";
+    }
+
+    private get validatorCollectionAddress(): string {
+        return validatorCollectionAddressMap.get(this) || "";
+    }
+
+    private get tokenPriceAddress(): string {
+        return tokenPriceAddressMap.get(this) || "";
+    }
+
+    private get franchiseeCollectionAddress(): string {
+        return franchiseeCollectionAddressMap.get(this) || "";
+    }
+
+    private get ledgerAddress(): string {
+        return ledgerAddressMap.get(this) || "";
     }
 
     private get providers(): JsonRpcProvider[] {
@@ -136,5 +199,47 @@ export class Web3Module implements IClientWeb3Core {
         }
 
         return contract.connect(signer) as Contract & T;
+    }
+
+    public getTokenAddress(): string {
+        if (!this.tokenAddress) {
+            throw new NoTokenAddress();
+        }
+        return this.tokenAddress;
+    }
+
+    public getLinkCollectionAddress(): string {
+        if (!this.linkCollectionAddress) {
+            throw new NoLinkCollectionAddress();
+        }
+        return this.linkCollectionAddress;
+    }
+
+    public getValidatorCollectionAddress(): string {
+        if (!this.validatorCollectionAddress) {
+            throw new NoValidatorCollectionAddress();
+        }
+        return this.validatorCollectionAddress;
+    }
+
+    public getTokenPriceAddress(): string {
+        if (!this.tokenPriceAddress) {
+            throw new NoTokenPriceAddress();
+        }
+        return this.tokenPriceAddress;
+    }
+
+    public getFranchiseeCollectionAddress(): string {
+        if (!this.franchiseeCollectionAddress) {
+            throw new NoFranchiseeCollectionAddress();
+        }
+        return this.franchiseeCollectionAddress;
+    }
+
+    public getLedgerAddress(): string {
+        if (!this.ledgerAddress) {
+            throw new NoLedgerAddress();
+        }
+        return this.ledgerAddress;
     }
 }

@@ -75,6 +75,28 @@ export class Context {
         return this.state.relayEndpoint || defaultState.relayEndpoint;
     }
 
+    get tokenAddress(): string | undefined {
+        return this.state.tokenAddress;
+    }
+
+    get linkCollectionAddress(): string | undefined {
+        return this.state.linkCollectionAddress;
+    }
+
+    get validatorCollectionAddress(): string | undefined {
+        return this.state.validatorCollectionAddress;
+    }
+
+    get tokenPriceAddress(): string | undefined {
+        return this.state.tokenPriceAddress;
+    }
+    get franchiseeCollectionAddress(): string | undefined {
+        return this.state.franchiseeCollectionAddress;
+    }
+    get ledgerAddress(): string | undefined {
+        return this.state.ledgerAddress;
+    }
+
     // DEFAULT CONTEXT STATE
     static setDefault(params: Partial<ContextParams>) {
         if (params.signer) {
@@ -126,12 +148,30 @@ export class Context {
             throw new Error("Please pass the required signer");
         } else if (!contextParams.web3Providers) {
             throw new Error("No web3 endpoints defined");
+        } else if (!contextParams.tokenAddress) {
+            throw new Error("Missing token contract address");
+        } else if (!contextParams.linkCollectionAddress) {
+            throw new Error("Missing link collection contract address");
+        } else if (!contextParams.validatorCollectionAddress) {
+            throw new Error("Missing validator collection contract address");
+        } else if (!contextParams.tokenPriceAddress) {
+            throw new Error("Missing token price contract address");
+        } else if (!contextParams.franchiseeCollectionAddress) {
+            throw new Error("Missing franchisee collection  contract address");
+        } else if (!contextParams.ledgerAddress) {
+            throw new Error("Missing ledger contract address");
         }
 
         this.state = {
             network: contextParams.network,
             signer: contextParams.signer,
-            web3Providers: Context.resolveWeb3Providers(contextParams.web3Providers, contextParams.network)
+            web3Providers: Context.resolveWeb3Providers(contextParams.web3Providers, contextParams.network),
+            tokenAddress: contextParams.tokenAddress,
+            linkCollectionAddress: contextParams.linkCollectionAddress,
+            validatorCollectionAddress: contextParams.validatorCollectionAddress,
+            tokenPriceAddress: contextParams.tokenPriceAddress,
+            franchiseeCollectionAddress: contextParams.franchiseeCollectionAddress,
+            ledgerAddress: contextParams.ledgerAddress
         };
     }
 
@@ -147,6 +187,24 @@ export class Context {
         }
         if (contextParams.relayEndpoint) {
             this.state.relayEndpoint = contextParams.relayEndpoint;
+        }
+        if (contextParams.tokenAddress) {
+            this.state.tokenAddress = contextParams.tokenAddress;
+        }
+        if (contextParams.linkCollectionAddress) {
+            this.state.linkCollectionAddress = contextParams.linkCollectionAddress;
+        }
+        if (contextParams.validatorCollectionAddress) {
+            this.state.validatorCollectionAddress = contextParams.validatorCollectionAddress;
+        }
+        if (contextParams.tokenPriceAddress) {
+            this.state.tokenPriceAddress = contextParams.tokenPriceAddress;
+        }
+        if (contextParams.franchiseeCollectionAddress) {
+            this.state.franchiseeCollectionAddress = contextParams.franchiseeCollectionAddress;
+        }
+        if (contextParams.ledgerAddress) {
+            this.state.ledgerAddress = contextParams.ledgerAddress;
         }
     }
 }
