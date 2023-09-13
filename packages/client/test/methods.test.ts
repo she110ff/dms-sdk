@@ -1,34 +1,23 @@
 import { Server } from "ganache";
-import * as ganacheSetup from "./helper/ganache-setup";
+import { GanacheServer } from "./helper/GanacheServer";
 import * as deployContracts from "./helper/deployContracts";
-import { getSigners, purchaseData } from "./helper/deployContracts";
+import { purchaseData } from "./helper/deployContracts";
 import { contextParamsLocalChain } from "./helper/constants";
 import { Amount, Client, Context, ContractUtils, LIVE_CONTRACTS } from "../src";
-import { JsonRpcProvider, JsonRpcSigner } from "@ethersproject/providers";
-import { restoreBlockTime } from "./helper/block-times";
 import { BigNumber } from "ethers";
 import { TestRelayServer } from "./helper/Utils";
-import { Wallet } from "@ethersproject/wallet";
 
 describe("Client", () => {
     let node: Server;
     let deployment: deployContracts.Deployment;
-    let provider: JsonRpcProvider;
-    let accounts: JsonRpcSigner[];
     let fakerServer: TestRelayServer;
+    const [, , validator1, validator2, , user1] = GanacheServer.accounts();
 
     describe("Save Purchase Data & Pay (mileage, token)", () => {
         beforeAll(async () => {
-            node = await ganacheSetup.start();
-
-            if (Array.isArray(contextParamsLocalChain.web3Providers)) {
-                provider = new JsonRpcProvider(contextParamsLocalChain.web3Providers[0] as string, {
-                    name: "bosagora_devnet",
-                    chainId: 24680
-                });
-            } else {
-                provider = new JsonRpcProvider(contextParamsLocalChain.web3Providers as any);
-            }
+            node = await GanacheServer.start();
+            const provider = GanacheServer.createTestProvider();
+            GanacheServer.setTestProvider(provider);
 
             deployment = await deployContracts.deployAll(provider);
             contextParamsLocalChain.token = deployment.token;
@@ -39,8 +28,7 @@ describe("Client", () => {
             contextParamsLocalChain.ledger = deployment.ledger;
             contextParamsLocalChain.web3Providers = deployment.provider;
 
-            accounts = getSigners(provider);
-            await restoreBlockTime(provider);
+            GanacheServer.setTestWeb3Signer(user1);
 
             LIVE_CONTRACTS.bosagora_devnet.LinkCollection = deployment.linkCollection.address;
             LIVE_CONTRACTS.bosagora_devnet.Token = deployment.token.address;
@@ -48,10 +36,6 @@ describe("Client", () => {
             LIVE_CONTRACTS.bosagora_devnet.FranchiseeCollection = deployment.franchiseeCollection.address;
             LIVE_CONTRACTS.bosagora_devnet.TokenPrice = deployment.tokenPrice.address;
             LIVE_CONTRACTS.bosagora_devnet.ValidatorCollection = deployment.validatorCollection.address;
-
-            const userAddress = await accounts[4].getAddress();
-            const initAccount = node.provider.getInitialAccounts();
-            contextParamsLocalChain.signer = new Wallet(initAccount[userAddress.toLowerCase()].secretKey);
 
             fakerServer = new TestRelayServer(7070, deployment);
             await fakerServer.start();
@@ -92,8 +76,6 @@ describe("Client", () => {
 
             describe("Pay Check", () => {
                 beforeAll(async () => {
-                    const validator1 = accounts[1];
-                    const validator2 = accounts[2];
                     const signer = client.web3.getConnectedSigner();
                     const userAddress = await signer.getAddress();
                     const exampleData = purchaseData[0];
