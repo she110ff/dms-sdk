@@ -1,5 +1,6 @@
 import { BigNumberish } from "@ethersproject/bignumber";
-import { BigNumber, Signer } from "ethers";
+import { BigNumber } from "@ethersproject/bignumber";
+import { Signer } from "@ethersproject/abstract-signer";
 import { JsonRpcProvider, Networkish } from "@ethersproject/providers";
 
 export type PurchaseParam = {
@@ -80,3 +81,12 @@ export type UpdateAllowanceParams = {
     amount: BigNumber;
     tokenAddress: string;
 };
+
+export enum WithdrawSteps {
+    WITHDRAWING = "withdrawing",
+    DONE = "done"
+}
+
+export type WithdrawStepValue =
+    | { key: WithdrawSteps.WITHDRAWING; txHash: string }
+    | { key: WithdrawSteps.DONE; amount: BigNumber };

@@ -5,10 +5,10 @@ import {
     ExchangeTokenToMileageOption,
     PayMileageOption,
     UpdateAllowanceParams,
-    UpdateAllowanceStepValue
+    UpdateAllowanceStepValue,
+    WithdrawStepValue
 } from "../interfaces";
 import { BigNumber } from "@ethersproject/bignumber";
-import { ContractTransaction } from "@ethersproject/contracts";
 
 export interface IClient {
     methods: IClientMethods;
@@ -33,6 +33,6 @@ export interface IClientMethods extends IClientCore, IClientHttpCore {
     getMileageToTokenOption: (email: string, amount: BigNumber) => Promise<ExchangeMileageToTokenOption>;
     getTokenToMileageOption: (email: string, amount: BigNumber) => Promise<ExchangeTokenToMileageOption>;
     deposit: (email: string, amount: BigNumber) => AsyncGenerator<DepositStepValue>;
-    withdraw: (email: string, amount: BigNumber) => Promise<ContractTransaction>;
+    withdraw: (email: string, amount: BigNumber) => AsyncGenerator<WithdrawStepValue>;
     updateAllowance: (params: UpdateAllowanceParams) => AsyncGenerator<UpdateAllowanceStepValue>;
 }

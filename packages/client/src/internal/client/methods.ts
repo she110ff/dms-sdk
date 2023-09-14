@@ -20,11 +20,14 @@ import {
     PayMileageOption,
     PayTokenOption,
     UpdateAllowanceParams,
-    UpdateAllowanceStepValue
+    UpdateAllowanceStepValue,
+    WithdrawSteps,
+    WithdrawStepValue
 } from "../../interfaces";
 import {
     AmountMismatchError,
     FailedDepositError,
+    FailedWithdrawError,
     InsufficientBalanceError,
     InvalidEmailParamError,
     MismatchApproveAddressError,
@@ -39,7 +42,6 @@ import { findLog } from "../../client-common/utils";
 import { BigNumber } from "@ethersproject/bignumber";
 import { AddressZero } from "@ethersproject/constants";
 import { ContractTransaction } from "@ethersproject/contracts";
-
 
 /**
  * Methods module the SDK Generic Client
@@ -351,16 +353,20 @@ export class ClientMethods extends ClientCore implements IClientMethods, IClient
             throw new FailedDepositError();
         }
 
-        const ledgerInterface = Ledger__factory.createInterface();
-        const parsedLog = ledgerInterface.parseLog(log);
-
-        if (!amount.toString() === parsedLog.args["amount"]) {
-            throw new AmountMismatchError(amount, parsedLog.args["amount"]);
+        const parsedLog = ledgerContract.interface.parseLog(log);
+        if (!amount.eq(parsedLog.args["depositAmount"])) {
+            throw new AmountMismatchError(amount, parsedLog.args["depositAmount"]);
         }
         yield { key: DepositSteps.DONE, amount: amount };
     }
 
-    public async withdraw(email: string, amount: BigNumber): Promise<ContractTransaction> {
+    /**
+     * 토큰을 인출합니다.
+     * @param {string} email 이메일주소
+     * @param {BigNumber} amount 금액
+     * @return {AsyncGenerator<WithdrawStepValue>}
+     */
+    public async *withdraw(email: string, amount: BigNumber): AsyncGenerator<WithdrawStepValue> {
         const signer = this.web3.getConnectedSigner();
         if (!signer) {
             throw new NoSignerError();
@@ -392,8 +398,19 @@ export class ClientMethods extends ClientCore implements IClientMethods, IClient
         if (currentDepositAmount.lte(amount)) throw new InsufficientBalanceError();
 
         const tx = await ledgerContract.connect(signer).withdraw(amount);
-        await tx.wait();
-        return tx;
+        yield { key: WithdrawSteps.WITHDRAWING, txHash: tx.hash };
+
+        const cr = await tx.wait();
+        const log = findLog(cr, ledgerContract.interface, "Withdrawn");
+        if (!log) {
+            throw new FailedWithdrawError();
+        }
+
+        const parsedLog = ledgerContract.interface.parseLog(log);
+        if (!amount.eq(parsedLog.args["withdrawAmount"])) {
+            throw new AmountMismatchError(amount, parsedLog.args["withdrawAmount"]);
+        }
+        yield { key: WithdrawSteps.DONE, amount: amount };
     }
 
     /**

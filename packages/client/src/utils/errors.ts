@@ -1,5 +1,5 @@
 import { UnfetchResponse } from "unfetch";
-import { BigNumber } from "ethers";
+import { BigNumber } from "@ethersproject/bignumber";
 
 export class InvalidEmailParamError extends Error {
     constructor() {
@@ -107,5 +107,11 @@ export class FailedDepositError extends Error {
 export class AmountMismatchError extends Error {
     constructor(expected: BigNumber, received: BigNumber) {
         super(`Deposited amount mismatch. Expected: ${expected}, received: ${received}`);
+    }
+}
+
+export class FailedWithdrawError extends Error {
+    constructor() {
+        super("Failed to withdraw");
     }
 }

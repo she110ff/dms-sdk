@@ -3,8 +3,9 @@ import { GanacheServer } from "./helper/GanacheServer";
 import * as deployContracts from "./helper/deployContracts";
 import { purchaseData } from "./helper/deployContracts";
 import { contextParamsLocalChain } from "./helper/constants";
-import { Amount, Client, Context, ContractUtils,DepositSteps } from "../src";
+import { Amount, Client, Context, ContractUtils, DepositSteps, WithdrawSteps } from "../src";
 import { FakerRelayServer } from "./helper/FakerRelayServer";
+import { BigNumber } from "@ethersproject/bignumber";
 import { Signer } from "@ethersproject/abstract-signer";
 
 describe("Client", () => {
@@ -190,7 +191,22 @@ describe("Client", () => {
                 });
                 it("Test of the withdraw", async () => {
                     const beforeBalance = await deployment.ledger.tokenBalanceOf(emailHash);
-                    await client.methods.withdraw(email, amountToTrade.value);
+
+                    for await (const step of client.methods.withdraw(email, amountToTrade.value)) {
+                        switch (step.key) {
+                            case WithdrawSteps.WITHDRAWING:
+                                expect(typeof step.txHash).toBe("string");
+                                expect(step.txHash).toMatch(/^0x[A-Fa-f0-9]{64}$/i);
+                                break;
+                            case WithdrawSteps.DONE:
+                                expect(step.amount instanceof BigNumber).toBe(true);
+                                expect(step.amount.toString()).toBe(amountToTrade.toString());
+                                break;
+                            default:
+                                throw new Error("Unexpected DAO withdraw step: " + JSON.stringify(step, null, 2));
+                        }
+                    }
+
                     const afterBalance = await deployment.ledger.tokenBalanceOf(emailHash);
                     expect(afterBalance.toString()).toEqual(beforeBalance.sub(amountToTrade.value).toString());
                 });
