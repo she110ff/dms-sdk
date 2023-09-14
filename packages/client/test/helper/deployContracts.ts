@@ -1,6 +1,9 @@
-import { JsonRpcProvider, JsonRpcSigner } from "@ethersproject/providers";
+import { GanacheServer } from "./GanacheServer";
 import { Signer } from "@ethersproject/abstract-signer";
+import { BigNumber } from "@ethersproject/bignumber";
 import { Contract, ContractFactory } from "@ethersproject/contracts";
+import { JsonRpcProvider, JsonRpcSigner } from "@ethersproject/providers";
+import { Wallet } from "@ethersproject/wallet";
 import {
     FranchiseeCollection,
     FranchiseeCollection__factory,
@@ -14,7 +17,6 @@ import {
     ValidatorCollection__factory
 } from "dms-osx-lib";
 import { Amount, ContractUtils } from "../../src";
-import { BigNumber } from "ethers";
 import { LinkCollection, LinkCollection__factory } from "del-osx-lib";
 
 export interface Deployment {
@@ -32,10 +34,10 @@ export const foundationEmail = "foundation@example.com";
 export const foundationAccount = ContractUtils.sha256String(foundationEmail);
 
 export async function deployAll(provider: JsonRpcProvider): Promise<Deployment> {
-    let accounts = getSigners(provider);
-    const [deployer, validator1, validator2, validator3] = accounts;
+    let accounts = GanacheServer.accounts();
+    const [deployer, , validator1, validator2, validator3] = accounts;
     const validators = [validator1, validator2, validator3];
-    const validatorsAddress: string[] = await getSignersToAddress(validators);
+    const validatorsAddress: string[] = validators.map((m) => m.address);
 
     try {
         const tokenContract = await deployToken(deployer, accounts);
@@ -78,7 +80,7 @@ export async function deployAll(provider: JsonRpcProvider): Promise<Deployment> 
     }
 }
 
-export const deployToken = async (deployer: Signer, accounts: JsonRpcSigner[]): Promise<Token> => {
+export const deployToken = async (deployer: Signer, accounts: Wallet[]): Promise<Token> => {
     const tokenFactory = new ContractFactory(Token__factory.abi, Token__factory.bytecode);
     const tokenContract = (await tokenFactory.connect(deployer).deploy("Sample", "SAM")) as Token;
     await tokenContract.deployed();

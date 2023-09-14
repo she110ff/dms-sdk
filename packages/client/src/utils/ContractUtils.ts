@@ -60,6 +60,11 @@ export class ContractUtils {
         });
     }
 
+    public static cacheEVMError(error: IEVMError): string {
+        while (error.error !== undefined) error = error.error;
+        return error.data.reason;
+    }
+
     public static getRequestId(emailHash: string, address: string, nonce: BigNumberish): string {
         const encodedResult = ethers.utils.defaultAbiCoder.encode(
             ["bytes32", "address", "uint256", "bytes32"],
@@ -150,4 +155,11 @@ export class ContractUtils {
         }
         return res.toLowerCase() === signerAddress.toLowerCase();
     }
+}
+
+interface IEVMError {
+    error?: IEVMError;
+    data: {
+        reason: string;
+    };
 }

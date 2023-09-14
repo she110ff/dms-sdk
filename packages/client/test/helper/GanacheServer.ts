@@ -1,9 +1,9 @@
 import ganache, { Server } from "ganache";
 import * as dotenv from "dotenv";
-import { Wallet } from "ethers";
-import { JsonRpcProvider } from "@ethersproject/providers";
 import { contextParamsLocalChain } from "./constants";
 import { Signer } from "@ethersproject/abstract-signer";
+import { JsonRpcProvider } from "@ethersproject/providers";
+import { Wallet } from "@ethersproject/wallet";
 
 dotenv.config({ path: "env/.env" });
 
