@@ -9,7 +9,6 @@ import {
 import { IClientMethods } from "../../interface/IClient";
 import { Ledger, Ledger__factory, Token, Token__factory } from "dms-osx-lib";
 import { NoProviderError, NoSignerError, UnsupportedNetworkError } from "dms-sdk-common";
-import { Provider } from "@ethersproject/providers";
 import { ContractUtils } from "../../utils/ContractUtils";
 import {
     ExchangeMileageToTokenOption,
@@ -25,10 +24,14 @@ import {
     NoHttpModuleError,
     UnregisteredEmailError
 } from "../../utils/errors";
-import { BigNumber, ContractTransaction, ethers } from "ethers";
 import { checkEmail } from "../../utils";
 import { LinkCollection, LinkCollection__factory } from "del-osx-lib";
 import { Network } from "../../client-common/interfaces/network";
+
+import { BigNumber } from "@ethersproject/bignumber";
+import { AddressZero } from "@ethersproject/constants";
+import { ContractTransaction } from "@ethersproject/contracts";
+import { Provider } from "@ethersproject/providers";
 
 /**
  * Methods module the SDK Generic Client
@@ -126,7 +129,7 @@ export class ClientMethods extends ClientCore implements IClientMethods, IClient
         );
 
         const emailToAddress: string = await linkContract.toAddress(emailHash);
-        if (emailToAddress === ethers.constants.AddressZero) throw new UnregisteredEmailError();
+        if (emailToAddress === AddressZero) throw new UnregisteredEmailError();
 
         const signerAddress: string = await signer.getAddress();
         if (emailToAddress !== signerAddress) throw new MismatchApproveAddressError();
@@ -180,7 +183,7 @@ export class ClientMethods extends ClientCore implements IClientMethods, IClient
         );
 
         const emailToAddress: string = await linkContract.toAddress(emailHash);
-        if (emailToAddress === ethers.constants.AddressZero) throw new UnregisteredEmailError();
+        if (emailToAddress === AddressZero) throw new UnregisteredEmailError();
 
         const signerAddress: string = await signer.getAddress();
         if (emailToAddress !== signerAddress) throw new MismatchApproveAddressError();
@@ -227,7 +230,7 @@ export class ClientMethods extends ClientCore implements IClientMethods, IClient
         );
 
         const emailToAddress: string = await linkContract.toAddress(emailHash);
-        if (emailToAddress === ethers.constants.AddressZero) throw new UnregisteredEmailError();
+        if (emailToAddress === AddressZero) throw new UnregisteredEmailError();
 
         const signerAddress: string = await signer.getAddress();
         if (emailToAddress !== signerAddress) throw new MismatchApproveAddressError();
@@ -271,7 +274,7 @@ export class ClientMethods extends ClientCore implements IClientMethods, IClient
         );
 
         const emailToAddress: string = await linkContract.toAddress(emailHash);
-        if (emailToAddress === ethers.constants.AddressZero) throw new UnregisteredEmailError();
+        if (emailToAddress === AddressZero) throw new UnregisteredEmailError();
 
         const signerAddress: string = await signer.getAddress();
         if (emailToAddress !== signerAddress) throw new MismatchApproveAddressError();
@@ -308,7 +311,7 @@ export class ClientMethods extends ClientCore implements IClientMethods, IClient
         );
 
         const emailToAddress: string = await linkContract.toAddress(emailHash);
-        if (emailToAddress === ethers.constants.AddressZero) throw new UnregisteredEmailError();
+        if (emailToAddress === AddressZero) throw new UnregisteredEmailError();
 
         const signerAddress: string = await signer.getAddress();
         if (emailToAddress !== signerAddress) throw new MismatchApproveAddressError();
@@ -353,7 +356,7 @@ export class ClientMethods extends ClientCore implements IClientMethods, IClient
         );
 
         const emailToAddress: string = await linkContract.toAddress(emailHash);
-        if (emailToAddress === ethers.constants.AddressZero) throw new UnregisteredEmailError();
+        if (emailToAddress === AddressZero) throw new UnregisteredEmailError();
 
         const signerAddress: string = await signer.getAddress();
         if (emailToAddress !== signerAddress) throw new MismatchApproveAddressError();

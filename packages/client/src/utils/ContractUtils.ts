@@ -9,8 +9,12 @@
  */
 
 import * as crypto from "crypto";
-import { BigNumberish, ethers, Signer } from "ethers";
-import { arrayify } from "ethers/lib/utils";
+import { defaultAbiCoder } from "@ethersproject/abi";
+import { Signer } from "@ethersproject/abstract-signer";
+import { BigNumberish } from "@ethersproject/bignumber";
+import { arrayify } from "@ethersproject/bytes";
+import { keccak256 } from "@ethersproject/keccak256";
+import { verifyMessage } from "@ethersproject/wallet";
 
 export class ContractUtils {
     /**
@@ -66,19 +70,19 @@ export class ContractUtils {
     }
 
     public static getRequestId(emailHash: string, address: string, nonce: BigNumberish): string {
-        const encodedResult = ethers.utils.defaultAbiCoder.encode(
+        const encodedResult = defaultAbiCoder.encode(
             ["bytes32", "address", "uint256", "bytes32"],
             [emailHash, address, nonce, crypto.randomBytes(32)]
         );
-        return ethers.utils.keccak256(encodedResult);
+        return keccak256(encodedResult);
     }
 
     public static async sign(signer: Signer, hash: string, nonce: BigNumberish): Promise<string> {
-        const encodedResult = ethers.utils.defaultAbiCoder.encode(
+        const encodedResult = defaultAbiCoder.encode(
             ["bytes32", "address", "uint256"],
             [hash, await signer.getAddress(), nonce]
         );
-        const message = arrayify(ethers.utils.keccak256(encodedResult));
+        const message = arrayify(keccak256(encodedResult));
         return signer.signMessage(message);
     }
 
@@ -90,11 +94,11 @@ export class ContractUtils {
         franchiseeId: string,
         nonce: BigNumberish
     ): Promise<string> {
-        const encodedResult = ethers.utils.defaultAbiCoder.encode(
+        const encodedResult = defaultAbiCoder.encode(
             ["string", "uint256", "bytes32", "string", "address", "uint256"],
             [purchaseId, amount, userEmail, franchiseeId, await signer.getAddress(), nonce]
         );
-        const message = arrayify(ethers.utils.keccak256(encodedResult));
+        const message = arrayify(keccak256(encodedResult));
         return signer.signMessage(message);
     }
 
@@ -104,11 +108,11 @@ export class ContractUtils {
         amount: BigNumberish,
         nonce: BigNumberish
     ): Promise<string> {
-        const encodedResult = ethers.utils.defaultAbiCoder.encode(
+        const encodedResult = defaultAbiCoder.encode(
             ["bytes32", "uint256", "address", "uint256"],
             [userEmail, amount, await signer.getAddress(), nonce]
         );
-        const message = arrayify(ethers.utils.keccak256(encodedResult));
+        const message = arrayify(keccak256(encodedResult));
         return signer.signMessage(message);
     }
 
@@ -121,14 +125,14 @@ export class ContractUtils {
         nonce: BigNumberish,
         signature: string
     ): boolean {
-        const encodedResult = ethers.utils.defaultAbiCoder.encode(
+        const encodedResult = defaultAbiCoder.encode(
             ["string", "uint256", "bytes32", "string", "address", "uint256"],
             [purchaseId, amount, userEmail, franchiseeId, signerAddress, nonce]
         );
-        const message = arrayify(ethers.utils.keccak256(encodedResult));
+        const message = arrayify(keccak256(encodedResult));
         let res: string;
         try {
-            res = ethers.utils.verifyMessage(message, signature);
+            res = verifyMessage(message, signature);
         } catch (error) {
             return false;
         }
@@ -142,14 +146,14 @@ export class ContractUtils {
         nonce: BigNumberish,
         signature: string
     ): boolean {
-        const encodedResult = ethers.utils.defaultAbiCoder.encode(
+        const encodedResult = defaultAbiCoder.encode(
             ["bytes32", "uint256", "address", "uint256"],
             [userEmail, amount, signerAddress, nonce]
         );
-        const message = arrayify(ethers.utils.keccak256(encodedResult));
+        const message = arrayify(keccak256(encodedResult));
         let res: string;
         try {
-            res = ethers.utils.verifyMessage(message, signature);
+            res = verifyMessage(message, signature);
         } catch (error) {
             return false;
         }

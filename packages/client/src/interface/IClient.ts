@@ -1,6 +1,7 @@
 import { IClientCore, IClientHttpCore } from "../client-common";
 import { ExchangeMileageToTokenOption, ExchangeTokenToMileageOption, PayMileageOption } from "../interfaces";
-import { BigNumber, ContractTransaction } from "ethers";
+import { BigNumber } from "@ethersproject/bignumber";
+import { ContractTransaction } from "@ethersproject/contracts";
 
 export interface IClient {
     methods: IClientMethods;
