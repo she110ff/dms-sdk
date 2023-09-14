@@ -16,7 +16,6 @@ import * as bodyParser from "body-parser";
 import * as http from "http";
 // @ts-ignore
 import e, * as express from "express";
-import { BigNumber } from "ethers";
 import { ContractUtils } from "../../src";
 import { Deployment } from "./deployContracts";
 
@@ -224,28 +223,4 @@ export class FakerRelayServer {
             });
         }
     }
-}
-
-export function delay(interval: number): Promise<void> {
-    return new Promise<void>((resolve) => {
-        setTimeout(resolve, interval);
-    });
-}
-
-export function isAmount(value: string): Promise<string> {
-    return new Promise<string>((resolve, reject) => {
-        if (!isPositiveInteger(value)) {
-            return reject(new Error("Invalid value"));
-        }
-        try {
-            BigNumber.from(value);
-        } catch (e) {
-            return reject(new Error("Invalid value"));
-        }
-        return resolve(value);
-    });
-}
-
-function isPositiveInteger(value: string): boolean {
-    return /^(\+)?([0-9]+)$/.test(value);
 }
