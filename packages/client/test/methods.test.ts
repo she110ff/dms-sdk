@@ -5,7 +5,7 @@ import { purchaseData } from "./helper/deployContracts";
 import { contextParamsLocalChain } from "./helper/constants";
 import { Amount, Client, Context, ContractUtils } from "../src";
 import { BigNumber } from "ethers";
-import { TestRelayServer } from "./helper/Utils";
+import { TestRelayServer } from "./helper/FakerRelayServer";
 
 describe("Client", () => {
     let node: Server;
