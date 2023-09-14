@@ -1,4 +1,5 @@
 import { UnfetchResponse } from "unfetch";
+import { BigNumber } from "ethers";
 
 export class InvalidEmailParamError extends Error {
     constructor() {
@@ -94,5 +95,17 @@ export class NoFranchiseeCollectionAddress extends Error {
 export class NoLedgerAddress extends Error {
     constructor() {
         super("A ledger address is needed");
+    }
+}
+
+export class FailedDepositError extends Error {
+    constructor() {
+        super("Failed to deposit");
+    }
+}
+
+export class AmountMismatchError extends Error {
+    constructor(expected: BigNumber, received: BigNumber) {
+        super(`Deposited amount mismatch. Expected: ${expected}, received: ${received}`);
     }
 }

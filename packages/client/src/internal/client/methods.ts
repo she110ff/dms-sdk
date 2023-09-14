@@ -8,16 +8,23 @@ import {
 } from "../../client-common";
 import { IClientMethods } from "../../interface/IClient";
 import { Ledger, Ledger__factory, Token, Token__factory } from "dms-osx-lib";
-import { NoProviderError, NoSignerError, UnsupportedNetworkError } from "dms-sdk-common";
+import { Provider } from "@ethersproject/providers";
+import { NoProviderError, NoSignerError, UnsupportedNetworkError, UpdateAllowanceError } from "dms-sdk-common";
 import { ContractUtils } from "../../utils/ContractUtils";
 import {
+    DepositSteps,
+    DepositStepValue,
     ExchangeMileageToTokenOption,
     ExchangeTokenToMileageOption,
     FetchPayOption,
     PayMileageOption,
-    PayTokenOption
+    PayTokenOption,
+    UpdateAllowanceParams,
+    UpdateAllowanceStepValue
 } from "../../interfaces";
 import {
+    AmountMismatchError,
+    FailedDepositError,
     InsufficientBalanceError,
     InvalidEmailParamError,
     MismatchApproveAddressError,
@@ -27,11 +34,12 @@ import {
 import { checkEmail } from "../../utils";
 import { LinkCollection, LinkCollection__factory } from "del-osx-lib";
 import { Network } from "../../client-common/interfaces/network";
+import { findLog } from "../../client-common/utils";
 
 import { BigNumber } from "@ethersproject/bignumber";
 import { AddressZero } from "@ethersproject/constants";
 import { ContractTransaction } from "@ethersproject/contracts";
-import { Provider } from "@ethersproject/providers";
+
 
 /**
  * Methods module the SDK Generic Client
@@ -290,7 +298,13 @@ export class ClientMethods extends ClientCore implements IClientMethods, IClient
         };
     }
 
-    public async deposit(email: string, amount: BigNumber): Promise<ContractTransaction[]> {
+    /**
+     * 토큰을 예치합니다.
+     * @param {string} email 이메일주소
+     * @param {BigNumber} amount 금액
+     * @return {AsyncGenerator<DepositStepValue>}
+     */
+    public async *deposit(email: string, amount: BigNumber): AsyncGenerator<DepositStepValue> {
         const signer = this.web3.getConnectedSigner();
         if (!signer) {
             throw new NoSignerError();
@@ -322,17 +336,28 @@ export class ClientMethods extends ClientCore implements IClientMethods, IClient
         const balance = await tokenContract.balanceOf(signerAddress);
         if (amount.gte(balance)) throw new InsufficientBalanceError();
 
-        const actions = [];
-        const allowanceBalance = await tokenContract.allowance(signerAddress, ledgerContract.address);
-        if (allowanceBalance.lte(amount)) {
-            const approveTx = await tokenContract.connect(signer).approve(ledgerContract.address, amount);
-            actions.push(approveTx);
-            await approveTx.wait();
-        }
+        yield* this.updateAllowance({
+            amount: amount,
+            targetAddress: this.web3.getLedgerAddress(),
+            tokenAddress: this.web3.getTokenAddress()
+        });
+
         const depositTx = await ledgerContract.connect(signer).deposit(amount);
-        await depositTx.wait();
-        actions.push(depositTx);
-        return actions;
+        yield { key: DepositSteps.DEPOSITING, txHash: depositTx.hash };
+
+        const cr = await depositTx.wait();
+        const log = findLog(cr, ledgerContract.interface, "Deposited");
+        if (!log) {
+            throw new FailedDepositError();
+        }
+
+        const ledgerInterface = Ledger__factory.createInterface();
+        const parsedLog = ledgerInterface.parseLog(log);
+
+        if (!amount.toString() === parsedLog.args["amount"]) {
+            throw new AmountMismatchError(amount, parsedLog.args["amount"]);
+        }
+        yield { key: DepositSteps.DONE, amount: amount };
     }
 
     public async withdraw(email: string, amount: BigNumber): Promise<ContractTransaction> {
@@ -369,6 +394,58 @@ export class ClientMethods extends ClientCore implements IClientMethods, IClient
         const tx = await ledgerContract.connect(signer).withdraw(amount);
         await tx.wait();
         return tx;
+    }
+
+    /**
+     * 수당이 충분한지 확인하고 업데이트합니다.
+     *
+     * @param {UpdateAllowanceParams} params
+     * @return {*}  {AsyncGenerator<UpdateAllowanceStepValue>}
+     * @memberof ClientMethods
+     */
+    public async *updateAllowance(params: UpdateAllowanceParams): AsyncGenerator<UpdateAllowanceStepValue> {
+        const signer = this.web3.getConnectedSigner();
+        if (!signer) {
+            throw new NoSignerError();
+        } else if (!signer.provider) {
+            throw new NoProviderError();
+        }
+
+        const tokenInstance = Token__factory.connect(params.tokenAddress, signer);
+        const currentAllowance = await tokenInstance.allowance(await signer.getAddress(), params.targetAddress);
+
+        yield {
+            key: DepositSteps.CHECKED_ALLOWANCE,
+            allowance: currentAllowance
+        };
+
+        if (currentAllowance.gte(params.amount)) return;
+
+        const tx: ContractTransaction = await tokenInstance.approve(
+            params.targetAddress,
+            BigNumber.from(params.amount)
+        );
+
+        yield {
+            key: DepositSteps.UPDATING_ALLOWANCE,
+            txHash: tx.hash
+        };
+
+        const cr = await tx.wait();
+        const log = findLog(cr, tokenInstance.interface, "Approval");
+
+        if (!log) {
+            throw new UpdateAllowanceError();
+        }
+        const value = log.data;
+        if (!value || BigNumber.from(params.amount).gt(BigNumber.from(value))) {
+            throw new UpdateAllowanceError();
+        }
+
+        yield {
+            key: DepositSteps.UPDATED_ALLOWANCE,
+            allowance: params.amount
+        };
     }
 
     public async fetchPayMileage(param: FetchPayOption): Promise<any> {

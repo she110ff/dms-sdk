@@ -3,7 +3,7 @@ import { GanacheServer } from "./helper/GanacheServer";
 import * as deployContracts from "./helper/deployContracts";
 import { purchaseData } from "./helper/deployContracts";
 import { contextParamsLocalChain } from "./helper/constants";
-import { Amount, Client, Context, ContractUtils } from "../src";
+import { Amount, Client, Context, ContractUtils,DepositSteps } from "../src";
 import { FakerRelayServer } from "./helper/FakerRelayServer";
 import { Signer } from "@ethersproject/abstract-signer";
 
@@ -157,7 +157,34 @@ describe("Client", () => {
 
                 it("Test of the deposit", async () => {
                     const beforeBalance = await deployment.ledger.tokenBalanceOf(emailHash);
-                    await client.methods.deposit(email, amountToTrade.value);
+
+                    for await (const step of client.methods.deposit(email, amountToTrade.value)) {
+                        switch (step.key) {
+                            case DepositSteps.CHECKED_ALLOWANCE:
+                                expect(step.allowance instanceof BigNumber).toBe(true);
+                                expect(step.allowance.toString()).toBe("0");
+                                break;
+                            case DepositSteps.UPDATING_ALLOWANCE:
+                                expect(typeof step.txHash).toBe("string");
+                                expect(step.txHash).toMatch(/^0x[A-Fa-f0-9]{64}$/i);
+                                break;
+                            case DepositSteps.UPDATED_ALLOWANCE:
+                                expect(step.allowance instanceof BigNumber).toBe(true);
+                                expect(step.allowance.toString()).toBe(amountToTrade.toString());
+                                break;
+                            case DepositSteps.DEPOSITING:
+                                expect(typeof step.txHash).toBe("string");
+                                expect(step.txHash).toMatch(/^0x[A-Fa-f0-9]{64}$/i);
+                                break;
+                            case DepositSteps.DONE:
+                                expect(step.amount instanceof BigNumber).toBe(true);
+                                expect(step.amount.toString()).toBe(amountToTrade.toString());
+                                break;
+                            default:
+                                throw new Error("Unexpected DAO deposit step: " + JSON.stringify(step, null, 2));
+                        }
+                    }
+
                     const afterBalance = await deployment.ledger.tokenBalanceOf(emailHash);
                     expect(afterBalance.toString()).toEqual(beforeBalance.add(amountToTrade.value).toString());
                 });
