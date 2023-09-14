@@ -5,12 +5,12 @@ import { purchaseData } from "./helper/deployContracts";
 import { contextParamsLocalChain } from "./helper/constants";
 import { Amount, Client, Context, ContractUtils } from "../src";
 import { BigNumber } from "ethers";
-import { TestRelayServer } from "./helper/FakerRelayServer";
+import { FakerRelayServer } from "./helper/FakerRelayServer";
 
 describe("Client", () => {
     let node: Server;
     let deployment: deployContracts.Deployment;
-    let fakerServer: TestRelayServer;
+    let fakerRelayServer: FakerRelayServer;
     const [, , validator1, validator2, , user1] = GanacheServer.accounts();
 
     describe("Save Purchase Data & Pay (mileage, token)", () => {
@@ -30,13 +30,13 @@ describe("Client", () => {
 
             GanacheServer.setTestWeb3Signer(user1);
 
-            fakerServer = new TestRelayServer(7070, deployment);
-            await fakerServer.start();
+            fakerRelayServer = new FakerRelayServer(7070, deployment);
+            await fakerRelayServer.start();
         });
 
         afterAll(async () => {
             await node.close();
-            await fakerServer.stop();
+            await fakerRelayServer.stop();
         });
 
         describe("Method Check", () => {

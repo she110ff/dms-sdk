@@ -24,7 +24,7 @@ import { Deployment } from "./deployContracts";
  * This is an Agora node for testing.
  * The test code allows the Agora node to be started and shut down.
  */
-export class TestRelayServer {
+export class FakerRelayServer {
     /**
      * The application of express module
      */
