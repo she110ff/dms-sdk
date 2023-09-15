@@ -36,6 +36,24 @@ export type PayMileageOption = {
     signature: string;
 };
 
+export enum PayMileageSteps {
+    PAYING_MILEAGE = "paying_mileage",
+    DONE = "done"
+}
+
+export type PayMileageStepValue =
+    | { key: PayMileageSteps.PAYING_MILEAGE; txHash: string }
+    | { key: PayMileageSteps.DONE; amount: BigNumber; paidAmountMileage: BigNumber; balanceMileage: BigNumber };
+
+export enum PayTokenSteps {
+    PAYING_TOKEN = "paying_token",
+    DONE = "done"
+}
+
+export type PayTokenStepValue =
+    | { key: PayTokenSteps.PAYING_TOKEN; txHash: string }
+    | { key: PayTokenSteps.DONE; amount: BigNumber; paidAmountToken: BigNumber; balanceToken: BigNumber };
+
 export type PayTokenOption = {
     purchaseId: string;
     amount: string;

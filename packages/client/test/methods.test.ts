@@ -3,7 +3,16 @@ import { GanacheServer } from "./helper/GanacheServer";
 import * as deployContracts from "./helper/deployContracts";
 import { purchaseData } from "./helper/deployContracts";
 import { contextParamsLocalChain } from "./helper/constants";
-import { Amount, Client, Context, ContractUtils, DepositSteps, WithdrawSteps } from "../src";
+import {
+    Amount,
+    Client,
+    Context,
+    ContractUtils,
+    DepositSteps,
+    PayMileageSteps,
+    PayTokenSteps,
+    WithdrawSteps
+} from "../src";
 import { FakerRelayServer } from "./helper/FakerRelayServer";
 import { BigNumber } from "@ethersproject/bignumber";
 import { Signer } from "@ethersproject/abstract-signer";
@@ -110,25 +119,53 @@ describe("Client", () => {
             describe("Pay Check", () => {
                 it("Test of pay mileage", async () => {
                     const exampleData = purchaseData[0];
+                    const amount = Amount.make(exampleData.amount, 18);
                     const option = await client.methods.getPayMileageOption(
                         exampleData.purchaseId,
-                        Amount.make(exampleData.amount, 18).value,
+                        amount.value,
                         exampleData.userEmail,
                         exampleData.franchiseeId
                     );
-                    const responseData = await client.methods.fetchPayMileage(option);
-                    expect(responseData.data.txHash).toMatch(/^0x[A-Fa-f0-9]{64}$/i);
+
+                    for await (const step of client.methods.fetchPayMileage(option)) {
+                        switch (step.key) {
+                            case PayMileageSteps.PAYING_MILEAGE:
+                                expect(typeof step.txHash).toBe("string");
+                                expect(step.txHash).toMatch(/^0x[A-Fa-f0-9]{64}$/i);
+                                break;
+                            case PayMileageSteps.DONE:
+                                expect(step.amount instanceof BigNumber).toBe(true);
+                                expect(step.amount.toString()).toBe(amount.toString());
+                                break;
+                            default:
+                                throw new Error("Unexpected pay mileage step: " + JSON.stringify(step, null, 2));
+                        }
+                    }
                 });
                 it("Test of pay token", async () => {
                     const exampleData = purchaseData[0];
+                    const amount = Amount.make(exampleData.amount, 18);
                     const option = await client.methods.getPayTokenOption(
                         exampleData.purchaseId,
-                        Amount.make(exampleData.amount, 18).value,
+                        amount.value,
                         exampleData.userEmail,
                         exampleData.franchiseeId
                     );
-                    const responseData = await client.methods.fetchPayToken(option);
-                    expect(responseData.data.txHash).toMatch(/^0x[A-Fa-f0-9]{64}$/i);
+
+                    for await (const step of client.methods.fetchPayToken(option)) {
+                        switch (step.key) {
+                            case PayTokenSteps.PAYING_TOKEN:
+                                expect(typeof step.txHash).toBe("string");
+                                expect(step.txHash).toMatch(/^0x[A-Fa-f0-9]{64}$/i);
+                                break;
+                            case PayTokenSteps.DONE:
+                                expect(step.amount instanceof BigNumber).toBe(true);
+                                expect(step.amount.toString()).toBe(amount.toString());
+                                break;
+                            default:
+                                throw new Error("Unexpected pay token step: " + JSON.stringify(step, null, 2));
+                        }
+                    }
                 });
             });
 
@@ -182,7 +219,7 @@ describe("Client", () => {
                                 expect(step.amount.toString()).toBe(amountToTrade.toString());
                                 break;
                             default:
-                                throw new Error("Unexpected DAO deposit step: " + JSON.stringify(step, null, 2));
+                                throw new Error("Unexpected deposit step: " + JSON.stringify(step, null, 2));
                         }
                     }
 
@@ -203,7 +240,7 @@ describe("Client", () => {
                                 expect(step.amount.toString()).toBe(amountToTrade.toString());
                                 break;
                             default:
-                                throw new Error("Unexpected DAO withdraw step: " + JSON.stringify(step, null, 2));
+                                throw new Error("Unexpected withdraw step: " + JSON.stringify(step, null, 2));
                         }
                     }
 

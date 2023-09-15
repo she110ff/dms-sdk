@@ -18,7 +18,11 @@ import {
     ExchangeTokenToMileageOption,
     FetchPayOption,
     PayMileageOption,
+    PayMileageSteps,
+    PayMileageStepValue,
     PayTokenOption,
+    PayTokenSteps,
+    PayTokenStepValue,
     UpdateAllowanceParams,
     UpdateAllowanceStepValue,
     WithdrawSteps,
@@ -27,8 +31,11 @@ import {
 import {
     AmountMismatchError,
     FailedDepositError,
+    FailedPayMileageError,
+    FailedPayTokenError,
     FailedWithdrawError,
     InsufficientBalanceError,
+    InternalServerError,
     InvalidEmailParamError,
     MismatchApproveAddressError,
     NoHttpModuleError,
@@ -465,12 +472,66 @@ export class ClientMethods extends ClientCore implements IClientMethods, IClient
         };
     }
 
-    public async fetchPayMileage(param: FetchPayOption): Promise<any> {
-        return Network.post(await this.getEndpoint("payMileage"), param);
+    public async *fetchPayMileage(param: FetchPayOption): AsyncGenerator<PayMileageStepValue> {
+        const provider = this.web3.getProvider();
+        if (!provider) throw new NoProviderError();
+
+        const res = await Network.post(await this.getEndpoint("payMileage"), param);
+        if (res?.code !== 200) throw new InternalServerError(res.message);
+        if (res?.data?.code && res.data.code !== 200) throw new InternalServerError(res?.data?.error?.message ?? "");
+
+        yield { key: PayMileageSteps.PAYING_MILEAGE, txHash: res.data.txHash };
+
+        const txResponse = (await provider.getTransaction(res.data.txHash)) as ContractTransaction;
+        const txReceipt = await txResponse.wait();
+        const ledgerContract: Ledger = Ledger__factory.connect(this.web3.getLedgerAddress(), provider);
+
+        const log = findLog(txReceipt, ledgerContract.interface, "PaidMileage");
+        if (!log) {
+            throw new FailedPayMileageError();
+        }
+        const amount = BigNumber.from(param.amount);
+        const parsedLog = ledgerContract.interface.parseLog(log);
+        if (!amount.eq(parsedLog.args["value"])) {
+            throw new AmountMismatchError(amount, parsedLog.args["value"]);
+        }
+        yield {
+            key: PayMileageSteps.DONE,
+            amount: amount,
+            paidAmountMileage: parsedLog.args["paidAmountMileage"],
+            balanceMileage: parsedLog.args["balanceMileage"]
+        };
     }
 
-    public async fetchPayToken(param: FetchPayOption): Promise<any> {
-        return Network.post(await this.getEndpoint("payToken"), param);
+    public async *fetchPayToken(param: FetchPayOption): AsyncGenerator<PayTokenStepValue> {
+        const provider = this.web3.getProvider();
+        if (!provider) throw new NoProviderError();
+
+        const res = await Network.post(await this.getEndpoint("payToken"), param);
+        if (res?.code !== 200) throw new InternalServerError(res.message);
+        if (res?.data?.code && res.data.code !== 200) throw new InternalServerError(res?.data?.error?.message ?? "");
+
+        yield { key: PayTokenSteps.PAYING_TOKEN, txHash: res.data.txHash };
+
+        const txResponse = (await provider.getTransaction(res.data.txHash)) as ContractTransaction;
+        const txReceipt = await txResponse.wait();
+        const ledgerContract: Ledger = Ledger__factory.connect(this.web3.getLedgerAddress(), provider);
+
+        const log = findLog(txReceipt, ledgerContract.interface, "PaidToken");
+        if (!log) {
+            throw new FailedPayTokenError();
+        }
+        const amount = BigNumber.from(param.amount);
+        const parsedLog = ledgerContract.interface.parseLog(log);
+        if (!amount.eq(parsedLog.args["value"])) {
+            throw new AmountMismatchError(amount, parsedLog.args["value"]);
+        }
+        yield {
+            key: PayTokenSteps.DONE,
+            amount: amount,
+            paidAmountToken: parsedLog.args["paidAmountToken"],
+            balanceToken: parsedLog.args["balanceToken"]
+        };
     }
 
     public async fetchExchangeMileageToToken(param: ExchangeMileageToTokenOption): Promise<any> {

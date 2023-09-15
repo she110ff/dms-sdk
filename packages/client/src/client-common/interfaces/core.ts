@@ -3,7 +3,13 @@
 import { Signer } from "@ethersproject/abstract-signer";
 import { Contract, ContractInterface } from "@ethersproject/contracts";
 import { JsonRpcProvider } from "@ethersproject/providers";
-import { ExchangeMileageToTokenOption, ExchangeTokenToMileageOption, FetchPayOption } from "../../interfaces";
+import {
+    ExchangeMileageToTokenOption,
+    ExchangeTokenToMileageOption,
+    FetchPayOption,
+    PayMileageStepValue,
+    PayTokenStepValue
+} from "../../interfaces";
 
 export interface IClientWeb3Core {
     useSigner: (signer: Signer) => void;
@@ -27,8 +33,8 @@ export interface IClientHttpCore {
     getEndpoint: (path: string) => Promise<URL>;
     fetchExchangeTokenToMileage: (params: ExchangeTokenToMileageOption) => Promise<any>;
     fetchExchangeMileageToToken: (params: ExchangeMileageToTokenOption) => Promise<any>;
-    fetchPayToken: (param: FetchPayOption) => Promise<any>;
-    fetchPayMileage: (param: FetchPayOption) => Promise<any>;
+    fetchPayMileage: (param: FetchPayOption) => AsyncGenerator<PayMileageStepValue>;
+    fetchPayToken: (param: FetchPayOption) => AsyncGenerator<PayTokenStepValue>;
 }
 
 export interface IClientCore {

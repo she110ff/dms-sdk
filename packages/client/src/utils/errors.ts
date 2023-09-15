@@ -115,3 +115,21 @@ export class FailedWithdrawError extends Error {
         super("Failed to withdraw");
     }
 }
+
+export class FailedPayMileageError extends Error {
+    constructor() {
+        super("Failed to pay mileage");
+    }
+}
+
+export class FailedPayTokenError extends Error {
+    constructor() {
+        super("Failed to pay token");
+    }
+}
+
+export class InternalServerError extends Error {
+    constructor(message: string) {
+        super(`Internal Server Error. Reason : ${message}`);
+    }
+}
