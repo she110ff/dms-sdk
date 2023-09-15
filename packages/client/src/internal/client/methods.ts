@@ -49,6 +49,7 @@ import { findLog } from "../../client-common/utils";
 import { BigNumber } from "@ethersproject/bignumber";
 import { AddressZero } from "@ethersproject/constants";
 import { ContractTransaction } from "@ethersproject/contracts";
+import { getNetwork } from "@ethersproject/networks";
 
 /**
  * Methods module the SDK Generic Client
@@ -76,7 +77,7 @@ export class ClientMethods extends ClientCore implements IClientMethods, IClient
         const provider = this.web3.getProvider() as Provider;
         if (!provider) throw new NoProviderError();
 
-        const network = await provider.getNetwork();
+        const network = getNetwork((await provider.getNetwork()).chainId);
         const networkName = network.name as SupportedNetworks;
         if (!SupportedNetworksArray.includes(networkName)) {
             throw new UnsupportedNetworkError(networkName);
@@ -99,7 +100,7 @@ export class ClientMethods extends ClientCore implements IClientMethods, IClient
         const provider = this.web3.getProvider() as Provider;
         if (!provider) throw new NoProviderError();
 
-        const network = await provider.getNetwork();
+        const network = getNetwork((await provider.getNetwork()).chainId);
         const networkName = network.name as SupportedNetworks;
         if (!SupportedNetworksArray.includes(networkName)) {
             throw new UnsupportedNetworkError(networkName);
@@ -132,7 +133,7 @@ export class ClientMethods extends ClientCore implements IClientMethods, IClient
             throw new NoProviderError();
         }
 
-        const network = await signer.provider.getNetwork();
+        const network = getNetwork((await signer.provider.getNetwork()).chainId);
         const networkName = network.name as SupportedNetworks;
         if (!SupportedNetworksArray.includes(networkName)) {
             throw new UnsupportedNetworkError(networkName);
@@ -186,7 +187,7 @@ export class ClientMethods extends ClientCore implements IClientMethods, IClient
             throw new NoProviderError();
         }
 
-        const network = await signer.provider.getNetwork();
+        const network = getNetwork((await signer.provider.getNetwork()).chainId);
         const networkName = network.name as SupportedNetworks;
         if (!SupportedNetworksArray.includes(networkName)) {
             throw new UnsupportedNetworkError(networkName);
@@ -233,7 +234,7 @@ export class ClientMethods extends ClientCore implements IClientMethods, IClient
             throw new NoProviderError();
         }
 
-        const network = await signer.provider.getNetwork();
+        const network = getNetwork((await signer.provider.getNetwork()).chainId);
         const networkName = network.name as SupportedNetworks;
         if (!SupportedNetworksArray.includes(networkName)) {
             throw new UnsupportedNetworkError(networkName);
@@ -277,7 +278,7 @@ export class ClientMethods extends ClientCore implements IClientMethods, IClient
             throw new NoProviderError();
         }
 
-        const network = await signer.provider.getNetwork();
+        const network = getNetwork((await signer.provider.getNetwork()).chainId);
         const networkName = network.name as SupportedNetworks;
         if (!SupportedNetworksArray.includes(networkName)) {
             throw new UnsupportedNetworkError(networkName);
@@ -321,7 +322,7 @@ export class ClientMethods extends ClientCore implements IClientMethods, IClient
             throw new NoProviderError();
         }
 
-        const network = await signer.provider.getNetwork();
+        const network = getNetwork((await signer.provider.getNetwork()).chainId);
         const networkName = network.name as SupportedNetworks;
         if (!SupportedNetworksArray.includes(networkName)) {
             throw new UnsupportedNetworkError(networkName);
@@ -381,7 +382,7 @@ export class ClientMethods extends ClientCore implements IClientMethods, IClient
             throw new NoProviderError();
         }
 
-        const network = await signer.provider.getNetwork();
+        const network = getNetwork((await signer.provider.getNetwork()).chainId);
         const networkName = network.name as SupportedNetworks;
         if (!SupportedNetworksArray.includes(networkName)) {
             throw new UnsupportedNetworkError(networkName);
@@ -435,6 +436,12 @@ export class ClientMethods extends ClientCore implements IClientMethods, IClient
             throw new NoProviderError();
         }
 
+        const network = getNetwork((await signer.provider.getNetwork()).chainId);
+        const networkName = network.name as SupportedNetworks;
+        if (!SupportedNetworksArray.includes(networkName)) {
+            throw new UnsupportedNetworkError(networkName);
+        }
+
         const tokenInstance = Token__factory.connect(params.tokenAddress, signer);
         const currentAllowance = await tokenInstance.allowance(await signer.getAddress(), params.targetAddress);
 
@@ -476,6 +483,12 @@ export class ClientMethods extends ClientCore implements IClientMethods, IClient
         const provider = this.web3.getProvider();
         if (!provider) throw new NoProviderError();
 
+        const network = getNetwork((await provider.getNetwork()).chainId);
+        const networkName = network.name as SupportedNetworks;
+        if (!SupportedNetworksArray.includes(networkName)) {
+            throw new UnsupportedNetworkError(networkName);
+        }
+
         const res = await Network.post(await this.getEndpoint("payMileage"), param);
         if (res?.code !== 200) throw new InternalServerError(res.message);
         if (res?.data?.code && res.data.code !== 200) throw new InternalServerError(res?.data?.error?.message ?? "");
@@ -506,6 +519,12 @@ export class ClientMethods extends ClientCore implements IClientMethods, IClient
     public async *fetchPayToken(param: FetchPayOption): AsyncGenerator<PayTokenStepValue> {
         const provider = this.web3.getProvider();
         if (!provider) throw new NoProviderError();
+
+        const network = getNetwork((await provider.getNetwork()).chainId);
+        const networkName = network.name as SupportedNetworks;
+        if (!SupportedNetworksArray.includes(networkName)) {
+            throw new UnsupportedNetworkError(networkName);
+        }
 
         const res = await Network.post(await this.getEndpoint("payToken"), param);
         if (res?.code !== 200) throw new InternalServerError(res.message);
