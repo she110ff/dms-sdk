@@ -84,8 +84,8 @@ describe("Client", () => {
                         .connect(signer)
                         .addRequest(requestId, emailHash, userAddress, signature);
                     // Vote
-                    await deployment.linkCollection.connect(validator1).voteRequest(requestId, 1);
-                    await deployment.linkCollection.connect(validator2).voteRequest(requestId, 1);
+                    await deployment.linkCollection.connect(validator1).voteRequest(requestId);
+                    await deployment.linkCollection.connect(validator2).voteRequest(requestId);
                     await deployment.linkCollection.connect(validator1).countVote(requestId);
                 });
 
