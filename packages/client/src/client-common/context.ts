@@ -1,6 +1,7 @@
 import { ContextParams, ContextState } from "./interfaces/context";
 import { JsonRpcProvider, Networkish } from "@ethersproject/providers";
 import { UnsupportedProtocolError } from "dms-sdk-common";
+import { GraphQLClient } from "graphql-request";
 
 export { ContextParams } from "./interfaces/context";
 
@@ -97,6 +98,19 @@ export class Context {
         return this.state.ledgerAddress;
     }
 
+    /**
+     * Getter for the GraphQL client
+     *
+     * @var graphql
+     *
+     * @returns {GraphQLClient[] | undefined}
+     *
+     * @public
+     */
+    get graphql(): GraphQLClient[] | undefined {
+        return this.state.graphql || defaultState.graphql;
+    }
+
     // DEFAULT CONTEXT STATE
     static setDefault(params: Partial<ContextParams>) {
         if (params.signer) {
@@ -134,6 +148,18 @@ export class Context {
         }
     }
 
+    private static resolveGraphql(endpoints: { url: string }[]): GraphQLClient[] {
+        let clients: GraphQLClient[] = [];
+        endpoints.forEach((endpoint) => {
+            const url = new URL(endpoint.url);
+            if (!supportedProtocols.includes(url.protocol)) {
+                throw new UnsupportedProtocolError(url.protocol);
+            }
+            clients.push(new GraphQLClient(url.href));
+        });
+        return clients;
+    }
+
     /**
      * Does set and parse the given context configuration object
      *
@@ -160,6 +186,8 @@ export class Context {
             throw new Error("Missing franchisee collection  contract address");
         } else if (!contextParams.ledgerAddress) {
             throw new Error("Missing ledger contract address");
+        } else if (!contextParams.graphqlNodes?.length) {
+            throw new Error("No graphql URL defined");
         }
 
         this.state = {
@@ -171,7 +199,8 @@ export class Context {
             validatorCollectionAddress: contextParams.validatorCollectionAddress,
             tokenPriceAddress: contextParams.tokenPriceAddress,
             franchiseeCollectionAddress: contextParams.franchiseeCollectionAddress,
-            ledgerAddress: contextParams.ledgerAddress
+            ledgerAddress: contextParams.ledgerAddress,
+            graphql: Context.resolveGraphql(contextParams.graphqlNodes)
         };
     }
 
@@ -205,6 +234,9 @@ export class Context {
         }
         if (contextParams.ledgerAddress) {
             this.state.ledgerAddress = contextParams.ledgerAddress;
+        }
+        if (contextParams.graphqlNodes?.length) {
+            this.state.graphql = Context.resolveGraphql(contextParams.graphqlNodes);
         }
     }
 }

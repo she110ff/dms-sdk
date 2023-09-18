@@ -1,7 +1,7 @@
 import { JsonRpcProvider } from "@ethersproject/providers";
 import { Wallet } from "@ethersproject/wallet";
 import { Client, Context } from "../src";
-import { contextParamsMainnet, web3endpoints } from "./helper/constants";
+import { contextParamsMainnet, web3EndpointsMainnet } from "./helper/constants";
 
 describe("Client", () => {
     describe("Client instances", () => {
@@ -18,7 +18,7 @@ describe("Client", () => {
         });
 
         it("Should create a failing client", async () => {
-            contextParamsMainnet.web3Providers = web3endpoints.failing;
+            contextParamsMainnet.web3Providers = web3EndpointsMainnet.failing;
             const context = new Context(contextParamsMainnet);
             const client = new Client(context);
 
@@ -31,7 +31,7 @@ describe("Client", () => {
         });
 
         it("Should create a client, fail and shift to a working endpoint", async () => {
-            contextParamsMainnet.web3Providers = web3endpoints.failing.concat(web3endpoints.working);
+            contextParamsMainnet.web3Providers = web3EndpointsMainnet.failing.concat(web3EndpointsMainnet.working);
             const context = new Context(contextParamsMainnet);
             const client = new Client(context);
 

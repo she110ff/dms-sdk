@@ -10,6 +10,7 @@ import {
     PayMileageStepValue,
     PayTokenStepValue
 } from "../../interfaces";
+import { GraphQLClient } from "graphql-request";
 
 export interface IClientWeb3Core {
     useSigner: (signer: Signer) => void;
@@ -37,6 +38,23 @@ export interface IClientHttpCore {
     fetchPayToken: (param: FetchPayOption) => AsyncGenerator<PayTokenStepValue>;
 }
 
+export interface IClientGraphQLCore {
+    getClient: () => GraphQLClient;
+    shiftClient: () => void;
+    isUp: () => Promise<boolean>;
+    ensureOnline: () => Promise<void>;
+    request: <T>({
+        query,
+        params,
+        name
+    }: {
+        query: string;
+        params: { [key: string]: any };
+        name?: string;
+    }) => Promise<T>;
+}
+
 export interface IClientCore {
     web3: IClientWeb3Core;
+    graphql: IClientGraphQLCore;
 }
