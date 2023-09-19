@@ -4,6 +4,7 @@ import {
     ExchangeMileageToTokenOption,
     ExchangeTokenToMileageOption,
     PayMileageOption,
+    QueryOption,
     UpdateAllowanceParams,
     UpdateAllowanceStepValue,
     WithdrawStepValue
@@ -35,4 +36,5 @@ export interface IClientMethods extends IClientCore, IClientHttpCore {
     deposit: (email: string, amount: BigNumber) => AsyncGenerator<DepositStepValue>;
     withdraw: (email: string, amount: BigNumber) => AsyncGenerator<WithdrawStepValue>;
     updateAllowance: (params: UpdateAllowanceParams) => AsyncGenerator<UpdateAllowanceStepValue>;
+    getUserTradeHistory: (email: string, option?: QueryOption) => Promise<any>;
 }

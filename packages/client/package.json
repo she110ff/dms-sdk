@@ -25,6 +25,7 @@
     "test": "TESTING=true tsdx test --verbose --runInBand",
     "test:client": "TESTING=true tsdx test test/client.test.ts --verbose --runInBand",
     "test:methods": "TESTING=true tsdx test test/methods.test.ts --verbose --runInBand",
+    "test:graphql": "TESTING=true tsdx test test/graphql.test.ts --verbose --runInBand",
     "lint": "tsdx lint --fix",
     "prepare": "tsdx build",
     "size": "size-limit",

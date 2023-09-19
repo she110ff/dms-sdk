@@ -108,3 +108,24 @@ export enum WithdrawSteps {
 export type WithdrawStepValue =
     | { key: WithdrawSteps.WITHDRAWING; txHash: string }
     | { key: WithdrawSteps.DONE; amount: BigNumber };
+
+export enum SortDirection {
+    ASC = "asc",
+    DESC = "desc"
+}
+
+export type QueryOption = {
+    limit?: number;
+    skip?: number;
+    sortDirection?: SortDirection;
+    sortBy?: SortByBlock;
+};
+
+export enum SortByBlock {
+    BLOCK_NUMBER = "blockNumber",
+    BLOCK_TIMESTAMP = "blockTimestamp"
+}
+export enum SortBy {
+    LAST_UPDATED = "lastUpdated",
+    CREATED_AT = "createdAt"
+}

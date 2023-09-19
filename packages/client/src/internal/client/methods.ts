@@ -23,6 +23,9 @@ import {
     PayTokenOption,
     PayTokenSteps,
     PayTokenStepValue,
+    QueryOption,
+    SortByBlock,
+    SortDirection,
     UpdateAllowanceParams,
     UpdateAllowanceStepValue,
     WithdrawSteps,
@@ -50,6 +53,7 @@ import { BigNumber } from "@ethersproject/bignumber";
 import { AddressZero } from "@ethersproject/constants";
 import { ContractTransaction } from "@ethersproject/contracts";
 import { getNetwork } from "@ethersproject/networks";
+import { QueryUserTradeHistory } from "../../client-common/graphql-queries/history";
 
 /**
  * Methods module the SDK Generic Client
@@ -594,5 +598,24 @@ export class ClientMethods extends ClientCore implements IClientMethods, IClient
             newUrl.pathname += "/";
         }
         return new URL(path, newUrl);
+    }
+
+    public async getUserTradeHistory(
+        email: string,
+        { limit, skip, sortDirection, sortBy }: QueryOption = {
+            limit: 10,
+            skip: 0,
+            sortDirection: SortDirection.DESC,
+            sortBy: SortByBlock.BLOCK_NUMBER
+        }
+    ): Promise<any> {
+        if (!checkEmail(email)) throw new InvalidEmailParamError();
+        const emailHash = ContractUtils.sha256String(email);
+        const query = QueryUserTradeHistory;
+        const where = { email: emailHash };
+        const params = { where, limit, skip, direction: sortDirection, sortBy };
+        const name = "user trade history";
+        const res = await this.graphql.request({ query, params, name });
+        return res;
     }
 }
