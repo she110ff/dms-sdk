@@ -618,4 +618,80 @@ export class ClientMethods extends ClientCore implements IClientMethods, IClient
         const res = await this.graphql.request({ query, params, name });
         return res;
     }
+
+    public async getUserMileageInputTradeHistory(
+        email: string,
+        { limit, skip, sortDirection, sortBy }: QueryOption = {
+            limit: 10,
+            skip: 0,
+            sortDirection: SortDirection.DESC,
+            sortBy: SortByBlock.BLOCK_NUMBER
+        }
+    ): Promise<any> {
+        if (!checkEmail(email)) throw new InvalidEmailParamError();
+        const emailHash = ContractUtils.sha256String(email);
+        const query = QueryUserTradeHistory;
+        const where = { email: emailHash, assetFlow: "MileageInput" };
+        const params = { where, limit, skip, direction: sortDirection, sortBy };
+        const name = "user trade history";
+        const res = await this.graphql.request({ query, params, name });
+        return res;
+    }
+
+    public async getUserTokenInputTradeHistory(
+        email: string,
+        { limit, skip, sortDirection, sortBy }: QueryOption = {
+            limit: 10,
+            skip: 0,
+            sortDirection: SortDirection.DESC,
+            sortBy: SortByBlock.BLOCK_NUMBER
+        }
+    ): Promise<any> {
+        if (!checkEmail(email)) throw new InvalidEmailParamError();
+        const emailHash = ContractUtils.sha256String(email);
+        const query = QueryUserTradeHistory;
+        const where = { email: emailHash, assetFlow: "TokenInput" };
+        const params = { where, limit, skip, direction: sortDirection, sortBy };
+        const name = "user trade history";
+        const res = await this.graphql.request({ query, params, name });
+        return res;
+    }
+
+    public async getUserMileageOutputTradeHistory(
+        email: string,
+        { limit, skip, sortDirection, sortBy }: QueryOption = {
+            limit: 10,
+            skip: 0,
+            sortDirection: SortDirection.DESC,
+            sortBy: SortByBlock.BLOCK_NUMBER
+        }
+    ): Promise<any> {
+        if (!checkEmail(email)) throw new InvalidEmailParamError();
+        const emailHash = ContractUtils.sha256String(email);
+        const query = QueryUserTradeHistory;
+        const where = { email: emailHash, assetFlow: "MileageOutput" };
+        const params = { where, limit, skip, direction: sortDirection, sortBy };
+        const name = "user trade history";
+        const res = await this.graphql.request({ query, params, name });
+        return res;
+    }
+
+    public async getUserTokenOutputTradeHistory(
+        email: string,
+        { limit, skip, sortDirection, sortBy }: QueryOption = {
+            limit: 10,
+            skip: 0,
+            sortDirection: SortDirection.DESC,
+            sortBy: SortByBlock.BLOCK_NUMBER
+        }
+    ): Promise<any> {
+        if (!checkEmail(email)) throw new InvalidEmailParamError();
+        const emailHash = ContractUtils.sha256String(email);
+        const query = QueryUserTradeHistory;
+        const where = { email: emailHash, assetFlow: "TokenOutput" };
+        const params = { where, limit, skip, direction: sortDirection, sortBy };
+        const name = "user trade history";
+        const res = await this.graphql.request({ query, params, name });
+        return res;
+    }
 }

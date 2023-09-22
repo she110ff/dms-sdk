@@ -37,4 +37,8 @@ export interface IClientMethods extends IClientCore, IClientHttpCore {
     withdraw: (email: string, amount: BigNumber) => AsyncGenerator<WithdrawStepValue>;
     updateAllowance: (params: UpdateAllowanceParams) => AsyncGenerator<UpdateAllowanceStepValue>;
     getUserTradeHistory: (email: string, option?: QueryOption) => Promise<any>;
+    getUserMileageInputTradeHistory: (email: string, option?: QueryOption) => Promise<any>;
+    getUserTokenInputTradeHistory: (email: string, option?: QueryOption) => Promise<any>;
+    getUserMileageOutputTradeHistory: (email: string, option?: QueryOption) => Promise<any>;
+    getUserTokenOutputTradeHistory: (email: string, option?: QueryOption) => Promise<any>;
 }

@@ -36,17 +36,63 @@ describe("Client", () => {
                     expect(isUp).toEqual(true);
                 });
 
-                it("History", async () => {
+                it("All History", async () => {
                     const user = users[50];
-                    console.log("Email Hash ", ContractUtils.sha256String(user.email));
+                    const hash = ContractUtils.sha256String(user.email);
                     const res = await client.methods.getUserTradeHistory(user.email);
                     const length = res.userTradeHistories.length;
                     expect(length).toBeGreaterThan(0);
-                    expect(res.userTradeHistories[length - 1].email).toEqual(
-                        "0x02798214d6110fda27efef6d6ede9c2655181d9b625bb05547104fa5c1aa54b8"
-                    );
+                    expect(res.userTradeHistories[length - 1].email).toEqual(hash);
                     expect(res.userTradeHistories[length - 1].action).toEqual("DepositedToken");
                     expect(res.userTradeHistories[length - 1].amountToken).toEqual("50000000000000");
+                });
+
+                it("Mileage Input History", async () => {
+                    for (const user of users) {
+                        const hash = ContractUtils.sha256String(user.email);
+                        const res = await client.methods.getUserMileageInputTradeHistory(user.email);
+                        const length = res.userTradeHistories.length;
+                        if (length > 0) {
+                            expect(res.userTradeHistories[length - 1].email).toEqual(hash);
+                            expect(res.userTradeHistories[length - 1].assetFlow).toEqual("MileageInput");
+                        }
+                    }
+                });
+
+                it("Token Input History", async () => {
+                    for (const user of users) {
+                        const hash = ContractUtils.sha256String(user.email);
+                        const res = await client.methods.getUserTokenInputTradeHistory(user.email);
+                        const length = res.userTradeHistories.length;
+                        if (length > 0) {
+                            expect(res.userTradeHistories[length - 1].email).toEqual(hash);
+                            expect(res.userTradeHistories[length - 1].assetFlow).toEqual("TokenInput");
+                        }
+                    }
+                });
+
+                it("Mileage Output History", async () => {
+                    for (const user of users) {
+                        const hash = ContractUtils.sha256String(user.email);
+                        const res = await client.methods.getUserMileageOutputTradeHistory(user.email);
+                        const length = res.userTradeHistories.length;
+                        if (length > 0) {
+                            expect(res.userTradeHistories[length - 1].email).toEqual(hash);
+                            expect(res.userTradeHistories[length - 1].assetFlow).toEqual("MileageOutput");
+                        }
+                    }
+                });
+
+                it("Token Output History", async () => {
+                    for (const user of users) {
+                        const hash = ContractUtils.sha256String(user.email);
+                        const res = await client.methods.getUserTokenOutputTradeHistory(user.email);
+                        const length = res.userTradeHistories.length;
+                        if (length > 0) {
+                            expect(res.userTradeHistories[length - 1].email).toEqual(hash);
+                            expect(res.userTradeHistories[length - 1].assetFlow).toEqual("TokenOutput");
+                        }
+                    }
                 });
             });
         });

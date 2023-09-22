@@ -12,6 +12,7 @@ export const QueryUserTradeHistory = gql`
             id
             email
             action
+            assetFlow
             amountMileage
             amountToken
             value
