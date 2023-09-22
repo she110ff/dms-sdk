@@ -53,7 +53,7 @@ import { BigNumber } from "@ethersproject/bignumber";
 import { AddressZero } from "@ethersproject/constants";
 import { ContractTransaction } from "@ethersproject/contracts";
 import { getNetwork } from "@ethersproject/networks";
-import { QueryUserTradeHistory } from "../../client-common/graphql-queries/history";
+import { QueryUserTradeHistory } from "../graphql-queries/history";
 
 /**
  * Methods module the SDK Generic Client

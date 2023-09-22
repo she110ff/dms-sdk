@@ -9,20 +9,20 @@ export const QueryUserTradeHistory = gql`
         $sortBy: UserTradeHistory_orderBy!
     ) {
         userTradeHistories(where: $where, first: $limit, orderBy: $sortBy, orderDirection: $direction, skip: $skip) {
-            account
+            id
+            email
             action
             amountMileage
             amountToken
+            value
             balanceMileage
             balanceToken
+            purchaseId
+            franchiseeId
+            account
             blockNumber
             blockTimestamp
-            email
-            franchiseeId
-            id
-            purchaseId
             transactionHash
-            value
         }
     }
 `;
