@@ -5,7 +5,7 @@ import { Signer } from "@ethersproject/abstract-signer";
 import { IClientWeb3Core } from "../interfaces/core";
 import { Context } from "../context";
 import {
-    NoFranchiseeCollectionAddress,
+    NoShopCollectionAddress,
     NoLedgerAddress,
     NoLinkCollectionAddress,
     NoTokenAddress,
@@ -21,7 +21,7 @@ const tokenAddressMap = new Map<Web3Module, string>();
 const linkCollectionAddressMap = new Map<Web3Module, string>();
 const validatorCollectionAddressMap = new Map<Web3Module, string>();
 const tokenPriceAddressMap = new Map<Web3Module, string>();
-const franchiseeCollectionAddressMap = new Map<Web3Module, string>();
+const shopCollectionAddressMap = new Map<Web3Module, string>();
 const ledgerAddressMap = new Map<Web3Module, string>();
 
 export class Web3Module implements IClientWeb3Core {
@@ -53,8 +53,8 @@ export class Web3Module implements IClientWeb3Core {
             tokenPriceAddressMap.set(this, context.tokenPriceAddress);
         }
 
-        if (context.franchiseeCollectionAddress) {
-            franchiseeCollectionAddressMap.set(this, context.franchiseeCollectionAddress);
+        if (context.shopCollectionAddress) {
+            shopCollectionAddressMap.set(this, context.shopCollectionAddress);
         }
 
         if (context.ledgerAddress) {
@@ -81,8 +81,8 @@ export class Web3Module implements IClientWeb3Core {
         return tokenPriceAddressMap.get(this) || "";
     }
 
-    private get franchiseeCollectionAddress(): string {
-        return franchiseeCollectionAddressMap.get(this) || "";
+    private get shopCollectionAddress(): string {
+        return shopCollectionAddressMap.get(this) || "";
     }
 
     private get ledgerAddress(): string {
@@ -229,11 +229,11 @@ export class Web3Module implements IClientWeb3Core {
         return this.tokenPriceAddress;
     }
 
-    public getFranchiseeCollectionAddress(): string {
-        if (!this.franchiseeCollectionAddress) {
-            throw new NoFranchiseeCollectionAddress();
+    public getShopCollectionAddress(): string {
+        if (!this.shopCollectionAddress) {
+            throw new NoShopCollectionAddress();
         }
-        return this.franchiseeCollectionAddress;
+        return this.shopCollectionAddress;
     }
 
     public getLedgerAddress(): string {

@@ -91,12 +91,12 @@ export class ContractUtils {
         purchaseId: string,
         amount: BigNumberish,
         userEmail: string,
-        franchiseeId: string,
+        shopId: string,
         nonce: BigNumberish
     ): Promise<string> {
         const encodedResult = defaultAbiCoder.encode(
             ["string", "uint256", "bytes32", "string", "address", "uint256"],
-            [purchaseId, amount, userEmail, franchiseeId, await signer.getAddress(), nonce]
+            [purchaseId, amount, userEmail, shopId, await signer.getAddress(), nonce]
         );
         const message = arrayify(keccak256(encodedResult));
         return signer.signMessage(message);
@@ -120,14 +120,14 @@ export class ContractUtils {
         purchaseId: string,
         amount: BigNumberish,
         userEmail: string,
-        franchiseeId: string,
+        shopId: string,
         signerAddress: string,
         nonce: BigNumberish,
         signature: string
     ): boolean {
         const encodedResult = defaultAbiCoder.encode(
             ["string", "uint256", "bytes32", "string", "address", "uint256"],
-            [purchaseId, amount, userEmail, franchiseeId, signerAddress, nonce]
+            [purchaseId, amount, userEmail, shopId, signerAddress, nonce]
         );
         const message = arrayify(keccak256(encodedResult));
         let res: string;

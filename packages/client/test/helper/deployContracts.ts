@@ -5,8 +5,8 @@ import { Contract, ContractFactory } from "@ethersproject/contracts";
 import { JsonRpcProvider, JsonRpcSigner } from "@ethersproject/providers";
 import { Wallet } from "@ethersproject/wallet";
 import {
-    FranchiseeCollection,
-    FranchiseeCollection__factory,
+    ShopCollection,
+    ShopCollection__factory,
     Ledger,
     Ledger__factory,
     Token,
@@ -25,7 +25,7 @@ export interface Deployment {
     token: Token;
     validatorCollection: ValidatorCollection;
     tokenPrice: TokenPrice;
-    franchiseeCollection: FranchiseeCollection;
+    shopCollection: ShopCollection;
     ledger: Ledger;
 }
 
@@ -53,7 +53,7 @@ export async function deployAll(provider: JsonRpcProvider): Promise<Deployment> 
             validatorCollectionContract,
             validator1
         );
-        const franchiseeCollectionContract: FranchiseeCollection = await deployFranchiseeCollection(
+        const shopCollectionContract: ShopCollection = await deployShopCollection(
             deployer,
             validatorCollectionContract
         );
@@ -64,7 +64,7 @@ export async function deployAll(provider: JsonRpcProvider): Promise<Deployment> 
             validatorCollectionContract,
             linkCollectionContract,
             tokenPriceContract,
-            franchiseeCollectionContract
+            shopCollectionContract
         );
         return {
             provider: provider,
@@ -72,7 +72,7 @@ export async function deployAll(provider: JsonRpcProvider): Promise<Deployment> 
             token: tokenContract,
             validatorCollection: validatorCollectionContract,
             tokenPrice: tokenPriceContract,
-            franchiseeCollection: franchiseeCollectionContract,
+            shopCollection: shopCollectionContract,
             ledger: ledgerContract
         };
     } catch (e) {
@@ -153,20 +153,17 @@ export const deployTokenPrice = async (
     return tokenPriceContract;
 };
 
-export const deployFranchiseeCollection = async (
+export const deployShopCollection = async (
     deployer: Signer,
     validatorContract: ValidatorCollection
-): Promise<FranchiseeCollection> => {
-    const franchiseeCollectionFactory = new ContractFactory(
-        FranchiseeCollection__factory.abi,
-        FranchiseeCollection__factory.bytecode
-    );
-    const franchiseeCollection = (await franchiseeCollectionFactory
+): Promise<ShopCollection> => {
+    const shopCollectionFactory = new ContractFactory(ShopCollection__factory.abi, ShopCollection__factory.bytecode);
+    const shopCollection = (await shopCollectionFactory
         .connect(deployer)
-        .deploy(validatorContract.address)) as FranchiseeCollection;
-    await franchiseeCollection.deployed();
-    await franchiseeCollection.deployTransaction.wait();
-    return franchiseeCollection;
+        .deploy(validatorContract.address)) as ShopCollection;
+    await shopCollection.deployed();
+    await shopCollection.deployTransaction.wait();
+    return shopCollection;
 };
 
 export const deployLedger = async (
@@ -176,7 +173,7 @@ export const deployLedger = async (
     validatorContract: Contract,
     linkCollectionContract: Contract,
     tokenPriceContract: Contract,
-    franchiseeCollection: Contract
+    shopCollection: Contract
 ): Promise<Ledger> => {
     const ledgerFactory = new ContractFactory(Ledger__factory.abi, Ledger__factory.bytecode);
     const ledgerContract = (await ledgerFactory
@@ -187,11 +184,11 @@ export const deployLedger = async (
             validatorContract.address,
             linkCollectionContract.address,
             tokenPriceContract.address,
-            franchiseeCollection.address
+            shopCollection.address
         )) as Ledger;
     await ledgerContract.deployed();
     await ledgerContract.deployTransaction.wait();
-    await franchiseeCollection.connect(deployer).setLedgerAddress(ledgerContract.address);
+    await shopCollection.connect(deployer).setLedgerAddress(ledgerContract.address);
     return ledgerContract;
 };
 
@@ -225,7 +222,7 @@ export interface PurchaseData {
     timestamp: number;
     amount: number;
     userEmail: string;
-    franchiseeId: string;
+    shopId: string;
     method: number;
 }
 
@@ -235,7 +232,7 @@ export const purchaseData: PurchaseData[] = [
         timestamp: 1672844400,
         amount: 10000,
         userEmail: "a@example.com",
-        franchiseeId: "F000100",
+        shopId: "F000100",
         method: 0
     },
     {
@@ -243,7 +240,7 @@ export const purchaseData: PurchaseData[] = [
         timestamp: 1675522800,
         amount: 10000,
         userEmail: "b@example.com",
-        franchiseeId: "F000100",
+        shopId: "F000100",
         method: 0
     },
     {
@@ -251,7 +248,7 @@ export const purchaseData: PurchaseData[] = [
         timestamp: 1677942000,
         amount: 10000,
         userEmail: "c@example.com",
-        franchiseeId: "F000200",
+        shopId: "F000200",
         method: 0
     },
     {
@@ -259,7 +256,7 @@ export const purchaseData: PurchaseData[] = [
         timestamp: 1680620400,
         amount: 10000,
         userEmail: "d@example.com",
-        franchiseeId: "F000300",
+        shopId: "F000300",
         method: 0
     },
     {
@@ -267,7 +264,7 @@ export const purchaseData: PurchaseData[] = [
         timestamp: 1683212400,
         amount: 10000,
         userEmail: "a@example.com",
-        franchiseeId: "F000200",
+        shopId: "F000200",
         method: 0
     }
 ];

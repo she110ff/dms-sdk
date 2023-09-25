@@ -1,7 +1,7 @@
 {
   "name": "dms-osx",
   "version": "1.0.0",
-  "description": "JS SDK for decentralized mileage system",
+  "description": "JS SDK for decentralized point system",
   "repository": "https://github.com/bosagora/dms-sdk",
   "author": "BOSagora Foundation",
   "private": true,

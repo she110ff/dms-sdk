@@ -7,7 +7,7 @@ export type PurchaseParam = {
     purchaseId: string;
     amount: BigNumberish;
     userEmail: string;
-    franchiseeId: string;
+    shopId: string;
 };
 
 export type SingPaymentParam = {
@@ -15,7 +15,7 @@ export type SingPaymentParam = {
     purchaseId: string;
     amount: BigNumberish;
     userEmail: string;
-    franchiseeId: string;
+    shopId: string;
     nonce: BigNumberish;
 };
 
@@ -26,24 +26,24 @@ export type ClientParams = {
     relayEndpoint?: string;
 };
 
-export type FetchPayOption = PayMileageOption | PayTokenOption;
-export type PayMileageOption = {
+export type FetchPayOption = PayPointOption | PayTokenOption;
+export type PayPointOption = {
     purchaseId: string;
     amount: string;
     email: string;
-    franchiseeId: string;
+    shopId: string;
     signer: string;
     signature: string;
 };
 
-export enum PayMileageSteps {
-    PAYING_MILEAGE = "paying_mileage",
+export enum PayPointSteps {
+    PAYING_MILEAGE = "paying_point",
     DONE = "done"
 }
 
-export type PayMileageStepValue =
-    | { key: PayMileageSteps.PAYING_MILEAGE; txHash: string }
-    | { key: PayMileageSteps.DONE; amount: BigNumber; paidAmountMileage: BigNumber; balanceMileage: BigNumber };
+export type PayPointStepValue =
+    | { key: PayPointSteps.PAYING_MILEAGE; txHash: string }
+    | { key: PayPointSteps.DONE; amount: BigNumber; paidAmountPoint: BigNumber; balancePoint: BigNumber };
 
 export enum PayTokenSteps {
     PAYING_TOKEN = "paying_token",
@@ -58,21 +58,21 @@ export type PayTokenOption = {
     purchaseId: string;
     amount: string;
     email: string;
-    franchiseeId: string;
+    shopId: string;
     signer: string;
     signature: string;
 };
 
-export type ExchangeTokenToMileageOption = {
+export type ExchangeTokenToPointOption = {
     email: string;
     amountToken: string;
     signer: string;
     signature: string;
 };
 
-export type ExchangeMileageToTokenOption = {
+export type ExchangePointToTokenOption = {
     email: string;
-    amountMileage: string;
+    amountPoint: string;
     signer: string;
     signature: string;
 };

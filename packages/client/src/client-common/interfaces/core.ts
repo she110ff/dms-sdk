@@ -4,10 +4,10 @@ import { Signer } from "@ethersproject/abstract-signer";
 import { Contract, ContractInterface } from "@ethersproject/contracts";
 import { JsonRpcProvider } from "@ethersproject/providers";
 import {
-    ExchangeMileageToTokenOption,
-    ExchangeTokenToMileageOption,
+    ExchangePointToTokenOption,
+    ExchangeTokenToPointOption,
     FetchPayOption,
-    PayMileageStepValue,
+    PayPointStepValue,
     PayTokenStepValue
 } from "../../interfaces";
 import { GraphQLClient } from "graphql-request";
@@ -25,16 +25,16 @@ export interface IClientWeb3Core {
     getLinkCollectionAddress: () => string;
     getValidatorCollectionAddress: () => string;
     getTokenPriceAddress: () => string;
-    getFranchiseeCollectionAddress: () => string;
+    getShopCollectionAddress: () => string;
     getLedgerAddress: () => string;
 }
 
 export interface IClientHttpCore {
     isRelayUp: () => Promise<boolean>;
     getEndpoint: (path: string) => Promise<URL>;
-    fetchExchangeTokenToMileage: (params: ExchangeTokenToMileageOption) => Promise<any>;
-    fetchExchangeMileageToToken: (params: ExchangeMileageToTokenOption) => Promise<any>;
-    fetchPayMileage: (param: FetchPayOption) => AsyncGenerator<PayMileageStepValue>;
+    fetchExchangeTokenToPoint: (params: ExchangeTokenToPointOption) => Promise<any>;
+    fetchExchangePointToToken: (params: ExchangePointToTokenOption) => Promise<any>;
+    fetchPayPoint: (param: FetchPayOption) => AsyncGenerator<PayPointStepValue>;
     fetchPayToken: (param: FetchPayOption) => AsyncGenerator<PayTokenStepValue>;
 }
 

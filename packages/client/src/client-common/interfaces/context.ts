@@ -13,7 +13,7 @@ type Web3ContextParams = {
     tokenAddress?: string;
     validatorCollectionAddress?: string;
     tokenPriceAddress?: string;
-    franchiseeCollectionAddress?: string;
+    shopCollectionAddress?: string;
     ledgerAddress?: string;
 };
 type HttpContextParams = {
@@ -34,7 +34,7 @@ type Web3ContextState = {
     tokenAddress?: string;
     validatorCollectionAddress?: string;
     tokenPriceAddress?: string;
-    franchiseeCollectionAddress?: string;
+    shopCollectionAddress?: string;
     ledgerAddress?: string;
 };
 type HTTPContextState = {

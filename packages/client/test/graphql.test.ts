@@ -8,7 +8,7 @@ import { Server } from "ganache";
 import fs from "fs";
 
 describe("Client", () => {
-    describe("Save Purchase Data & Pay (mileage, token)", () => {
+    describe("Save Purchase Data & Pay (point, token)", () => {
         describe("Method Check", () => {
             let node: Server;
             let client: Client;
@@ -47,14 +47,14 @@ describe("Client", () => {
                     expect(res.userTradeHistories[length - 1].amountToken).toEqual("50000000000000");
                 });
 
-                it("Mileage Input History", async () => {
+                it("Point Input History", async () => {
                     for (const user of users) {
                         const hash = ContractUtils.sha256String(user.email);
-                        const res = await client.methods.getUserMileageInputTradeHistory(user.email);
+                        const res = await client.methods.getUserPointInputTradeHistory(user.email);
                         const length = res.userTradeHistories.length;
                         if (length > 0) {
                             expect(res.userTradeHistories[length - 1].email).toEqual(hash);
-                            expect(res.userTradeHistories[length - 1].assetFlow).toEqual("MileageInput");
+                            expect(res.userTradeHistories[length - 1].assetFlow).toEqual("PointInput");
                         }
                     }
                 });
@@ -71,14 +71,14 @@ describe("Client", () => {
                     }
                 });
 
-                it("Mileage Output History", async () => {
+                it("Point Output History", async () => {
                     for (const user of users) {
                         const hash = ContractUtils.sha256String(user.email);
-                        const res = await client.methods.getUserMileageOutputTradeHistory(user.email);
+                        const res = await client.methods.getUserPointOutputTradeHistory(user.email);
                         const length = res.userTradeHistories.length;
                         if (length > 0) {
                             expect(res.userTradeHistories[length - 1].email).toEqual(hash);
-                            expect(res.userTradeHistories[length - 1].assetFlow).toEqual("MileageOutput");
+                            expect(res.userTradeHistories[length - 1].assetFlow).toEqual("PointOutput");
                         }
                     }
                 });

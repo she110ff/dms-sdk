@@ -91,8 +91,8 @@ export class Context {
     get tokenPriceAddress(): string | undefined {
         return this.state.tokenPriceAddress;
     }
-    get franchiseeCollectionAddress(): string | undefined {
-        return this.state.franchiseeCollectionAddress;
+    get shopCollectionAddress(): string | undefined {
+        return this.state.shopCollectionAddress;
     }
     get ledgerAddress(): string | undefined {
         return this.state.ledgerAddress;
@@ -182,8 +182,8 @@ export class Context {
             throw new Error("Missing validator collection contract address");
         } else if (!contextParams.tokenPriceAddress) {
             throw new Error("Missing token price contract address");
-        } else if (!contextParams.franchiseeCollectionAddress) {
-            throw new Error("Missing franchisee collection  contract address");
+        } else if (!contextParams.shopCollectionAddress) {
+            throw new Error("Missing shop collection  contract address");
         } else if (!contextParams.ledgerAddress) {
             throw new Error("Missing ledger contract address");
         } else if (!contextParams.graphqlNodes?.length) {
@@ -198,7 +198,7 @@ export class Context {
             linkCollectionAddress: contextParams.linkCollectionAddress,
             validatorCollectionAddress: contextParams.validatorCollectionAddress,
             tokenPriceAddress: contextParams.tokenPriceAddress,
-            franchiseeCollectionAddress: contextParams.franchiseeCollectionAddress,
+            shopCollectionAddress: contextParams.shopCollectionAddress,
             ledgerAddress: contextParams.ledgerAddress,
             graphql: Context.resolveGraphql(contextParams.graphqlNodes)
         };
@@ -229,8 +229,8 @@ export class Context {
         if (contextParams.tokenPriceAddress) {
             this.state.tokenPriceAddress = contextParams.tokenPriceAddress;
         }
-        if (contextParams.franchiseeCollectionAddress) {
-            this.state.franchiseeCollectionAddress = contextParams.franchiseeCollectionAddress;
+        if (contextParams.shopCollectionAddress) {
+            this.state.shopCollectionAddress = contextParams.shopCollectionAddress;
         }
         if (contextParams.ledgerAddress) {
             this.state.ledgerAddress = contextParams.ledgerAddress;

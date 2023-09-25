@@ -5,7 +5,7 @@ export type NetworkDeployment = {
     TokenAddress: string;
     ValidatorCollectionAddress: string;
     TokenPriceAddress: string;
-    FranchiseeCollectionAddress: string;
+    ShopCollectionAddress: string;
     LedgerAddress: string;
     relayEndpoint?: string | URL;
 };

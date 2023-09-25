@@ -13,13 +13,13 @@ export const QueryUserTradeHistory = gql`
             email
             action
             assetFlow
-            amountMileage
+            amountPoint
             amountToken
             value
-            balanceMileage
+            balancePoint
             balanceToken
             purchaseId
-            franchiseeId
+            shopId
             account
             blockNumber
             blockTimestamp

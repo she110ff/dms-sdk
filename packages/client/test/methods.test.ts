@@ -9,7 +9,7 @@ import {
     Context,
     ContractUtils,
     DepositSteps,
-    PayMileageSteps,
+    PayPointSteps,
     PayTokenSteps,
     WithdrawSteps
 } from "../src";
@@ -23,7 +23,7 @@ describe("Client", () => {
     let fakerRelayServer: FakerRelayServer;
     const [, , validator1, validator2, , user1] = GanacheServer.accounts();
 
-    describe("Save Purchase Data & Pay (mileage, token)", () => {
+    describe("Save Purchase Data & Pay (point, token)", () => {
         beforeAll(async () => {
             node = await GanacheServer.start();
             const provider = GanacheServer.createTestProvider();
@@ -34,7 +34,7 @@ describe("Client", () => {
             contextParamsLocalChain.linkCollectionAddress = deployment.linkCollection.address;
             contextParamsLocalChain.validatorCollectionAddress = deployment.validatorCollection.address;
             contextParamsLocalChain.tokenPriceAddress = deployment.tokenPrice.address;
-            contextParamsLocalChain.franchiseeCollectionAddress = deployment.franchiseeCollection.address;
+            contextParamsLocalChain.shopCollectionAddress = deployment.shopCollection.address;
             contextParamsLocalChain.ledgerAddress = deployment.ledger.address;
             contextParamsLocalChain.web3Providers = deployment.provider;
 
@@ -94,19 +94,19 @@ describe("Client", () => {
                     await deployment.ledger.connect(signer).deposit(depositToken);
                 });
 
-                it("Exchange token to mileage", async () => {
+                it("Exchange token to point", async () => {
                     const nonce = await deployment.ledger.nonceOf(userAddress);
                     const signature = await ContractUtils.signExchange(signer, emailHash, exchangeToken, nonce);
 
                     await deployment.ledger
                         .connect(signer)
-                        .exchangeTokenToMileage(emailHash, exchangeToken, userAddress, signature);
+                        .exchangeTokenToPoint(emailHash, exchangeToken, userAddress, signature);
                 });
             });
 
             describe("Balance Check", () => {
-                it("Test getting the mileage balance", async () => {
-                    const balance = await client.methods.getMileageBalances(email);
+                it("Test getting the point balance", async () => {
+                    const balance = await client.methods.getPointBalances(email);
                     expect(balance).toEqual(exchangeToken.mul(150));
                 });
 
@@ -117,28 +117,28 @@ describe("Client", () => {
             });
 
             describe("Pay Check", () => {
-                it("Test of pay mileage", async () => {
+                it("Test of pay point", async () => {
                     const exampleData = purchaseData[0];
                     const amount = Amount.make(exampleData.amount, 18);
-                    const option = await client.methods.getPayMileageOption(
+                    const option = await client.methods.getPayPointOption(
                         exampleData.purchaseId,
                         amount.value,
                         exampleData.userEmail,
-                        exampleData.franchiseeId
+                        exampleData.shopId
                     );
 
-                    for await (const step of client.methods.fetchPayMileage(option)) {
+                    for await (const step of client.methods.fetchPayPoint(option)) {
                         switch (step.key) {
-                            case PayMileageSteps.PAYING_MILEAGE:
+                            case PayPointSteps.PAYING_MILEAGE:
                                 expect(typeof step.txHash).toBe("string");
                                 expect(step.txHash).toMatch(/^0x[A-Fa-f0-9]{64}$/i);
                                 break;
-                            case PayMileageSteps.DONE:
+                            case PayPointSteps.DONE:
                                 expect(step.amount instanceof BigNumber).toBe(true);
                                 expect(step.amount.toString()).toBe(amount.toString());
                                 break;
                             default:
-                                throw new Error("Unexpected pay mileage step: " + JSON.stringify(step, null, 2));
+                                throw new Error("Unexpected pay point step: " + JSON.stringify(step, null, 2));
                         }
                     }
                 });
@@ -149,7 +149,7 @@ describe("Client", () => {
                         exampleData.purchaseId,
                         amount.value,
                         exampleData.userEmail,
-                        exampleData.franchiseeId
+                        exampleData.shopId
                     );
 
                     for await (const step of client.methods.fetchPayToken(option)) {
@@ -176,15 +176,15 @@ describe("Client", () => {
                     await deployment.ledger.connect(signer).deposit(amountDepositToken.value);
                 });
 
-                it("Test of token to mileage exchange", async () => {
-                    const option = await client.methods.getTokenToMileageOption(email, amountDepositToken.value);
-                    const responseData = await client.methods.fetchExchangeTokenToMileage(option);
+                it("Test of token to point exchange", async () => {
+                    const option = await client.methods.getTokenToPointOption(email, amountDepositToken.value);
+                    const responseData = await client.methods.fetchExchangeTokenToPoint(option);
                     expect(responseData.data.txHash).toMatch(/^0x[A-Fa-f0-9]{64}$/i);
                 });
 
-                it("Test of mileage to token exchange", async () => {
-                    const option = await client.methods.getMileageToTokenOption(email, amountDepositToken.value);
-                    const responseData = await client.methods.fetchExchangeMileageToToken(option);
+                it("Test of point to token exchange", async () => {
+                    const option = await client.methods.getPointToTokenOption(email, amountDepositToken.value);
+                    const responseData = await client.methods.fetchExchangePointToToken(option);
                     expect(responseData.data.txHash).toMatch(/^0x[A-Fa-f0-9]{64}$/i);
                 });
             });

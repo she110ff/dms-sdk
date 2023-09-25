@@ -14,12 +14,12 @@ import { ContractUtils } from "../../utils/ContractUtils";
 import {
     DepositSteps,
     DepositStepValue,
-    ExchangeMileageToTokenOption,
-    ExchangeTokenToMileageOption,
+    ExchangePointToTokenOption,
+    ExchangeTokenToPointOption,
     FetchPayOption,
-    PayMileageOption,
-    PayMileageSteps,
-    PayMileageStepValue,
+    PayPointOption,
+    PayPointSteps,
+    PayPointStepValue,
     PayTokenOption,
     PayTokenSteps,
     PayTokenStepValue,
@@ -34,7 +34,7 @@ import {
 import {
     AmountMismatchError,
     FailedDepositError,
-    FailedPayMileageError,
+    FailedPayPointError,
     FailedPayTokenError,
     FailedWithdrawError,
     InsufficientBalanceError,
@@ -71,11 +71,11 @@ export class ClientMethods extends ClientCore implements IClientMethods, IClient
     }
 
     /**
-     * 마일리지의 잔고를 리턴한다
+     * 포인트의 잔고를 리턴한다
      * @param {string} email - 이메일 주소
-     * @return {Promise<BigNumber>} 마일리지 잔고
+     * @return {Promise<BigNumber>} 포인트 잔고
      */
-    public async getMileageBalances(email: string): Promise<BigNumber> {
+    public async getPointBalances(email: string): Promise<BigNumber> {
         if (!checkEmail(email)) throw new InvalidEmailParamError();
 
         const provider = this.web3.getProvider() as Provider;
@@ -90,7 +90,7 @@ export class ClientMethods extends ClientCore implements IClientMethods, IClient
         const ledgerInstance: Ledger = Ledger__factory.connect(this.web3.getLedgerAddress(), provider);
         const emailHash = ContractUtils.sha256String(email);
 
-        return await ledgerInstance.mileageBalanceOf(emailHash);
+        return await ledgerInstance.pointBalanceOf(emailHash);
     }
 
     /**
@@ -117,19 +117,19 @@ export class ClientMethods extends ClientCore implements IClientMethods, IClient
     }
 
     /**
-     * 마일리지 사용승인 하여 Relay 서버로 전송하기 위한 서명값을 생성한다.
+     * 포인트 사용승인 하여 Relay 서버로 전송하기 위한 서명값을 생성한다.
      * @param purchaseId - 거래 아이디
      * @param amount - 거래금액
      * @param email - 사용자 이메일 주소
-     * @param franchiseeId - 거래처 아이디
-     * @return {Promise<PayMileageOption>}
+     * @param shopId - 거래처 아이디
+     * @return {Promise<PayPointOption>}
      */
-    public async getPayMileageOption(
+    public async getPayPointOption(
         purchaseId: string,
         amount: BigNumber,
         email: string,
-        franchiseeId: string
-    ): Promise<PayMileageOption> {
+        shopId: string
+    ): Promise<PayPointOption> {
         const signer = this.web3.getConnectedSigner();
         if (!signer) {
             throw new NoSignerError();
@@ -157,13 +157,13 @@ export class ClientMethods extends ClientCore implements IClientMethods, IClient
         if (emailToAddress !== signerAddress) throw new MismatchApproveAddressError();
 
         const nonce = await ledgerContract.nonceOf(emailToAddress);
-        const signature = await ContractUtils.signPayment(signer, purchaseId, amount, emailHash, franchiseeId, nonce);
+        const signature = await ContractUtils.signPayment(signer, purchaseId, amount, emailHash, shopId, nonce);
 
         const relayParam: FetchPayOption = {
             purchaseId,
             amount: amount.toString(),
             email: emailHash,
-            franchiseeId,
+            shopId,
             signer: signerAddress,
             signature
         };
@@ -175,14 +175,14 @@ export class ClientMethods extends ClientCore implements IClientMethods, IClient
      * @param purchaseId - 거래 아이디
      * @param amount - 거래금액
      * @param email - 사용자 이메일 주소
-     * @param franchiseeId - 거래처 아이디
+     * @param shopId - 거래처 아이디
      * @return {Promise<PayTokenOption>}
      */
     public async getPayTokenOption(
         purchaseId: string,
         amount: BigNumber,
         email: string,
-        franchiseeId: string
+        shopId: string
     ): Promise<PayTokenOption> {
         const signer = this.web3.getConnectedSigner();
         if (!signer) {
@@ -211,13 +211,13 @@ export class ClientMethods extends ClientCore implements IClientMethods, IClient
         if (emailToAddress !== signerAddress) throw new MismatchApproveAddressError();
 
         const nonce = await ledgerContract.nonceOf(emailToAddress);
-        const signature = await ContractUtils.signPayment(signer, purchaseId, amount, emailHash, franchiseeId, nonce);
+        const signature = await ContractUtils.signPayment(signer, purchaseId, amount, emailHash, shopId, nonce);
 
         const relayParam: FetchPayOption = {
             purchaseId,
             amount: amount.toString(),
             email: emailHash,
-            franchiseeId,
+            shopId,
             signer: signerAddress,
             signature
         };
@@ -225,12 +225,12 @@ export class ClientMethods extends ClientCore implements IClientMethods, IClient
     }
 
     /**
-     * 토큰을 마일리지로 전환 하기위한 서명값을 생성한다.
+     * 토큰을 포인트로 전환 하기위한 서명값을 생성한다.
      * @param {string} email - 이메일주소
      * @param {number} amount - 거래금액
-     * @return {Promise<ExchangeTokenToMileageOption>}
+     * @return {Promise<ExchangeTokenToPointOption>}
      */
-    public async getTokenToMileageOption(email: string, amount: BigNumber): Promise<ExchangeTokenToMileageOption> {
+    public async getTokenToPointOption(email: string, amount: BigNumber): Promise<ExchangeTokenToPointOption> {
         const signer = this.web3.getConnectedSigner();
         if (!signer) {
             throw new NoSignerError();
@@ -269,12 +269,12 @@ export class ClientMethods extends ClientCore implements IClientMethods, IClient
     }
 
     /**
-     * 마일리지를 토큰으로 전환 하기위한 서명값을 생성한다.
+     * 포인트를 토큰으로 전환 하기위한 서명값을 생성한다.
      * @param {string} email - 이메일주소
      * @param {number} amount - 거래금액
-     * @return {Promise<ExchangeMileageToTokenOption>}
+     * @return {Promise<ExchangePointToTokenOption>}
      */
-    public async getMileageToTokenOption(email: string, amount: BigNumber): Promise<ExchangeMileageToTokenOption> {
+    public async getPointToTokenOption(email: string, amount: BigNumber): Promise<ExchangePointToTokenOption> {
         const signer = this.web3.getConnectedSigner();
         if (!signer) {
             throw new NoSignerError();
@@ -306,7 +306,7 @@ export class ClientMethods extends ClientCore implements IClientMethods, IClient
 
         return {
             email: emailHash,
-            amountMileage: amount.toString(),
+            amountPoint: amount.toString(),
             signer: signerAddress,
             signature
         };
@@ -483,7 +483,7 @@ export class ClientMethods extends ClientCore implements IClientMethods, IClient
         };
     }
 
-    public async *fetchPayMileage(param: FetchPayOption): AsyncGenerator<PayMileageStepValue> {
+    public async *fetchPayPoint(param: FetchPayOption): AsyncGenerator<PayPointStepValue> {
         const provider = this.web3.getProvider();
         if (!provider) throw new NoProviderError();
 
@@ -493,19 +493,19 @@ export class ClientMethods extends ClientCore implements IClientMethods, IClient
             throw new UnsupportedNetworkError(networkName);
         }
 
-        const res = await Network.post(await this.getEndpoint("payMileage"), param);
+        const res = await Network.post(await this.getEndpoint("payPoint"), param);
         if (res?.code !== 200) throw new InternalServerError(res.message);
         if (res?.data?.code && res.data.code !== 200) throw new InternalServerError(res?.data?.error?.message ?? "");
 
-        yield { key: PayMileageSteps.PAYING_MILEAGE, txHash: res.data.txHash };
+        yield { key: PayPointSteps.PAYING_MILEAGE, txHash: res.data.txHash };
 
         const txResponse = (await provider.getTransaction(res.data.txHash)) as ContractTransaction;
         const txReceipt = await txResponse.wait();
         const ledgerContract: Ledger = Ledger__factory.connect(this.web3.getLedgerAddress(), provider);
 
-        const log = findLog(txReceipt, ledgerContract.interface, "PaidMileage");
+        const log = findLog(txReceipt, ledgerContract.interface, "PaidPoint");
         if (!log) {
-            throw new FailedPayMileageError();
+            throw new FailedPayPointError();
         }
         const amount = BigNumber.from(param.amount);
         const parsedLog = ledgerContract.interface.parseLog(log);
@@ -513,10 +513,10 @@ export class ClientMethods extends ClientCore implements IClientMethods, IClient
             throw new AmountMismatchError(amount, parsedLog.args["value"]);
         }
         yield {
-            key: PayMileageSteps.DONE,
+            key: PayPointSteps.DONE,
             amount: amount,
-            paidAmountMileage: parsedLog.args["paidAmountMileage"],
-            balanceMileage: parsedLog.args["balanceMileage"]
+            paidAmountPoint: parsedLog.args["paidAmountPoint"],
+            balancePoint: parsedLog.args["balancePoint"]
         };
     }
 
@@ -557,12 +557,12 @@ export class ClientMethods extends ClientCore implements IClientMethods, IClient
         };
     }
 
-    public async fetchExchangeMileageToToken(param: ExchangeMileageToTokenOption): Promise<any> {
-        return Network.post(await this.getEndpoint("exchangeMileageToToken"), param);
+    public async fetchExchangePointToToken(param: ExchangePointToTokenOption): Promise<any> {
+        return Network.post(await this.getEndpoint("exchangePointToToken"), param);
     }
 
-    public async fetchExchangeTokenToMileage(param: ExchangeTokenToMileageOption): Promise<any> {
-        return Network.post(await this.getEndpoint("exchangeTokenToMileage"), param);
+    public async fetchExchangeTokenToPoint(param: ExchangeTokenToPointOption): Promise<any> {
+        return Network.post(await this.getEndpoint("exchangeTokenToPoint"), param);
     }
 
     public async isRelayUp(): Promise<boolean> {
@@ -619,7 +619,7 @@ export class ClientMethods extends ClientCore implements IClientMethods, IClient
         return res;
     }
 
-    public async getUserMileageInputTradeHistory(
+    public async getUserPointInputTradeHistory(
         email: string,
         { limit, skip, sortDirection, sortBy }: QueryOption = {
             limit: 10,
@@ -631,7 +631,7 @@ export class ClientMethods extends ClientCore implements IClientMethods, IClient
         if (!checkEmail(email)) throw new InvalidEmailParamError();
         const emailHash = ContractUtils.sha256String(email);
         const query = QueryUserTradeHistory;
-        const where = { email: emailHash, assetFlow: "MileageInput" };
+        const where = { email: emailHash, assetFlow: "PointInput" };
         const params = { where, limit, skip, direction: sortDirection, sortBy };
         const name = "user trade history";
         const res = await this.graphql.request({ query, params, name });
@@ -657,7 +657,7 @@ export class ClientMethods extends ClientCore implements IClientMethods, IClient
         return res;
     }
 
-    public async getUserMileageOutputTradeHistory(
+    public async getUserPointOutputTradeHistory(
         email: string,
         { limit, skip, sortDirection, sortBy }: QueryOption = {
             limit: 10,
@@ -669,7 +669,7 @@ export class ClientMethods extends ClientCore implements IClientMethods, IClient
         if (!checkEmail(email)) throw new InvalidEmailParamError();
         const emailHash = ContractUtils.sha256String(email);
         const query = QueryUserTradeHistory;
-        const where = { email: emailHash, assetFlow: "MileageOutput" };
+        const where = { email: emailHash, assetFlow: "PointOutput" };
         const params = { where, limit, skip, direction: sortDirection, sortBy };
         const name = "user trade history";
         const res = await this.graphql.request({ query, params, name });

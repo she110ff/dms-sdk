@@ -1,4 +1,4 @@
-# Decentralized Mileage System SDK Client
+# Decentralized Point System SDK Client
 
 `dms-sdk-client` provides easy access to the high level interactions to be
 made with an DMS.

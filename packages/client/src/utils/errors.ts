@@ -86,9 +86,9 @@ export class NoTokenPriceAddress extends Error {
     }
 }
 
-export class NoFranchiseeCollectionAddress extends Error {
+export class NoShopCollectionAddress extends Error {
     constructor() {
-        super("A franchisee collection address is needed");
+        super("A shop collection address is needed");
     }
 }
 
@@ -116,9 +116,9 @@ export class FailedWithdrawError extends Error {
     }
 }
 
-export class FailedPayMileageError extends Error {
+export class FailedPayPointError extends Error {
     constructor() {
-        super("Failed to pay mileage");
+        super("Failed to pay point");
     }
 }
 
