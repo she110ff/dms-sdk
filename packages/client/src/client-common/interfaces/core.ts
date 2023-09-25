@@ -3,13 +3,7 @@
 import { Signer } from "@ethersproject/abstract-signer";
 import { Contract, ContractInterface } from "@ethersproject/contracts";
 import { JsonRpcProvider } from "@ethersproject/providers";
-import {
-    ExchangePointToTokenOption,
-    ExchangeTokenToPointOption,
-    FetchPayOption,
-    PayPointStepValue,
-    PayTokenStepValue
-} from "../../interfaces";
+import { FetchPayOption, PayPointStepValue, PayTokenStepValue } from "../../interfaces";
 import { GraphQLClient } from "graphql-request";
 
 export interface IClientWeb3Core {
@@ -32,8 +26,6 @@ export interface IClientWeb3Core {
 export interface IClientHttpCore {
     isRelayUp: () => Promise<boolean>;
     getEndpoint: (path: string) => Promise<URL>;
-    fetchExchangeTokenToPoint: (params: ExchangeTokenToPointOption) => Promise<any>;
-    fetchExchangePointToToken: (params: ExchangePointToTokenOption) => Promise<any>;
     fetchPayPoint: (param: FetchPayOption) => AsyncGenerator<PayPointStepValue>;
     fetchPayToken: (param: FetchPayOption) => AsyncGenerator<PayTokenStepValue>;
 }

@@ -14,8 +14,6 @@ import { ContractUtils } from "../../utils/ContractUtils";
 import {
     DepositSteps,
     DepositStepValue,
-    ExchangePointToTokenOption,
-    ExchangeTokenToPointOption,
     FetchPayOption,
     PayPointOption,
     PayPointSteps,
@@ -225,94 +223,6 @@ export class ClientMethods extends ClientCore implements IClientMethods, IClient
     }
 
     /**
-     * 토큰을 포인트로 전환 하기위한 서명값을 생성한다.
-     * @param {string} email - 이메일주소
-     * @param {number} amount - 거래금액
-     * @return {Promise<ExchangeTokenToPointOption>}
-     */
-    public async getTokenToPointOption(email: string, amount: BigNumber): Promise<ExchangeTokenToPointOption> {
-        const signer = this.web3.getConnectedSigner();
-        if (!signer) {
-            throw new NoSignerError();
-        } else if (!signer.provider) {
-            throw new NoProviderError();
-        }
-
-        const network = getNetwork((await signer.provider.getNetwork()).chainId);
-        const networkName = network.name as SupportedNetworks;
-        if (!SupportedNetworksArray.includes(networkName)) {
-            throw new UnsupportedNetworkError(networkName);
-        }
-
-        const emailHash = ContractUtils.sha256String(email);
-        const ledgerContract: Ledger = Ledger__factory.connect(this.web3.getLedgerAddress(), signer);
-        const linkContract: LinkCollection = LinkCollection__factory.connect(
-            this.web3.getLinkCollectionAddress(),
-            signer
-        );
-
-        const emailToAddress: string = await linkContract.toAddress(emailHash);
-        if (emailToAddress === AddressZero) throw new UnregisteredEmailError();
-
-        const signerAddress: string = await signer.getAddress();
-        if (emailToAddress !== signerAddress) throw new MismatchApproveAddressError();
-
-        const nonce: BigNumber = await ledgerContract.nonceOf(emailToAddress);
-        const signature: string = await ContractUtils.signExchange(signer, emailHash, amount, nonce);
-
-        return {
-            email: emailHash,
-            amountToken: amount.toString(),
-            signer: signerAddress,
-            signature
-        };
-    }
-
-    /**
-     * 포인트를 토큰으로 전환 하기위한 서명값을 생성한다.
-     * @param {string} email - 이메일주소
-     * @param {number} amount - 거래금액
-     * @return {Promise<ExchangePointToTokenOption>}
-     */
-    public async getPointToTokenOption(email: string, amount: BigNumber): Promise<ExchangePointToTokenOption> {
-        const signer = this.web3.getConnectedSigner();
-        if (!signer) {
-            throw new NoSignerError();
-        } else if (!signer.provider) {
-            throw new NoProviderError();
-        }
-
-        const network = getNetwork((await signer.provider.getNetwork()).chainId);
-        const networkName = network.name as SupportedNetworks;
-        if (!SupportedNetworksArray.includes(networkName)) {
-            throw new UnsupportedNetworkError(networkName);
-        }
-
-        const emailHash = ContractUtils.sha256String(email);
-        const ledgerContract: Ledger = Ledger__factory.connect(this.web3.getLedgerAddress(), signer);
-        const linkContract: LinkCollection = LinkCollection__factory.connect(
-            this.web3.getLinkCollectionAddress(),
-            signer
-        );
-
-        const emailToAddress: string = await linkContract.toAddress(emailHash);
-        if (emailToAddress === AddressZero) throw new UnregisteredEmailError();
-
-        const signerAddress: string = await signer.getAddress();
-        if (emailToAddress !== signerAddress) throw new MismatchApproveAddressError();
-
-        const nonce: BigNumber = await ledgerContract.nonceOf(emailToAddress);
-        const signature: string = await ContractUtils.signExchange(signer, emailHash, amount, nonce);
-
-        return {
-            email: emailHash,
-            amountPoint: amount.toString(),
-            signer: signerAddress,
-            signature
-        };
-    }
-
-    /**
      * 토큰을 예치합니다.
      * @param {string} email 이메일주소
      * @param {BigNumber} amount 금액
@@ -497,7 +407,7 @@ export class ClientMethods extends ClientCore implements IClientMethods, IClient
         if (res?.code !== 200) throw new InternalServerError(res.message);
         if (res?.data?.code && res.data.code !== 200) throw new InternalServerError(res?.data?.error?.message ?? "");
 
-        yield { key: PayPointSteps.PAYING_MILEAGE, txHash: res.data.txHash };
+        yield { key: PayPointSteps.PAYING_POINT, txHash: res.data.txHash };
 
         const txResponse = (await provider.getTransaction(res.data.txHash)) as ContractTransaction;
         const txReceipt = await txResponse.wait();
@@ -555,14 +465,6 @@ export class ClientMethods extends ClientCore implements IClientMethods, IClient
             paidAmountToken: parsedLog.args["paidAmountToken"],
             balanceToken: parsedLog.args["balanceToken"]
         };
-    }
-
-    public async fetchExchangePointToToken(param: ExchangePointToTokenOption): Promise<any> {
-        return Network.post(await this.getEndpoint("exchangePointToToken"), param);
-    }
-
-    public async fetchExchangeTokenToPoint(param: ExchangeTokenToPointOption): Promise<any> {
-        return Network.post(await this.getEndpoint("exchangeTokenToPoint"), param);
     }
 
     public async isRelayUp(): Promise<boolean> {

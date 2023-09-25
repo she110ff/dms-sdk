@@ -37,12 +37,12 @@ export type PayPointOption = {
 };
 
 export enum PayPointSteps {
-    PAYING_MILEAGE = "paying_point",
+    PAYING_POINT = "paying_point",
     DONE = "done"
 }
 
 export type PayPointStepValue =
-    | { key: PayPointSteps.PAYING_MILEAGE; txHash: string }
+    | { key: PayPointSteps.PAYING_POINT; txHash: string }
     | { key: PayPointSteps.DONE; amount: BigNumber; paidAmountPoint: BigNumber; balancePoint: BigNumber };
 
 export enum PayTokenSteps {
@@ -59,20 +59,6 @@ export type PayTokenOption = {
     amount: string;
     email: string;
     shopId: string;
-    signer: string;
-    signature: string;
-};
-
-export type ExchangeTokenToPointOption = {
-    email: string;
-    amountToken: string;
-    signer: string;
-    signature: string;
-};
-
-export type ExchangePointToTokenOption = {
-    email: string;
-    amountPoint: string;
     signer: string;
     signature: string;
 };

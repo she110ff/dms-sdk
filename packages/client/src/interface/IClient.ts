@@ -1,8 +1,6 @@
 import { IClientCore, IClientHttpCore } from "../client-common";
 import {
     DepositStepValue,
-    ExchangePointToTokenOption,
-    ExchangeTokenToPointOption,
     PayPointOption,
     QueryOption,
     UpdateAllowanceParams,
@@ -31,8 +29,6 @@ export interface IClientMethods extends IClientCore, IClientHttpCore {
         email: string,
         shopId: string
     ) => Promise<PayPointOption>;
-    getPointToTokenOption: (email: string, amount: BigNumber) => Promise<ExchangePointToTokenOption>;
-    getTokenToPointOption: (email: string, amount: BigNumber) => Promise<ExchangeTokenToPointOption>;
     deposit: (email: string, amount: BigNumber) => AsyncGenerator<DepositStepValue>;
     withdraw: (email: string, amount: BigNumber) => AsyncGenerator<WithdrawStepValue>;
     updateAllowance: (params: UpdateAllowanceParams) => AsyncGenerator<UpdateAllowanceStepValue>;

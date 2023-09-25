@@ -30,24 +30,27 @@ export interface Deployment {
 }
 
 export const depositAmount = Amount.make(50_000, 18);
+export const foundationAmount = Amount.make(1_000_000_000, 18);
 export const foundationEmail = "foundation@example.com";
 export const foundationAccount = ContractUtils.sha256String(foundationEmail);
 
 export async function deployAll(provider: JsonRpcProvider): Promise<Deployment> {
     let accounts = GanacheServer.accounts();
-    const [deployer, , validator1, validator2, validator3] = accounts;
+    const [deployer, foundation, validator1, validator2, validator3] = accounts;
     const validators = [validator1, validator2, validator3];
-    const validatorsAddress: string[] = validators.map((m) => m.address);
 
     try {
         const tokenContract = await deployToken(deployer, accounts);
+
         const validatorCollectionContract: ValidatorCollection = (await deployValidatorCollection(
             deployer,
             tokenContract,
-            validatorsAddress
+            validators
         )) as ValidatorCollection;
+
         await depositValidators(tokenContract, validatorCollectionContract, validators);
-        const linkCollectionContract: LinkCollection = await deployLinkCollection(deployer, validatorsAddress);
+        const linkCollectionContract: LinkCollection = await deployLinkCollection(deployer, validators);
+
         const tokenPriceContract: TokenPrice = await deployTokenPrice(
             deployer,
             validatorCollectionContract,
@@ -66,6 +69,15 @@ export async function deployAll(provider: JsonRpcProvider): Promise<Deployment> 
             tokenPriceContract,
             shopCollectionContract
         );
+        await depositFoundationAsset(
+            tokenContract,
+            ledgerContract,
+            linkCollectionContract,
+            deployer,
+            foundation,
+            validators
+        );
+
         return {
             provider: provider,
             linkCollection: linkCollectionContract,
@@ -80,39 +92,43 @@ export async function deployAll(provider: JsonRpcProvider): Promise<Deployment> 
     }
 }
 
-export const deployToken = async (deployer: Signer, accounts: Wallet[]): Promise<Token> => {
+async function deployToken(deployer: Wallet, accounts: Wallet[]): Promise<Token> {
     const tokenFactory = new ContractFactory(Token__factory.abi, Token__factory.bytecode);
-    const tokenContract = (await tokenFactory.connect(deployer).deploy("Sample", "SAM")) as Token;
+    const tokenContract = (await tokenFactory
+        .connect(deployer)
+        .deploy(await deployer.getAddress(), "Sample", "SAM")) as Token;
     await tokenContract.deployed();
     await tokenContract.deployTransaction.wait();
+
     for (const elem of accounts) {
         await tokenContract.connect(deployer).transfer(await elem.getAddress(), depositAmount.value);
     }
     return tokenContract;
-};
+}
 
-export const deployValidatorCollection = async (
-    deployer: Signer,
+async function deployValidatorCollection(
+    deployer: Wallet,
     tokenContract: Token,
-    validators: any[]
-): Promise<ValidatorCollection> => {
+    validators: Wallet[]
+): Promise<ValidatorCollection> {
     const validatorFactory = new ContractFactory(
         ValidatorCollection__factory.abi,
         ValidatorCollection__factory.bytecode
     );
-    const validatorContract: ValidatorCollection = (await validatorFactory
-        .connect(deployer)
-        .deploy(tokenContract.address, validators)) as ValidatorCollection;
+    const validatorContract: ValidatorCollection = (await validatorFactory.connect(deployer).deploy(
+        tokenContract.address,
+        validators.map((m) => m.address)
+    )) as ValidatorCollection;
     await validatorContract.deployed();
     await validatorContract.deployTransaction.wait();
     return validatorContract;
-};
+}
 
-export const depositValidators = async (
+async function depositValidators(
     tokenContract: Contract,
     validatorContract: ValidatorCollection,
-    validators: Signer[]
-): Promise<void> => {
+    validators: Wallet[]
+): Promise<void> {
     for (const elem of validators) {
         const token = tokenContract.connect(elem);
         const address = await elem.getAddress();
@@ -123,23 +139,24 @@ export const depositValidators = async (
         await validatorContract.validatorOf(address);
     }
     await validatorContract.connect(validators[0]).makeActiveItems();
-};
+}
 
-export const deployLinkCollection = async (deployer: Signer, validators: String[]): Promise<LinkCollection> => {
+const deployLinkCollection = async (deployer: Wallet, validators: Wallet[]): Promise<LinkCollection> => {
     const linkCollectionFactory = new ContractFactory(LinkCollection__factory.abi, LinkCollection__factory.bytecode);
     const linkCollectionContract: LinkCollection = (await linkCollectionFactory
         .connect(deployer)
-        .deploy(validators)) as LinkCollection;
+        .deploy(validators.map((m) => m.address))) as LinkCollection;
     await linkCollectionContract.deployed();
     await linkCollectionContract.deployTransaction.wait();
+
     return linkCollectionContract;
 };
 
-export const deployTokenPrice = async (
+async function deployTokenPrice(
     deployer: Signer,
     validatorContract: ValidatorCollection,
     validator: Signer
-): Promise<TokenPrice> => {
+): Promise<TokenPrice> {
     const tokenPriceFactory = new ContractFactory(TokenPrice__factory.abi, TokenPrice__factory.bytecode);
     const tokenPriceContract = (await tokenPriceFactory
         .connect(deployer)
@@ -151,12 +168,9 @@ export const deployTokenPrice = async (
     const price = BigNumber.from(150).mul(multiple);
     await tokenPriceContract.connect(validator).set("KRW", price);
     return tokenPriceContract;
-};
+}
 
-export const deployShopCollection = async (
-    deployer: Signer,
-    validatorContract: ValidatorCollection
-): Promise<ShopCollection> => {
+async function deployShopCollection(deployer: Signer, validatorContract: ValidatorCollection): Promise<ShopCollection> {
     const shopCollectionFactory = new ContractFactory(ShopCollection__factory.abi, ShopCollection__factory.bytecode);
     const shopCollection = (await shopCollectionFactory
         .connect(deployer)
@@ -164,9 +178,9 @@ export const deployShopCollection = async (
     await shopCollection.deployed();
     await shopCollection.deployTransaction.wait();
     return shopCollection;
-};
+}
 
-export const deployLedger = async (
+const deployLedger = async (
     deployer: Signer,
     foundationAccount: string,
     tokenContract: Contract,
@@ -191,6 +205,28 @@ export const deployLedger = async (
     await shopCollection.connect(deployer).setLedgerAddress(ledgerContract.address);
     return ledgerContract;
 };
+
+async function depositFoundationAsset(
+    tokenContract: Token,
+    ledgerContract: Ledger,
+    linkContract: LinkCollection,
+    deployer: Wallet,
+    foundation: Wallet,
+    validators: Wallet[]
+): Promise<void> {
+    const nonce = await linkContract.nonceOf(foundation.address);
+    const signature = await ContractUtils.sign(foundation, foundationAccount, nonce);
+    const requestId = ContractUtils.getRequestId(foundationAccount, foundation.address, nonce);
+    await linkContract.connect(validators[0]).addRequest(requestId, foundationAccount, foundation.address, signature);
+    await linkContract.connect(validators[0]).voteRequest(requestId);
+    await linkContract.connect(validators[1]).voteRequest(requestId);
+    await linkContract.connect(validators[2]).voteRequest(requestId);
+    await linkContract.connect(validators[1]).countVote(requestId);
+
+    await tokenContract.connect(deployer).transfer(foundation.address, foundationAmount.value);
+    await tokenContract.connect(foundation).approve(ledgerContract.address, foundationAmount.value);
+    await ledgerContract.connect(foundation).deposit(foundationAmount.value);
+}
 
 export const getSigners = (provider: JsonRpcProvider): JsonRpcSigner[] => {
     let accounts: JsonRpcSigner[] = [];
