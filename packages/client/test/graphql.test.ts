@@ -1,8 +1,8 @@
-import { contextParamsLocalChain } from "./helper/constants";
-import { Client, Context, ContractUtils } from "../src";
+import { contextParamsDevnet } from "./helper/constants";
 import { delay } from "./helper/deployContracts";
-import { GanacheServer } from "./helper/GanacheServer";
-import { Server } from "ganache";
+import { Amount, Client, Context, ContractUtils, LIVE_CONTRACTS, PayTokenSteps } from "../src";
+import { BigNumber } from "@ethersproject/bignumber";
+import { Wallet } from "@ethersproject/wallet";
 
 // @ts-ignore
 import fs from "fs";
@@ -10,23 +10,32 @@ import fs from "fs";
 describe("Client", () => {
     describe("Save Purchase Data & Pay (point, token)", () => {
         describe("Method Check", () => {
-            let node: Server;
             let client: Client;
+            const users = JSON.parse(fs.readFileSync("test/helper/users.json", "utf8"));
             beforeAll(async () => {
-                node = await GanacheServer.start();
-                const provider = GanacheServer.createTestProvider();
-                GanacheServer.setTestProvider(provider);
-                contextParamsLocalChain.web3Providers = provider;
-                const ctx = new Context(contextParamsLocalChain);
+                contextParamsDevnet.tokenAddress = LIVE_CONTRACTS["bosagora_devnet"].TokenAddress;
+                contextParamsDevnet.linkCollectionAddress = LIVE_CONTRACTS["bosagora_devnet"].LinkCollectionAddress;
+                contextParamsDevnet.validatorCollectionAddress =
+                    LIVE_CONTRACTS["bosagora_devnet"].ValidatorCollectionAddress;
+                contextParamsDevnet.tokenPriceAddress = LIVE_CONTRACTS["bosagora_devnet"].TokenPriceAddress;
+                contextParamsDevnet.shopCollectionAddress = LIVE_CONTRACTS["bosagora_devnet"].ShopCollectionAddress;
+                contextParamsDevnet.ledgerAddress = LIVE_CONTRACTS["bosagora_devnet"].LedgerAddress;
+                contextParamsDevnet.signer = new Wallet(users[50]);
+                const ctx = new Context(contextParamsDevnet);
                 client = new Client(ctx);
             });
-            afterAll(async () => {
-                await node.close();
+
+            it("Web3 Health Checking", async () => {
+                const isUp = await client.methods.web3.isUp();
+                expect(isUp).toEqual(true);
+            });
+
+            it("Server Health Checking", async () => {
+                const isUp = await client.methods.isRelayUp();
+                expect(isUp).toEqual(true);
             });
 
             describe("GraphQL TEST", () => {
-                const users = JSON.parse(fs.readFileSync("test/helper/users.json", "utf8"));
-
                 it("GraphQL Server Health Test", async () => {
                     const web3IsUp = await client.web3.isUp();
                     expect(web3IsUp).toEqual(true);
@@ -43,8 +52,6 @@ describe("Client", () => {
                     const length = res.userTradeHistories.length;
                     expect(length).toBeGreaterThan(0);
                     expect(res.userTradeHistories[length - 1].email).toEqual(hash);
-                    expect(res.userTradeHistories[length - 1].action).toEqual("DepositedToken");
-                    expect(res.userTradeHistories[length - 1].amountToken).toEqual("50000000000000");
                 });
 
                 it("Point Input History", async () => {
@@ -94,6 +101,116 @@ describe("Client", () => {
                         }
                     }
                 });
+
+                it("Pay token", async () => {
+                    let selectUser;
+                    for (const user of users) {
+                        const balance = await client.methods.getTokenBalances(user.email);
+                        if (balance.gt(0)) {
+                            selectUser = user;
+                            break;
+                        }
+                    }
+
+                    const exampleData = {
+                        purchaseId: "P100000",
+                        timestamp: 1672844400,
+                        amount: 1,
+                        userEmail: selectUser.email,
+                        shopId: "F000100",
+                        method: 0
+                    };
+                    exampleData.purchaseId = `P${ContractUtils.getTimeStamp()}`;
+                    const amount = Amount.make(1, 18);
+                    const option = await client.methods.getPayTokenOption(
+                        exampleData.purchaseId,
+                        amount.value,
+                        exampleData.userEmail,
+                        exampleData.shopId
+                    );
+
+                    await ContractUtils.delay(2000);
+
+                    for await (const step of client.methods.fetchPayToken(option)) {
+                        switch (step.key) {
+                            case PayTokenSteps.PAYING_TOKEN:
+                                expect(typeof step.txHash).toBe("string");
+                                expect(step.txHash).toMatch(/^0x[A-Fa-f0-9]{64}$/i);
+                                expect(step.purchaseId).toEqual(exampleData.purchaseId);
+                                break;
+                            case PayTokenSteps.DONE:
+                                expect(step.amount instanceof BigNumber).toBe(true);
+                                expect(step.amount.toString()).toBe(amount.toString());
+                                expect(step.purchaseId).toEqual(exampleData.purchaseId);
+                                break;
+                            default:
+                                throw new Error("Unexpected pay token step: " + JSON.stringify(step, null, 2));
+                        }
+                    }
+
+                    const hash = ContractUtils.sha256String(exampleData.userEmail);
+                    const res = await client.methods.getPaidToken(exampleData.userEmail, exampleData.purchaseId);
+                    if (length == 1) {
+                        expect(res.paidToken[0].email).toEqual(hash);
+                        expect(res.paidToken[0].purchaseId).toEqual(exampleData.purchaseId);
+                    }
+                });
+
+                /*
+                it("Pay point", async () => {
+                    let selectUser;
+                    for (const user of users) {
+                        const balance = await client.methods.getPointBalances(user.email);
+                        if (balance.gt(0)) {
+                            selectUser = user;
+                            break;
+                        }
+                    }
+
+                    const exampleData = {
+                        purchaseId: "P100000",
+                        timestamp: 1672844400,
+                        amount: 1,
+                        userEmail: selectUser.email,
+                        shopId: "F000100",
+                        method: 0
+                    };
+                    exampleData.purchaseId = `P${ContractUtils.getTimeStamp()}`;
+                    const amount = Amount.make(1, 18);
+                    const option = await client.methods.getPayPointOption(
+                        exampleData.purchaseId,
+                        amount.value,
+                        exampleData.userEmail,
+                        exampleData.shopId
+                    );
+
+                    await ContractUtils.delay(2000);
+
+                    for await (const step of client.methods.fetchPayPoint(option)) {
+                        switch (step.key) {
+                            case PayPointSteps.PAYING_POINT:
+                                expect(typeof step.txHash).toBe("string");
+                                expect(step.txHash).toMatch(/^0x[A-Fa-f0-9]{64}$/i);
+                                expect(step.purchaseId).toEqual(exampleData.purchaseId);
+                                break;
+                            case PayPointSteps.DONE:
+                                expect(step.amount instanceof BigNumber).toBe(true);
+                                expect(step.amount.toString()).toBe(amount.toString());
+                                expect(step.purchaseId).toEqual(exampleData.purchaseId);
+                                break;
+                            default:
+                                throw new Error("Unexpected pay token step: " + JSON.stringify(step, null, 2));
+                        }
+                    }
+
+                    const hash = ContractUtils.sha256String(exampleData.userEmail);
+                    const res = await client.methods.getPaidPoint(exampleData.userEmail, exampleData.purchaseId);
+                    if (length == 1) {
+                        expect(res.paidToken[0].email).toEqual(hash);
+                        expect(res.paidToken[0].purchaseId).toEqual(exampleData.purchaseId);
+                    }
+                });
+                */
             });
         });
     });

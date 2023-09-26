@@ -42,8 +42,14 @@ export enum PayPointSteps {
 }
 
 export type PayPointStepValue =
-    | { key: PayPointSteps.PAYING_POINT; txHash: string }
-    | { key: PayPointSteps.DONE; amount: BigNumber; paidAmountPoint: BigNumber; balancePoint: BigNumber };
+    | { key: PayPointSteps.PAYING_POINT; txHash: string; purchaseId: string }
+    | {
+          key: PayPointSteps.DONE;
+          amount: BigNumber;
+          purchaseId: string;
+          paidAmountPoint: BigNumber;
+          balancePoint: BigNumber;
+      };
 
 export enum PayTokenSteps {
     PAYING_TOKEN = "paying_token",
@@ -51,8 +57,14 @@ export enum PayTokenSteps {
 }
 
 export type PayTokenStepValue =
-    | { key: PayTokenSteps.PAYING_TOKEN; txHash: string }
-    | { key: PayTokenSteps.DONE; amount: BigNumber; paidAmountToken: BigNumber; balanceToken: BigNumber };
+    | { key: PayTokenSteps.PAYING_TOKEN; txHash: string; purchaseId: string }
+    | {
+          key: PayTokenSteps.DONE;
+          purchaseId: string;
+          amount: BigNumber;
+          paidAmountToken: BigNumber;
+          balanceToken: BigNumber;
+      };
 
 export type PayTokenOption = {
     purchaseId: string;

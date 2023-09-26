@@ -34,6 +34,11 @@ const grapqhlEndpoints = {
     failing: [{ url: "https://bad-url-gateway.io/" }]
 };
 
+export const relayEndpointsDevnet = {
+    working: "http://relay.devnet.bosagora.org:7070/",
+    failing: "https://bad-url-gateway.io/"
+};
+
 export const contextParamsMainnet: ContextParams = {
     network: 2151,
     signer: new Wallet(TEST_WALLET),
@@ -45,11 +50,12 @@ export const contextParamsDevnet: ContextParams = {
     network: 24680,
     signer: new Wallet(TEST_WALLET),
     web3Providers: web3EndpointsDevnet.working,
+    relayEndpoint: relayEndpointsDevnet.working,
     graphqlNodes: grapqhlEndpoints.working
 };
 
 export const contextParamsLocalChain: ContextParams = {
-    network: "bosagora_devnet",
+    network: 24680,
     signer: new Wallet(TEST_WALLET),
     web3Providers: ["http://localhost:7545"],
     relayEndpoint: "http://localhost:7070",

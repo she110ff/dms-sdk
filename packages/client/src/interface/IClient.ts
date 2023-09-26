@@ -37,4 +37,6 @@ export interface IClientMethods extends IClientCore, IClientHttpCore {
     getUserTokenInputTradeHistory: (email: string, option?: QueryOption) => Promise<any>;
     getUserPointOutputTradeHistory: (email: string, option?: QueryOption) => Promise<any>;
     getUserTokenOutputTradeHistory: (email: string, option?: QueryOption) => Promise<any>;
+    getPaidToken: (email: string, purchaseId: string, option?: QueryOption) => Promise<any>;
+    getPaidPoint: (email: string, purchaseId: string, option?: QueryOption) => Promise<any>;
 }

@@ -52,6 +52,8 @@ import { AddressZero } from "@ethersproject/constants";
 import { ContractTransaction } from "@ethersproject/contracts";
 import { getNetwork } from "@ethersproject/networks";
 import { QueryUserTradeHistory } from "../graphql-queries/history";
+import { QueryPaidToken } from "../graphql-queries/paidToken";
+import { QueryPaidPoint } from "../graphql-queries/paidPoint";
 
 /**
  * Methods module the SDK Generic Client
@@ -407,7 +409,7 @@ export class ClientMethods extends ClientCore implements IClientMethods, IClient
         if (res?.code !== 200) throw new InternalServerError(res.message);
         if (res?.data?.code && res.data.code !== 200) throw new InternalServerError(res?.data?.error?.message ?? "");
 
-        yield { key: PayPointSteps.PAYING_POINT, txHash: res.data.txHash };
+        yield { key: PayPointSteps.PAYING_POINT, txHash: res.data.txHash, purchaseId: param.purchaseId };
 
         const txResponse = (await provider.getTransaction(res.data.txHash)) as ContractTransaction;
         const txReceipt = await txResponse.wait();
@@ -424,6 +426,7 @@ export class ClientMethods extends ClientCore implements IClientMethods, IClient
         }
         yield {
             key: PayPointSteps.DONE,
+            purchaseId: param.purchaseId,
             amount: amount,
             paidAmountPoint: parsedLog.args["paidAmountPoint"],
             balancePoint: parsedLog.args["balancePoint"]
@@ -444,7 +447,7 @@ export class ClientMethods extends ClientCore implements IClientMethods, IClient
         if (res?.code !== 200) throw new InternalServerError(res.message);
         if (res?.data?.code && res.data.code !== 200) throw new InternalServerError(res?.data?.error?.message ?? "");
 
-        yield { key: PayTokenSteps.PAYING_TOKEN, txHash: res.data.txHash };
+        yield { key: PayTokenSteps.PAYING_TOKEN, txHash: res.data.txHash, purchaseId: param.purchaseId };
 
         const txResponse = (await provider.getTransaction(res.data.txHash)) as ContractTransaction;
         const txReceipt = await txResponse.wait();
@@ -461,6 +464,7 @@ export class ClientMethods extends ClientCore implements IClientMethods, IClient
         }
         yield {
             key: PayTokenSteps.DONE,
+            purchaseId: param.purchaseId,
             amount: amount,
             paidAmountToken: parsedLog.args["paidAmountToken"],
             balanceToken: parsedLog.args["balanceToken"]
@@ -593,6 +597,28 @@ export class ClientMethods extends ClientCore implements IClientMethods, IClient
         const where = { email: emailHash, assetFlow: "TokenOutput" };
         const params = { where, limit, skip, direction: sortDirection, sortBy };
         const name = "user trade history";
+        const res = await this.graphql.request({ query, params, name });
+        return res;
+    }
+
+    public async getPaidToken(email: string, purchaseId: string): Promise<any> {
+        if (!checkEmail(email)) throw new InvalidEmailParamError();
+        const emailHash = ContractUtils.sha256String(email);
+        const query = QueryPaidToken;
+        const where = { email: emailHash, purchaseId: purchaseId };
+        const params = { where };
+        const name = "paid token";
+        const res = await this.graphql.request({ query, params, name });
+        return res;
+    }
+
+    public async getPaidPoint(email: string, purchaseId: string): Promise<any> {
+        if (!checkEmail(email)) throw new InvalidEmailParamError();
+        const emailHash = ContractUtils.sha256String(email);
+        const query = QueryPaidPoint;
+        const where = { email: emailHash, purchaseId: purchaseId };
+        const params = { where };
+        const name = "paid token";
         const res = await this.graphql.request({ query, params, name });
         return res;
     }
