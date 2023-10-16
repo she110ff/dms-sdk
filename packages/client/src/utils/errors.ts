@@ -80,7 +80,7 @@ export class NoValidatorCollectionAddress extends Error {
     }
 }
 
-export class NoTokenPriceAddress extends Error {
+export class NoCurrencyRateAddress extends Error {
     constructor() {
         super("A token price address is needed");
     }

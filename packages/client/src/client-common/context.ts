@@ -80,16 +80,16 @@ export class Context {
         return this.state.tokenAddress;
     }
 
-    get emailLinkCollectionAddress(): string | undefined {
-        return this.state.emailLinkCollectionAddress;
+    get phoneLinkCollectionAddress(): string | undefined {
+        return this.state.phoneLinkCollectionAddress;
     }
 
     get validatorCollectionAddress(): string | undefined {
         return this.state.validatorCollectionAddress;
     }
 
-    get tokenPriceAddress(): string | undefined {
-        return this.state.tokenPriceAddress;
+    get currencyRateAddress(): string | undefined {
+        return this.state.currencyRateAddress;
     }
     get shopCollectionAddress(): string | undefined {
         return this.state.shopCollectionAddress;
@@ -176,11 +176,11 @@ export class Context {
             throw new Error("No web3 endpoints defined");
         } else if (!contextParams.tokenAddress) {
             throw new Error("Missing token contract address");
-        } else if (!contextParams.emailLinkCollectionAddress) {
+        } else if (!contextParams.phoneLinkCollectionAddress) {
             throw new Error("Missing link collection contract address");
         } else if (!contextParams.validatorCollectionAddress) {
             throw new Error("Missing validator collection contract address");
-        } else if (!contextParams.tokenPriceAddress) {
+        } else if (!contextParams.currencyRateAddress) {
             throw new Error("Missing token price contract address");
         } else if (!contextParams.shopCollectionAddress) {
             throw new Error("Missing shop collection  contract address");
@@ -195,9 +195,9 @@ export class Context {
             signer: contextParams.signer,
             web3Providers: Context.resolveWeb3Providers(contextParams.web3Providers, contextParams.network),
             tokenAddress: contextParams.tokenAddress,
-            emailLinkCollectionAddress: contextParams.emailLinkCollectionAddress,
+            phoneLinkCollectionAddress: contextParams.phoneLinkCollectionAddress,
             validatorCollectionAddress: contextParams.validatorCollectionAddress,
-            tokenPriceAddress: contextParams.tokenPriceAddress,
+            currencyRateAddress: contextParams.currencyRateAddress,
             shopCollectionAddress: contextParams.shopCollectionAddress,
             ledgerAddress: contextParams.ledgerAddress,
             graphql: Context.resolveGraphql(contextParams.graphqlNodes)
@@ -220,14 +220,14 @@ export class Context {
         if (contextParams.tokenAddress) {
             this.state.tokenAddress = contextParams.tokenAddress;
         }
-        if (contextParams.emailLinkCollectionAddress) {
-            this.state.emailLinkCollectionAddress = contextParams.emailLinkCollectionAddress;
+        if (contextParams.phoneLinkCollectionAddress) {
+            this.state.phoneLinkCollectionAddress = contextParams.phoneLinkCollectionAddress;
         }
         if (contextParams.validatorCollectionAddress) {
             this.state.validatorCollectionAddress = contextParams.validatorCollectionAddress;
         }
-        if (contextParams.tokenPriceAddress) {
-            this.state.tokenPriceAddress = contextParams.tokenPriceAddress;
+        if (contextParams.currencyRateAddress) {
+            this.state.currencyRateAddress = contextParams.currencyRateAddress;
         }
         if (contextParams.shopCollectionAddress) {
             this.state.shopCollectionAddress = contextParams.shopCollectionAddress;

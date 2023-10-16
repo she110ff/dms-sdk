@@ -8,6 +8,7 @@ import {
     WithdrawStepValue
 } from "../interfaces";
 import { BigNumber } from "@ethersproject/bignumber";
+import { BytesLike } from "@ethersproject/bytes";
 
 export interface IClient {
     methods: IClientMethods;
@@ -15,22 +16,23 @@ export interface IClient {
 
 /** Defines the shape of the general purpose Client class */
 export interface IClientMethods extends IClientCore, IClientHttpCore {
-    getPointBalances: (email: string) => Promise<BigNumber>;
-    getTokenBalances: (email: string) => Promise<BigNumber>;
+    getUnPayablePointBalance: (phone: string) => Promise<BigNumber>;
+    getPointBalance: (account: string) => Promise<BigNumber>;
+    getTokenBalance: (account: string) => Promise<BigNumber>;
     getPayPointOption: (
         purchaseId: string,
         amount: BigNumber,
-        email: string,
-        shopId: string
+        currency: string,
+        shopId: BytesLike
     ) => Promise<PayPointOption>;
     getPayTokenOption: (
         purchaseId: string,
         amount: BigNumber,
-        email: string,
-        shopId: string
+        currency: string,
+        shopId: BytesLike
     ) => Promise<PayPointOption>;
-    deposit: (email: string, amount: BigNumber) => AsyncGenerator<DepositStepValue>;
-    withdraw: (email: string, amount: BigNumber) => AsyncGenerator<WithdrawStepValue>;
+    deposit: (amount: BigNumber) => AsyncGenerator<DepositStepValue>;
+    withdraw: (amount: BigNumber) => AsyncGenerator<WithdrawStepValue>;
     updateAllowance: (params: UpdateAllowanceParams) => AsyncGenerator<UpdateAllowanceStepValue>;
     getUserTradeHistory: (email: string, option?: QueryOption) => Promise<any>;
     getUserPointInputTradeHistory: (email: string, option?: QueryOption) => Promise<any>;

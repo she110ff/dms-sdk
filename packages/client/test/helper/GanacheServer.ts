@@ -51,11 +51,33 @@ export class GanacheServer {
             accounts.push(process.env.DEPLOYER);
         }
 
-        if (process.env.OWNER !== undefined && process.env.OWNER.trim() !== "" && reg_bytes64.test(process.env.OWNER)) {
-            accounts.push(process.env.OWNER);
+        if (
+            process.env.FOUNDATION !== undefined &&
+            process.env.FOUNDATION.trim() !== "" &&
+            reg_bytes64.test(process.env.FOUNDATION)
+        ) {
+            accounts.push(process.env.FOUNDATION);
         } else {
-            process.env.OWNER = Wallet.createRandom().privateKey;
-            accounts.push(process.env.OWNER);
+            process.env.FOUNDATION = Wallet.createRandom().privateKey;
+            accounts.push(process.env.FOUNDATION);
+        }
+
+        if (
+            process.env.SETTLEMENT !== undefined &&
+            process.env.SETTLEMENT.trim() !== "" &&
+            reg_bytes64.test(process.env.SETTLEMENT)
+        ) {
+            accounts.push(process.env.SETTLEMENT);
+        } else {
+            process.env.SETTLEMENT = Wallet.createRandom().privateKey;
+            accounts.push(process.env.SETTLEMENT);
+        }
+
+        if (process.env.FEE !== undefined && process.env.FEE.trim() !== "" && reg_bytes64.test(process.env.FEE)) {
+            accounts.push(process.env.FEE);
+        } else {
+            process.env.FEE = Wallet.createRandom().privateKey;
+            accounts.push(process.env.FEE);
         }
 
         if (
@@ -103,6 +125,62 @@ export class GanacheServer {
         } else {
             process.env.USER2 = Wallet.createRandom().privateKey;
             accounts.push(process.env.USER2);
+        }
+
+        if (process.env.USER3 !== undefined && process.env.USER3.trim() !== "" && reg_bytes64.test(process.env.USER3)) {
+            accounts.push(process.env.USER3);
+        } else {
+            process.env.USER3 = Wallet.createRandom().privateKey;
+            accounts.push(process.env.USER3);
+        }
+
+        if (process.env.USER4 !== undefined && process.env.USER4.trim() !== "" && reg_bytes64.test(process.env.USER4)) {
+            accounts.push(process.env.USER4);
+        } else {
+            process.env.USER4 = Wallet.createRandom().privateKey;
+            accounts.push(process.env.USER4);
+        }
+
+        if (process.env.USER5 !== undefined && process.env.USER5.trim() !== "" && reg_bytes64.test(process.env.USER5)) {
+            accounts.push(process.env.USER5);
+        } else {
+            process.env.USER5 = Wallet.createRandom().privateKey;
+            accounts.push(process.env.USER5);
+        }
+
+        if (process.env.SHOP1 !== undefined && process.env.SHOP1.trim() !== "" && reg_bytes64.test(process.env.SHOP1)) {
+            accounts.push(process.env.SHOP1);
+        } else {
+            process.env.SHOP1 = Wallet.createRandom().privateKey;
+            accounts.push(process.env.SHOP1);
+        }
+
+        if (process.env.SHOP2 !== undefined && process.env.SHOP2.trim() !== "" && reg_bytes64.test(process.env.SHOP2)) {
+            accounts.push(process.env.SHOP2);
+        } else {
+            process.env.SHOP2 = Wallet.createRandom().privateKey;
+            accounts.push(process.env.SHOP2);
+        }
+
+        if (process.env.SHOP3 !== undefined && process.env.SHOP3.trim() !== "" && reg_bytes64.test(process.env.SHOP3)) {
+            accounts.push(process.env.SHOP3);
+        } else {
+            process.env.SHOP3 = Wallet.createRandom().privateKey;
+            accounts.push(process.env.SHOP3);
+        }
+
+        if (process.env.SHOP4 !== undefined && process.env.SHOP4.trim() !== "" && reg_bytes64.test(process.env.SHOP4)) {
+            accounts.push(process.env.SHOP4);
+        } else {
+            process.env.SHOP4 = Wallet.createRandom().privateKey;
+            accounts.push(process.env.SHOP4);
+        }
+
+        if (process.env.SHOP5 !== undefined && process.env.SHOP5.trim() !== "" && reg_bytes64.test(process.env.SHOP5)) {
+            accounts.push(process.env.SHOP5);
+        } else {
+            process.env.SHOP5 = Wallet.createRandom().privateKey;
+            accounts.push(process.env.SHOP5);
         }
 
         return accounts.map((m) => {

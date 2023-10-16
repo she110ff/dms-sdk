@@ -12,6 +12,7 @@ import * as crypto from "crypto";
 import { defaultAbiCoder } from "@ethersproject/abi";
 import { Signer } from "@ethersproject/abstract-signer";
 import { BigNumberish } from "@ethersproject/bignumber";
+import { BytesLike } from "@ethersproject/bytes";
 import { arrayify } from "@ethersproject/bytes";
 import { keccak256 } from "@ethersproject/keccak256";
 import { verifyMessage } from "@ethersproject/wallet";
@@ -69,95 +70,161 @@ export class ContractUtils {
         return error.data.reason;
     }
 
-    public static getRequestId(emailHash: string, address: string, nonce: BigNumberish): string {
+    public static getPhoneHash(phone: string): string {
+        const encodedResult = defaultAbiCoder.encode(["string", "string"], ["BOSagora Phone Number", phone]);
+        return keccak256(encodedResult);
+    }
+
+    public static getEmailHash(phone: string): string {
+        const encodedResult = defaultAbiCoder.encode(["string", "string"], ["BOSagora Email", phone]);
+        return keccak256(encodedResult);
+    }
+
+    public static getRequestId(hash: BytesLike, address: string, nonce: BigNumberish): string {
         const encodedResult = defaultAbiCoder.encode(
             ["bytes32", "address", "uint256", "bytes32"],
-            [emailHash, address, nonce, crypto.randomBytes(32)]
+            [hash, address, nonce, crypto.randomBytes(32)]
         );
         return keccak256(encodedResult);
     }
 
-    public static async sign(signer: Signer, hash: string, nonce: BigNumberish): Promise<string> {
-        const encodedResult = defaultAbiCoder.encode(
-            ["bytes32", "address", "uint256"],
-            [hash, await signer.getAddress(), nonce]
-        );
-        const message = arrayify(keccak256(encodedResult));
+    public static getRequestHash(hash: BytesLike, address: string, nonce: BigNumberish): Uint8Array {
+        const encodedResult = defaultAbiCoder.encode(["bytes32", "address", "uint256"], [hash, address, nonce]);
+        return arrayify(keccak256(encodedResult));
+    }
+
+    public static async signRequestHash(signer: Signer, hash: BytesLike, nonce: BigNumberish): Promise<string> {
+        const message = ContractUtils.getRequestHash(hash, await signer.getAddress(), nonce);
         return signer.signMessage(message);
+    }
+
+    public static verifyRequestHash(
+        address: string,
+        hash: BytesLike,
+        nonce: BigNumberish,
+        signature: BytesLike
+    ): boolean {
+        const message = ContractUtils.getRequestHash(hash, address, nonce);
+        let res: string;
+        try {
+            res = verifyMessage(message, signature);
+        } catch (error) {
+            return false;
+        }
+        return res.toLowerCase() === address.toLowerCase();
+    }
+
+    public static getPaymentMessage(
+        account: string,
+        purchaseId: string,
+        amount: BigNumberish,
+        currency: string,
+        shopId: BytesLike,
+        nonce: BigNumberish
+    ): Uint8Array {
+        const encodedResult = defaultAbiCoder.encode(
+            ["string", "uint256", "string", "bytes32", "address", "uint256"],
+            [purchaseId, amount, currency, shopId, account, nonce]
+        );
+        return arrayify(keccak256(encodedResult));
     }
 
     public static async signPayment(
         signer: Signer,
         purchaseId: string,
         amount: BigNumberish,
-        userEmail: string,
-        shopId: string,
+        currency: string,
+        shopId: BytesLike,
         nonce: BigNumberish
     ): Promise<string> {
-        const encodedResult = defaultAbiCoder.encode(
-            ["string", "uint256", "bytes32", "string", "address", "uint256"],
-            [purchaseId, amount, userEmail, shopId, await signer.getAddress(), nonce]
+        const message = ContractUtils.getPaymentMessage(
+            await signer.getAddress(),
+            purchaseId,
+            amount,
+            currency,
+            shopId,
+            nonce
         );
-        const message = arrayify(keccak256(encodedResult));
-        return signer.signMessage(message);
-    }
-
-    public static async signExchange(
-        signer: Signer,
-        userEmail: string,
-        amount: BigNumberish,
-        nonce: BigNumberish
-    ): Promise<string> {
-        const encodedResult = defaultAbiCoder.encode(
-            ["bytes32", "uint256", "address", "uint256"],
-            [userEmail, amount, await signer.getAddress(), nonce]
-        );
-        const message = arrayify(keccak256(encodedResult));
         return signer.signMessage(message);
     }
 
     public static verifyPayment(
         purchaseId: string,
         amount: BigNumberish,
-        userEmail: string,
+        currency: string,
         shopId: string,
-        signerAddress: string,
+        account: string,
         nonce: BigNumberish,
-        signature: string
+        signature: BytesLike
     ): boolean {
-        const encodedResult = defaultAbiCoder.encode(
-            ["string", "uint256", "bytes32", "string", "address", "uint256"],
-            [purchaseId, amount, userEmail, shopId, signerAddress, nonce]
-        );
-        const message = arrayify(keccak256(encodedResult));
+        const message = ContractUtils.getPaymentMessage(account, purchaseId, amount, currency, shopId, nonce);
         let res: string;
         try {
             res = verifyMessage(message, signature);
         } catch (error) {
             return false;
         }
-        return res.toLowerCase() === signerAddress.toLowerCase();
+        return res.toLowerCase() === account.toLowerCase();
     }
 
-    public static verifyExchange(
-        signerAddress: string,
-        userEmail: string,
-        amount: BigNumberish,
+    public static getChangePayablePointMessage(phone: BytesLike, address: string, nonce: BigNumberish): Uint8Array {
+        const encodedResult = defaultAbiCoder.encode(["bytes32", "address", "uint256"], [phone, address, nonce]);
+        return arrayify(keccak256(encodedResult));
+    }
+
+    public static async signChangePayablePoint(signer: Signer, phone: BytesLike, nonce: BigNumberish): Promise<string> {
+        const message = ContractUtils.getChangePayablePointMessage(phone, await signer.getAddress(), nonce);
+        return signer.signMessage(message);
+    }
+
+    public static verifyChangePayablePoint(
+        phone: BytesLike,
+        account: string,
         nonce: BigNumberish,
-        signature: string
+        signature: BytesLike
     ): boolean {
-        const encodedResult = defaultAbiCoder.encode(
-            ["bytes32", "uint256", "address", "uint256"],
-            [userEmail, amount, signerAddress, nonce]
-        );
-        const message = arrayify(keccak256(encodedResult));
+        const message = ContractUtils.getChangePayablePointMessage(phone, account, nonce);
         let res: string;
         try {
             res = verifyMessage(message, signature);
         } catch (error) {
             return false;
         }
-        return res.toLowerCase() === signerAddress.toLowerCase();
+        return res.toLowerCase() === account.toLowerCase();
+    }
+
+    public static getPointTypeMessage(type: BigNumberish, account: string, nonce: BigNumberish): Uint8Array {
+        const encodedResult = defaultAbiCoder.encode(["uint256", "address", "uint256"], [type, account, nonce]);
+        return arrayify(keccak256(encodedResult));
+    }
+
+    public static async signPointType(signer: Signer, type: BigNumberish, nonce: BigNumberish): Promise<string> {
+        const message = ContractUtils.getPointTypeMessage(type, await signer.getAddress(), nonce);
+        return signer.signMessage(message);
+    }
+
+    public static verifyPointType(
+        type: BigNumberish,
+        account: string,
+        nonce: BigNumberish,
+        signature: BytesLike
+    ): boolean {
+        const message = ContractUtils.getPointTypeMessage(type, account, nonce);
+        let res: string;
+        try {
+            res = verifyMessage(message, signature);
+        } catch (error) {
+            return false;
+        }
+        return res.toLowerCase() === account.toLowerCase();
+    }
+
+    public static getShopId(name: string, account: string): string {
+        const encodedResult = defaultAbiCoder.encode(
+            ["string", "address", "bytes32"],
+            [name, account, crypto.randomBytes(32)]
+        );
+        return keccak256(encodedResult);
     }
 }
 

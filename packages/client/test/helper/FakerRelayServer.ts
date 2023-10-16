@@ -26,7 +26,6 @@ import { Signer } from "@ethersproject/abstract-signer";
 import { ContractUtils } from "../../src";
 import { GanacheServer } from "./GanacheServer";
 import { Deployment } from "./deployContracts";
-import { EmailLinkCollection, EmailLinkCollection__factory } from "del-osx-lib";
 import { Ledger, Ledger__factory } from "dms-osx-lib";
 
 import { Utils } from "./Utils";
@@ -89,11 +88,11 @@ export class FakerRelayServer {
             [
                 body("purchaseId").exists(),
                 body("amount").custom(Utils.isAmount),
-                body("email")
+                body("currency").exists(),
+                body("shopId")
                     .exists()
                     .matches(/^(0x)[0-9a-f]{64}$/i),
-                body("shopId").exists(),
-                body("signer")
+                body("account")
                     .exists()
                     .isEthereumAddress(),
                 body("signature")
@@ -109,11 +108,11 @@ export class FakerRelayServer {
             [
                 body("purchaseId").exists(),
                 body("amount").custom(Utils.isAmount),
-                body("email")
+                body("currency").exists(),
+                body("shopId")
                     .exists()
                     .matches(/^(0x)[0-9a-f]{64}$/i),
-                body("shopId").exists(),
-                body("signer")
+                body("account")
                     .exists()
                     .isEthereumAddress(),
                 body("signature")
@@ -146,13 +145,6 @@ export class FakerRelayServer {
 
     private get ledgerContract(): Ledger {
         return Ledger__factory.connect(this.deployment.ledger.address, this.signer) as Ledger;
-    }
-
-    private get linkCollectionContract(): EmailLinkCollection {
-        return EmailLinkCollection__factory.connect(
-            this.deployment.linkCollection.address,
-            this.signer
-        ) as EmailLinkCollection;
     }
 
     private get signer(): Signer {
@@ -193,32 +185,23 @@ export class FakerRelayServer {
         try {
             const purchaseId: string = String(req.body.purchaseId); // 구매 아이디
             const amount: string = String(req.body.amount); // 구매 금액
-            const email: string = String(req.body.email); // 구매한 사용자의 이메일 해시
+            const currency: string = String(req.body.currency).toLowerCase(); // 구매한 금액 통화코드
             const shopId: string = String(req.body.shopId); // 구매한 가맹점 아이디
-            const signer: string = String(req.body.signer); // 구매자의 주소
+            const account: string = String(req.body.account); // 구매자의 주소
             const signature: string = String(req.body.signature); // 서명
 
             // 서명검증
-            const userNonce = await this.ledgerContract.nonceOf(signer);
-            if (!ContractUtils.verifyPayment(purchaseId, amount, email, shopId, signer, userNonce, signature))
+            const userNonce = await this.ledgerContract.nonceOf(account);
+            if (!ContractUtils.verifyPayment(purchaseId, amount, currency, shopId, account, userNonce, signature))
                 return res.status(200).json(
                     this.makeResponseData(500, undefined, {
                         message: "Signature is not valid."
                     })
                 );
 
-            // 컨트랙트에서 이메일 등록여부 체크 및 구매자 주소와 동일여부
-            const emailToAddress: string = await this.linkCollectionContract.toAddress(email);
-            if (emailToAddress !== signer) {
-                return res.status(200).json(
-                    this.makeResponseData(502, undefined, {
-                        message: "Email is not valid."
-                    })
-                );
-            }
             const tx = await this.ledgerContract
                 .connect(this.signer)
-                .payPoint(purchaseId, amount, email, shopId, signer, signature);
+                .payPoint({ purchaseId, amount, currency, shopId, account, signature });
 
             console.log(`TxHash(payPoint): `, tx.hash);
             return res.status(200).json(this.makeResponseData(200, { txHash: tx.hash }));
@@ -250,32 +233,23 @@ export class FakerRelayServer {
         try {
             const purchaseId: string = String(req.body.purchaseId); // 구매 아이디
             const amount: string = String(req.body.amount); // 구매 금액
-            const email: string = String(req.body.email); // 구매한 사용자의 이메일 해시
+            const currency: string = String(req.body.currency).toLowerCase(); // 구매한 금액 통화코드
             const shopId: string = String(req.body.shopId); // 구매한 가맹점 아이디
-            const signer: string = String(req.body.signer); // 구매자의 주소
+            const account: string = String(req.body.account); // 구매자의 주소
             const signature: string = String(req.body.signature); // 서명
 
             // 서명검증
-            const userNonce = await this.ledgerContract.nonceOf(signer);
-            if (!ContractUtils.verifyPayment(purchaseId, amount, email, shopId, signer, userNonce, signature))
+            const userNonce = await this.ledgerContract.nonceOf(account);
+            if (!ContractUtils.verifyPayment(purchaseId, amount, currency, shopId, account, userNonce, signature))
                 return res.status(200).json(
                     this.makeResponseData(500, undefined, {
                         message: "Signature is not valid."
                     })
                 );
 
-            // 컨트랙트에서 이메일 등록여부 체크 및 구매자 주소와 동일여부
-            const emailToAddress: string = await this.linkCollectionContract.toAddress(email);
-            if (emailToAddress !== signer) {
-                return res.status(200).json(
-                    this.makeResponseData(502, undefined, {
-                        message: "Email is not valid."
-                    })
-                );
-            }
             const tx = await this.ledgerContract
                 .connect(this.signer)
-                .payToken(purchaseId, amount, email, shopId, signer, signature);
+                .payToken({ purchaseId, amount, currency, shopId, account, signature });
 
             console.log(`TxHash(payToken): `, tx.hash);
             return res.status(200).json(this.makeResponseData(200, { txHash: tx.hash }));

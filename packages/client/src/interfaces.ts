@@ -2,6 +2,7 @@ import { BigNumberish } from "@ethersproject/bignumber";
 import { BigNumber } from "@ethersproject/bignumber";
 import { Signer } from "@ethersproject/abstract-signer";
 import { JsonRpcProvider, Networkish } from "@ethersproject/providers";
+import { BytesLike } from "@ethersproject/bytes";
 
 export type PurchaseParam = {
     purchaseId: string;
@@ -30,10 +31,10 @@ export type FetchPayOption = PayPointOption | PayTokenOption;
 export type PayPointOption = {
     purchaseId: string;
     amount: string;
-    email: string;
-    shopId: string;
-    signer: string;
-    signature: string;
+    currency: string;
+    shopId: BytesLike;
+    account: string;
+    signature: BytesLike;
 };
 
 export enum PayPointSteps {
@@ -69,10 +70,10 @@ export type PayTokenStepValue =
 export type PayTokenOption = {
     purchaseId: string;
     amount: string;
-    email: string;
-    shopId: string;
-    signer: string;
-    signature: string;
+    currency: string;
+    shopId: BytesLike;
+    account: string;
+    signature: BytesLike;
 };
 
 export enum DepositSteps {

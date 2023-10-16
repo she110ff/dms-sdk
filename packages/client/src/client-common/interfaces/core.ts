@@ -18,7 +18,7 @@ export interface IClientWeb3Core {
     getTokenAddress: () => string;
     getLinkCollectionAddress: () => string;
     getValidatorCollectionAddress: () => string;
-    getTokenPriceAddress: () => string;
+    getCurrencyRateAddress: () => string;
     getShopCollectionAddress: () => string;
     getLedgerAddress: () => string;
 }

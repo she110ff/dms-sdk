@@ -38,22 +38,19 @@ import {
     InsufficientBalanceError,
     InternalServerError,
     InvalidEmailParamError,
-    MismatchApproveAddressError,
-    NoHttpModuleError,
-    UnregisteredEmailError
+    NoHttpModuleError
 } from "../../utils/errors";
 import { checkEmail } from "../../utils";
-import { EmailLinkCollection, EmailLinkCollection__factory } from "del-osx-lib";
 import { Network } from "../../client-common/interfaces/network";
 import { findLog } from "../../client-common/utils";
 
 import { BigNumber } from "@ethersproject/bignumber";
-import { AddressZero } from "@ethersproject/constants";
 import { ContractTransaction } from "@ethersproject/contracts";
 import { getNetwork } from "@ethersproject/networks";
 import { QueryUserTradeHistory } from "../graphql-queries/history";
 import { QueryPaidToken } from "../graphql-queries/paidToken";
 import { QueryPaidPoint } from "../graphql-queries/paidPoint";
+import { BytesLike } from "@ethersproject/bytes";
 
 /**
  * Methods module the SDK Generic Client
@@ -72,12 +69,10 @@ export class ClientMethods extends ClientCore implements IClientMethods, IClient
 
     /**
      * 포인트의 잔고를 리턴한다
-     * @param {string} email - 이메일 주소
+     * @param {string} phone - 전화번호 해시
      * @return {Promise<BigNumber>} 포인트 잔고
      */
-    public async getPointBalances(email: string): Promise<BigNumber> {
-        if (!checkEmail(email)) throw new InvalidEmailParamError();
-
+    public async getUnPayablePointBalance(phone: string): Promise<BigNumber> {
         const provider = this.web3.getProvider() as Provider;
         if (!provider) throw new NoProviderError();
 
@@ -88,19 +83,34 @@ export class ClientMethods extends ClientCore implements IClientMethods, IClient
         }
 
         const ledgerInstance: Ledger = Ledger__factory.connect(this.web3.getLedgerAddress(), provider);
-        const emailHash = ContractUtils.sha256String(email);
+        return await ledgerInstance.unPayablePointBalanceOf(phone);
+    }
 
-        return await ledgerInstance.pointBalanceOf(emailHash);
+    /**
+     * 포인트의 잔고를 리턴한다
+     * @param {string} account - 지갑 주소
+     * @return {Promise<BigNumber>} 포인트 잔고
+     */
+    public async getPointBalance(account: string): Promise<BigNumber> {
+        const provider = this.web3.getProvider() as Provider;
+        if (!provider) throw new NoProviderError();
+
+        const network = getNetwork((await provider.getNetwork()).chainId);
+        const networkName = network.name as SupportedNetworks;
+        if (!SupportedNetworksArray.includes(networkName)) {
+            throw new UnsupportedNetworkError(networkName);
+        }
+
+        const ledgerInstance: Ledger = Ledger__factory.connect(this.web3.getLedgerAddress(), provider);
+        return await ledgerInstance.pointBalanceOf(account);
     }
 
     /**
      * 토큰의 잔고를 리턴한다.
-     * @param {string} email - 이메일
+     * @param {string} account - 지갑 주소
      * @return {Promise<BigNumber>} 토큰 잔고
      */
-    public async getTokenBalances(email: string): Promise<BigNumber> {
-        if (!checkEmail(email)) throw new InvalidEmailParamError();
-
+    public async getTokenBalance(account: string): Promise<BigNumber> {
         const provider = this.web3.getProvider() as Provider;
         if (!provider) throw new NoProviderError();
 
@@ -111,24 +121,23 @@ export class ClientMethods extends ClientCore implements IClientMethods, IClient
         }
 
         const ledgerInstance: Ledger = Ledger__factory.connect(this.web3.getLedgerAddress(), provider);
-        const emailHash = ContractUtils.sha256String(email);
 
-        return await ledgerInstance.tokenBalanceOf(emailHash);
+        return await ledgerInstance.tokenBalanceOf(account);
     }
 
     /**
      * 포인트 사용승인 하여 Relay 서버로 전송하기 위한 서명값을 생성한다.
      * @param purchaseId - 거래 아이디
      * @param amount - 거래금액
-     * @param email - 사용자 이메일 주소
-     * @param shopId - 거래처 아이디
+     * @param currency - 통화코드
+     * @param shopId - 상점 아이디
      * @return {Promise<PayPointOption>}
      */
     public async getPayPointOption(
         purchaseId: string,
         amount: BigNumber,
-        email: string,
-        shopId: string
+        currency: string,
+        shopId: BytesLike
     ): Promise<PayPointOption> {
         const signer = this.web3.getConnectedSigner();
         if (!signer) {
@@ -143,28 +152,19 @@ export class ClientMethods extends ClientCore implements IClientMethods, IClient
             throw new UnsupportedNetworkError(networkName);
         }
 
-        const emailHash = ContractUtils.sha256String(email);
         const ledgerContract: Ledger = Ledger__factory.connect(this.web3.getLedgerAddress(), signer);
-        const linkContract: EmailLinkCollection = EmailLinkCollection__factory.connect(
-            this.web3.getLinkCollectionAddress(),
-            signer
-        );
 
-        const emailToAddress: string = await linkContract.toAddress(emailHash);
-        if (emailToAddress === AddressZero) throw new UnregisteredEmailError();
+        const account: string = await signer.getAddress();
 
-        const signerAddress: string = await signer.getAddress();
-        if (emailToAddress !== signerAddress) throw new MismatchApproveAddressError();
-
-        const nonce = await ledgerContract.nonceOf(emailToAddress);
-        const signature = await ContractUtils.signPayment(signer, purchaseId, amount, emailHash, shopId, nonce);
+        const nonce = await ledgerContract.nonceOf(account);
+        const signature = await ContractUtils.signPayment(signer, purchaseId, amount, currency, shopId, nonce);
 
         const relayParam: FetchPayOption = {
             purchaseId,
             amount: amount.toString(),
-            email: emailHash,
+            currency,
             shopId,
-            signer: signerAddress,
+            account,
             signature
         };
         return Promise.resolve(relayParam);
@@ -174,15 +174,15 @@ export class ClientMethods extends ClientCore implements IClientMethods, IClient
      * 토큰 사용승인 하여 Relay 서버로 전송하기 위한 서명값을 생성한다.
      * @param purchaseId - 거래 아이디
      * @param amount - 거래금액
-     * @param email - 사용자 이메일 주소
-     * @param shopId - 거래처 아이디
+     * @param currency - 통화코드
+     * @param shopId - 상점 아이디
      * @return {Promise<PayTokenOption>}
      */
     public async getPayTokenOption(
         purchaseId: string,
         amount: BigNumber,
-        email: string,
-        shopId: string
+        currency: string,
+        shopId: BytesLike
     ): Promise<PayTokenOption> {
         const signer = this.web3.getConnectedSigner();
         if (!signer) {
@@ -197,28 +197,19 @@ export class ClientMethods extends ClientCore implements IClientMethods, IClient
             throw new UnsupportedNetworkError(networkName);
         }
 
-        const emailHash = ContractUtils.sha256String(email);
         const ledgerContract: Ledger = Ledger__factory.connect(this.web3.getLedgerAddress(), signer);
-        const linkContract: EmailLinkCollection = EmailLinkCollection__factory.connect(
-            this.web3.getLinkCollectionAddress(),
-            signer
-        );
 
-        const emailToAddress: string = await linkContract.toAddress(emailHash);
-        if (emailToAddress === AddressZero) throw new UnregisteredEmailError();
+        const account: string = await signer.getAddress();
 
-        const signerAddress: string = await signer.getAddress();
-        if (emailToAddress !== signerAddress) throw new MismatchApproveAddressError();
-
-        const nonce = await ledgerContract.nonceOf(emailToAddress);
-        const signature = await ContractUtils.signPayment(signer, purchaseId, amount, emailHash, shopId, nonce);
+        const nonce = await ledgerContract.nonceOf(account);
+        const signature = await ContractUtils.signPayment(signer, purchaseId, amount, currency, shopId, nonce);
 
         const relayParam: FetchPayOption = {
             purchaseId,
             amount: amount.toString(),
-            email: emailHash,
+            currency,
             shopId,
-            signer: signerAddress,
+            account,
             signature
         };
         return Promise.resolve(relayParam);
@@ -226,11 +217,10 @@ export class ClientMethods extends ClientCore implements IClientMethods, IClient
 
     /**
      * 토큰을 예치합니다.
-     * @param {string} email 이메일주소
      * @param {BigNumber} amount 금액
      * @return {AsyncGenerator<DepositStepValue>}
      */
-    public async *deposit(email: string, amount: BigNumber): AsyncGenerator<DepositStepValue> {
+    public async *deposit(amount: BigNumber): AsyncGenerator<DepositStepValue> {
         const signer = this.web3.getConnectedSigner();
         if (!signer) {
             throw new NoSignerError();
@@ -244,22 +234,12 @@ export class ClientMethods extends ClientCore implements IClientMethods, IClient
             throw new UnsupportedNetworkError(networkName);
         }
 
-        const emailHash = ContractUtils.sha256String(email);
-        const linkContract: EmailLinkCollection = EmailLinkCollection__factory.connect(
-            this.web3.getLinkCollectionAddress(),
-            signer
-        );
-
-        const emailToAddress: string = await linkContract.toAddress(emailHash);
-        if (emailToAddress === AddressZero) throw new UnregisteredEmailError();
-
-        const signerAddress: string = await signer.getAddress();
-        if (emailToAddress !== signerAddress) throw new MismatchApproveAddressError();
+        const account: string = await signer.getAddress();
 
         const ledgerContract: Ledger = Ledger__factory.connect(this.web3.getLedgerAddress(), signer);
         const tokenContract: Token = Token__factory.connect(this.web3.getTokenAddress(), signer);
 
-        const balance = await tokenContract.balanceOf(signerAddress);
+        const balance = await tokenContract.balanceOf(account);
         if (amount.gte(balance)) throw new InsufficientBalanceError();
 
         yield* this.updateAllowance({
@@ -286,11 +266,10 @@ export class ClientMethods extends ClientCore implements IClientMethods, IClient
 
     /**
      * 토큰을 인출합니다.
-     * @param {string} email 이메일주소
      * @param {BigNumber} amount 금액
      * @return {AsyncGenerator<WithdrawStepValue>}
      */
-    public async *withdraw(email: string, amount: BigNumber): AsyncGenerator<WithdrawStepValue> {
+    public async *withdraw(amount: BigNumber): AsyncGenerator<WithdrawStepValue> {
         const signer = this.web3.getConnectedSigner();
         if (!signer) {
             throw new NoSignerError();
@@ -304,21 +283,11 @@ export class ClientMethods extends ClientCore implements IClientMethods, IClient
             throw new UnsupportedNetworkError(networkName);
         }
 
-        const emailHash = ContractUtils.sha256String(email);
-        const linkContract: EmailLinkCollection = EmailLinkCollection__factory.connect(
-            this.web3.getLinkCollectionAddress(),
-            signer
-        );
-
-        const emailToAddress: string = await linkContract.toAddress(emailHash);
-        if (emailToAddress === AddressZero) throw new UnregisteredEmailError();
-
-        const signerAddress: string = await signer.getAddress();
-        if (emailToAddress !== signerAddress) throw new MismatchApproveAddressError();
+        const account: string = await signer.getAddress();
 
         const ledgerContract: Ledger = Ledger__factory.connect(this.web3.getLedgerAddress(), signer);
 
-        const currentDepositAmount = await ledgerContract.tokenBalanceOf(emailHash);
+        const currentDepositAmount = await ledgerContract.tokenBalanceOf(account);
         if (currentDepositAmount.lte(amount)) throw new InsufficientBalanceError();
 
         const tx = await ledgerContract.connect(signer).withdraw(amount);

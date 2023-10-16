@@ -9,7 +9,7 @@ import {
     NoLedgerAddress,
     NoLinkCollectionAddress,
     NoTokenAddress,
-    NoTokenPriceAddress,
+    NoCurrencyRateAddress,
     NoValidatorCollectionAddress
 } from "../../utils/errors";
 
@@ -20,7 +20,7 @@ const signerMap = new Map<Web3Module, Signer>();
 const tokenAddressMap = new Map<Web3Module, string>();
 const linkCollectionAddressMap = new Map<Web3Module, string>();
 const validatorCollectionAddressMap = new Map<Web3Module, string>();
-const tokenPriceAddressMap = new Map<Web3Module, string>();
+const currencyRateAddressMap = new Map<Web3Module, string>();
 const shopCollectionAddressMap = new Map<Web3Module, string>();
 const ledgerAddressMap = new Map<Web3Module, string>();
 
@@ -41,16 +41,16 @@ export class Web3Module implements IClientWeb3Core {
             tokenAddressMap.set(this, context.tokenAddress);
         }
 
-        if (context.emailLinkCollectionAddress) {
-            linkCollectionAddressMap.set(this, context.emailLinkCollectionAddress);
+        if (context.phoneLinkCollectionAddress) {
+            linkCollectionAddressMap.set(this, context.phoneLinkCollectionAddress);
         }
 
         if (context.validatorCollectionAddress) {
             validatorCollectionAddressMap.set(this, context.validatorCollectionAddress);
         }
 
-        if (context.tokenPriceAddress) {
-            tokenPriceAddressMap.set(this, context.tokenPriceAddress);
+        if (context.currencyRateAddress) {
+            currencyRateAddressMap.set(this, context.currencyRateAddress);
         }
 
         if (context.shopCollectionAddress) {
@@ -69,7 +69,7 @@ export class Web3Module implements IClientWeb3Core {
         return tokenAddressMap.get(this) || "";
     }
 
-    private get emailLinkCollectionAddress(): string {
+    private get phoneLinkCollectionAddress(): string {
         return linkCollectionAddressMap.get(this) || "";
     }
 
@@ -77,8 +77,8 @@ export class Web3Module implements IClientWeb3Core {
         return validatorCollectionAddressMap.get(this) || "";
     }
 
-    private get tokenPriceAddress(): string {
-        return tokenPriceAddressMap.get(this) || "";
+    private get currencyRateAddress(): string {
+        return currencyRateAddressMap.get(this) || "";
     }
 
     private get shopCollectionAddress(): string {
@@ -209,10 +209,10 @@ export class Web3Module implements IClientWeb3Core {
     }
 
     public getLinkCollectionAddress(): string {
-        if (!this.emailLinkCollectionAddress) {
+        if (!this.phoneLinkCollectionAddress) {
             throw new NoLinkCollectionAddress();
         }
-        return this.emailLinkCollectionAddress;
+        return this.phoneLinkCollectionAddress;
     }
 
     public getValidatorCollectionAddress(): string {
@@ -222,11 +222,11 @@ export class Web3Module implements IClientWeb3Core {
         return this.validatorCollectionAddress;
     }
 
-    public getTokenPriceAddress(): string {
-        if (!this.tokenPriceAddress) {
-            throw new NoTokenPriceAddress();
+    public getCurrencyRateAddress(): string {
+        if (!this.currencyRateAddress) {
+            throw new NoCurrencyRateAddress();
         }
-        return this.tokenPriceAddress;
+        return this.currencyRateAddress;
     }
 
     public getShopCollectionAddress(): string {

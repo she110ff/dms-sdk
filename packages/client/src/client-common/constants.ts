@@ -7,37 +7,37 @@ dotenv.config({ path: "env/.env" });
 
 export const LIVE_CONTRACTS: { [K in SupportedNetworks]: NetworkDeployment } = {
     bosagora_mainnet: {
-        EmailLinkCollectionAddress: delActiveContractList.bosagora_mainnet.EmailLinkCollection,
+        PhoneLinkCollectionAddress: delActiveContractList.bosagora_mainnet.PhoneLinkCollection,
         TokenAddress: dmsActiveContractList.bosagora_mainnet.Token,
         ValidatorCollectionAddress: dmsActiveContractList.bosagora_mainnet.ValidatorCollection,
-        TokenPriceAddress: dmsActiveContractList.bosagora_mainnet.TokenPrice,
+        CurrencyRateAddress: dmsActiveContractList.bosagora_mainnet.CurrencyRate,
         ShopCollectionAddress: dmsActiveContractList.bosagora_mainnet.ShopCollection,
         LedgerAddress: dmsActiveContractList.bosagora_mainnet.Ledger,
         relayEndpoint: process.env.MAINNET_RELAY_SERVER_URL
     },
     bosagora_testnet: {
-        EmailLinkCollectionAddress: delActiveContractList.bosagora_testnet.EmailLinkCollection,
+        PhoneLinkCollectionAddress: delActiveContractList.bosagora_testnet.PhoneLinkCollection,
         TokenAddress: dmsActiveContractList.bosagora_testnet.Token,
         ValidatorCollectionAddress: dmsActiveContractList.bosagora_testnet.ValidatorCollection,
-        TokenPriceAddress: dmsActiveContractList.bosagora_testnet.TokenPrice,
+        CurrencyRateAddress: dmsActiveContractList.bosagora_testnet.CurrencyRate,
         ShopCollectionAddress: dmsActiveContractList.bosagora_testnet.ShopCollection,
         LedgerAddress: dmsActiveContractList.bosagora_testnet.Ledger,
         relayEndpoint: process.env.TESTNET_RELAY_SERVER_URL
     },
     bosagora_devnet: {
-        EmailLinkCollectionAddress: delActiveContractList.bosagora_devnet.EmailLinkCollection,
+        PhoneLinkCollectionAddress: delActiveContractList.bosagora_devnet.PhoneLinkCollection,
         TokenAddress: dmsActiveContractList.bosagora_devnet.Token,
         ValidatorCollectionAddress: dmsActiveContractList.bosagora_devnet.ValidatorCollection,
-        TokenPriceAddress: dmsActiveContractList.bosagora_devnet.TokenPrice,
+        CurrencyRateAddress: dmsActiveContractList.bosagora_devnet.CurrencyRate,
         ShopCollectionAddress: dmsActiveContractList.bosagora_devnet.ShopCollection,
         LedgerAddress: dmsActiveContractList.bosagora_devnet.Ledger,
         relayEndpoint: process.env.DEVNET_RELAY_SERVER_URL
     },
     localhost: {
-        EmailLinkCollectionAddress: "",
+        PhoneLinkCollectionAddress: "",
         TokenAddress: "",
         ValidatorCollectionAddress: "",
-        TokenPriceAddress: "",
+        CurrencyRateAddress: "",
         ShopCollectionAddress: "",
         LedgerAddress: "",
         relayEndpoint: ""

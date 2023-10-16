@@ -2,7 +2,7 @@ import { GanacheServer } from "./GanacheServer";
 import { Signer } from "@ethersproject/abstract-signer";
 import { BigNumber } from "@ethersproject/bignumber";
 import { Contract, ContractFactory } from "@ethersproject/contracts";
-import { JsonRpcProvider, JsonRpcSigner } from "@ethersproject/providers";
+import { JsonRpcProvider } from "@ethersproject/providers";
 import { Wallet } from "@ethersproject/wallet";
 import {
     ShopCollection,
@@ -11,32 +11,185 @@ import {
     Ledger__factory,
     Token,
     Token__factory,
-    TokenPrice,
-    TokenPrice__factory,
+    CurrencyRate,
+    CurrencyRate__factory,
     ValidatorCollection,
     ValidatorCollection__factory
 } from "dms-osx-lib";
 import { Amount, ContractUtils } from "../../src";
-import { EmailLinkCollection, EmailLinkCollection__factory } from "del-osx-lib";
+import { PhoneLinkCollection, PhoneLinkCollection__factory } from "del-osx-lib";
 
 export interface Deployment {
     provider: JsonRpcProvider;
-    linkCollection: EmailLinkCollection;
+    phoneLinkCollection: PhoneLinkCollection;
     token: Token;
     validatorCollection: ValidatorCollection;
-    tokenPrice: TokenPrice;
+    currencyRate: CurrencyRate;
     shopCollection: ShopCollection;
     ledger: Ledger;
 }
 
 export const depositAmount = Amount.make(50_000, 18);
 export const foundationAmount = Amount.make(1_000_000_000, 18);
-export const foundationEmail = "foundation@example.com";
-export const foundationAccount = ContractUtils.sha256String(foundationEmail);
+
+export interface IPurchaseData {
+    purchaseId: string;
+    timestamp: number;
+    amount: number;
+    method: number;
+    currency: string;
+    userIndex: number;
+    shopIndex: number;
+}
+
+export interface IShopData {
+    shopId: string;
+    name: string;
+    provideWaitTime: number;
+    providePercent: number;
+    wallet: Wallet;
+}
+
+export interface IUserData {
+    phone: string;
+    address: string;
+    privateKey: string;
+}
+
+export const userData: IUserData[] = [];
+
+export const shopData: IShopData[] = [];
+
+export const purchaseData: IPurchaseData[] = [
+    {
+        purchaseId: "P000001",
+        timestamp: 1672844400,
+        amount: 10000,
+        method: 0,
+        currency: "krw",
+        shopIndex: 0,
+        userIndex: 0
+    },
+    {
+        purchaseId: "P000002",
+        timestamp: 1675522800,
+        amount: 10000,
+        method: 0,
+        currency: "krw",
+        shopIndex: 0,
+        userIndex: 1
+    },
+    {
+        purchaseId: "P000003",
+        timestamp: 1677942000,
+        amount: 10000,
+        method: 0,
+        currency: "krw",
+        shopIndex: 1,
+        userIndex: 2
+    },
+    {
+        purchaseId: "P000004",
+        timestamp: 1680620400,
+        amount: 10000,
+        method: 0,
+        currency: "krw",
+        shopIndex: 2,
+        userIndex: 3
+    },
+    {
+        purchaseId: "P000005",
+        timestamp: 1683212400,
+        amount: 10000,
+        method: 0,
+        currency: "krw",
+        shopIndex: 1,
+        userIndex: 4
+    }
+];
+
+function createSampleData() {
+    let accounts = GanacheServer.accounts();
+    while (userData.length > 0) userData.pop();
+
+    userData.push(
+        ...[
+            {
+                phone: "08201012341001",
+                address: accounts[7].address,
+                privateKey: accounts[7].privateKey
+            },
+            {
+                phone: "08201012341002",
+                address: accounts[8].address,
+                privateKey: accounts[8].privateKey
+            },
+            {
+                phone: "08201012341003",
+                address: accounts[9].address,
+                privateKey: accounts[9].privateKey
+            },
+            {
+                phone: "08201012341004",
+                address: "",
+                privateKey: ""
+            },
+            {
+                phone: "08201012341005",
+                address: "",
+                privateKey: ""
+            }
+        ]
+    );
+
+    shopData.push(
+        ...[
+            {
+                shopId: "",
+                name: "Shop1",
+                provideWaitTime: 0,
+                providePercent: 1,
+                wallet: accounts[11]
+            },
+            {
+                shopId: "",
+                name: "Shop2",
+                provideWaitTime: 0,
+                providePercent: 1,
+                wallet: accounts[12]
+            },
+            {
+                shopId: "",
+                name: "Shop3",
+                provideWaitTime: 0,
+                providePercent: 1,
+                wallet: accounts[13]
+            },
+            {
+                shopId: "",
+                name: "Shop4",
+                provideWaitTime: 0,
+                providePercent: 1,
+                wallet: accounts[14]
+            },
+            {
+                shopId: "",
+                name: "Shop5",
+                provideWaitTime: 0,
+                providePercent: 1,
+                wallet: accounts[15]
+            }
+        ]
+    );
+
+    for (const elem of shopData) {
+        elem.shopId = ContractUtils.getShopId(elem.name, elem.wallet.address);
+    }
+}
 
 export async function deployAll(provider: JsonRpcProvider): Promise<Deployment> {
     let accounts = GanacheServer.accounts();
-    const [deployer, foundation, validator1, validator2, validator3] = accounts;
+    const [deployer, foundation, settlement, fee, validator1, validator2, validator3] = accounts;
     const validators = [validator1, validator2, validator3];
 
     try {
@@ -49,41 +202,38 @@ export async function deployAll(provider: JsonRpcProvider): Promise<Deployment> 
         )) as ValidatorCollection;
 
         await depositValidators(tokenContract, validatorCollectionContract, validators);
-        const linkCollectionContract: EmailLinkCollection = await deployLinkCollection(deployer, validators);
+        const linkCollectionContract: PhoneLinkCollection = await deployLinkCollection(deployer, validators);
 
-        const tokenPriceContract: TokenPrice = await deployTokenPrice(
+        const currencyRateContract: CurrencyRate = await deployCurrencyRate(
             deployer,
             validatorCollectionContract,
+            tokenContract,
             validator1
         );
-        const shopCollectionContract: ShopCollection = await deployShopCollection(
-            deployer,
-            validatorCollectionContract
-        );
+        const shopCollectionContract: ShopCollection = await deployShopCollection(deployer);
         const ledgerContract: Ledger = await deployLedger(
             deployer,
-            foundationAccount,
+            foundation.address,
+            settlement.address,
+            fee.address,
             tokenContract,
             validatorCollectionContract,
             linkCollectionContract,
-            tokenPriceContract,
+            currencyRateContract,
             shopCollectionContract
         );
-        await depositFoundationAsset(
-            tokenContract,
-            ledgerContract,
-            linkCollectionContract,
-            deployer,
-            foundation,
-            validators
-        );
+        await depositFoundationAsset(tokenContract, ledgerContract, deployer, foundation);
+
+        createSampleData();
+
+        await addShopData(shopCollectionContract);
 
         return {
             provider: provider,
-            linkCollection: linkCollectionContract,
+            phoneLinkCollection: linkCollectionContract,
             token: tokenContract,
             validatorCollection: validatorCollectionContract,
-            tokenPrice: tokenPriceContract,
+            currencyRate: currencyRateContract,
             shopCollection: shopCollectionContract,
             ledger: ledgerContract
         };
@@ -138,172 +288,94 @@ async function depositValidators(
         await tx2.wait();
         await validatorContract.validatorOf(address);
     }
-    await validatorContract.connect(validators[0]).makeActiveItems();
 }
 
-const deployLinkCollection = async (deployer: Wallet, validators: Wallet[]): Promise<EmailLinkCollection> => {
+async function deployLinkCollection(deployer: Wallet, validators: Wallet[]): Promise<PhoneLinkCollection> {
     const linkCollectionFactory = new ContractFactory(
-        EmailLinkCollection__factory.abi,
-        EmailLinkCollection__factory.bytecode
+        PhoneLinkCollection__factory.abi,
+        PhoneLinkCollection__factory.bytecode
     );
-    const linkCollectionContract: EmailLinkCollection = (await linkCollectionFactory
+    const linkCollectionContract: PhoneLinkCollection = (await linkCollectionFactory
         .connect(deployer)
-        .deploy(validators.map((m) => m.address))) as EmailLinkCollection;
+        .deploy(validators.map((m) => m.address))) as PhoneLinkCollection;
     await linkCollectionContract.deployed();
     await linkCollectionContract.deployTransaction.wait();
 
     return linkCollectionContract;
-};
+}
 
-async function deployTokenPrice(
+async function deployCurrencyRate(
     deployer: Signer,
     validatorContract: ValidatorCollection,
+    tokenContract: Token,
     validator: Signer
-): Promise<TokenPrice> {
-    const tokenPriceFactory = new ContractFactory(TokenPrice__factory.abi, TokenPrice__factory.bytecode);
-    const tokenPriceContract = (await tokenPriceFactory
+): Promise<CurrencyRate> {
+    const currencyRateFactory = new ContractFactory(CurrencyRate__factory.abi, CurrencyRate__factory.bytecode);
+    const currencyRateContract = (await currencyRateFactory
         .connect(deployer)
-        .deploy(validatorContract.address)) as TokenPrice;
-    await tokenPriceContract.deployed();
-    await tokenPriceContract.deployTransaction.wait();
+        .deploy(validatorContract.address)) as CurrencyRate;
+    await currencyRateContract.deployed();
+    await currencyRateContract.deployTransaction.wait();
 
     const multiple = BigNumber.from(1000000000);
     const price = BigNumber.from(150).mul(multiple);
-    await tokenPriceContract.connect(validator).set("KRW", price);
-    return tokenPriceContract;
+    await currencyRateContract.connect(validator).set(await tokenContract.symbol(), price);
+    return currencyRateContract;
 }
 
-async function deployShopCollection(deployer: Signer, validatorContract: ValidatorCollection): Promise<ShopCollection> {
+async function deployShopCollection(deployer: Signer): Promise<ShopCollection> {
     const shopCollectionFactory = new ContractFactory(ShopCollection__factory.abi, ShopCollection__factory.bytecode);
-    const shopCollection = (await shopCollectionFactory
-        .connect(deployer)
-        .deploy(validatorContract.address)) as ShopCollection;
+    const shopCollection = (await shopCollectionFactory.connect(deployer).deploy()) as ShopCollection;
     await shopCollection.deployed();
     await shopCollection.deployTransaction.wait();
     return shopCollection;
 }
 
-const deployLedger = async (
+async function deployLedger(
     deployer: Signer,
-    foundationAccount: string,
+    foundationAddress: string,
+    settlementAddress: string,
+    feeAddress: string,
     tokenContract: Contract,
     validatorContract: Contract,
     linkCollectionContract: Contract,
-    tokenPriceContract: Contract,
+    currencyRateContract: Contract,
     shopCollection: Contract
-): Promise<Ledger> => {
+): Promise<Ledger> {
     const ledgerFactory = new ContractFactory(Ledger__factory.abi, Ledger__factory.bytecode);
     const ledgerContract = (await ledgerFactory
         .connect(deployer)
         .deploy(
-            foundationAccount,
+            foundationAddress,
+            settlementAddress,
+            feeAddress,
             tokenContract.address,
             validatorContract.address,
             linkCollectionContract.address,
-            tokenPriceContract.address,
+            currencyRateContract.address,
             shopCollection.address
         )) as Ledger;
     await ledgerContract.deployed();
     await ledgerContract.deployTransaction.wait();
     await shopCollection.connect(deployer).setLedgerAddress(ledgerContract.address);
     return ledgerContract;
-};
+}
 
 async function depositFoundationAsset(
     tokenContract: Token,
     ledgerContract: Ledger,
-    linkContract: EmailLinkCollection,
     deployer: Wallet,
-    foundation: Wallet,
-    validators: Wallet[]
+    foundation: Wallet
 ): Promise<void> {
-    const nonce = await linkContract.nonceOf(foundation.address);
-    const signature = await ContractUtils.sign(foundation, foundationAccount, nonce);
-    const requestId = ContractUtils.getRequestId(foundationAccount, foundation.address, nonce);
-    await linkContract.connect(validators[0]).addRequest(requestId, foundationAccount, foundation.address, signature);
-    await linkContract.connect(validators[0]).voteRequest(requestId);
-    await linkContract.connect(validators[1]).voteRequest(requestId);
-    await linkContract.connect(validators[2]).voteRequest(requestId);
-    await linkContract.connect(validators[1]).countVote(requestId);
-
     await tokenContract.connect(deployer).transfer(foundation.address, foundationAmount.value);
     await tokenContract.connect(foundation).approve(ledgerContract.address, foundationAmount.value);
     await ledgerContract.connect(foundation).deposit(foundationAmount.value);
 }
 
-export const getSigners = (provider: JsonRpcProvider): JsonRpcSigner[] => {
-    let accounts: JsonRpcSigner[] = [];
-    for (let idx = 0; idx < 7; idx++) {
-        const p = provider.getSigner(idx);
-        accounts.push(p);
+async function addShopData(shopCollection: ShopCollection) {
+    for (const elem of shopData) {
+        await shopCollection
+            .connect(elem.wallet)
+            .add(elem.shopId, elem.name, elem.provideWaitTime, elem.providePercent);
     }
-    return accounts;
-};
-
-export const getSignersToAddress = async (singers: JsonRpcSigner[]): Promise<string[]> => {
-    let accounts = [];
-    for (let idx = 0; idx < singers.length; idx++) {
-        const signer = singers[idx];
-        const address = await signer.getAddress();
-        accounts.push(address);
-    }
-    return accounts;
-};
-
-export function delay(interval: number): Promise<void> {
-    return new Promise<void>((resolve) => {
-        setTimeout(resolve, interval);
-    });
 }
-
-export interface PurchaseData {
-    purchaseId: string;
-    timestamp: number;
-    amount: number;
-    userEmail: string;
-    shopId: string;
-    method: number;
-}
-
-export const purchaseData: PurchaseData[] = [
-    {
-        purchaseId: "P000001",
-        timestamp: 1672844400,
-        amount: 10000,
-        userEmail: "a@example.com",
-        shopId: "F000100",
-        method: 0
-    },
-    {
-        purchaseId: "P000002",
-        timestamp: 1675522800,
-        amount: 10000,
-        userEmail: "b@example.com",
-        shopId: "F000100",
-        method: 0
-    },
-    {
-        purchaseId: "P000003",
-        timestamp: 1677942000,
-        amount: 10000,
-        userEmail: "c@example.com",
-        shopId: "F000200",
-        method: 0
-    },
-    {
-        purchaseId: "P000004",
-        timestamp: 1680620400,
-        amount: 10000,
-        userEmail: "d@example.com",
-        shopId: "F000300",
-        method: 0
-    },
-    {
-        purchaseId: "P000005",
-        timestamp: 1683212400,
-        amount: 10000,
-        userEmail: "a@example.com",
-        shopId: "F000200",
-        method: 0
-    }
-];

@@ -14,11 +14,11 @@ describe("Client", () => {
             const users = JSON.parse(fs.readFileSync("test/helper/users.json", "utf8"));
             beforeAll(async () => {
                 contextParamsDevnet.tokenAddress = LIVE_CONTRACTS["bosagora_devnet"].TokenAddress;
-                contextParamsDevnet.emailLinkCollectionAddress =
-                    LIVE_CONTRACTS["bosagora_devnet"].EmailLinkCollectionAddress;
+                contextParamsDevnet.phoneLinkCollectionAddress =
+                    LIVE_CONTRACTS["bosagora_devnet"].PhoneLinkCollectionAddress;
                 contextParamsDevnet.validatorCollectionAddress =
                     LIVE_CONTRACTS["bosagora_devnet"].ValidatorCollectionAddress;
-                contextParamsDevnet.tokenPriceAddress = LIVE_CONTRACTS["bosagora_devnet"].TokenPriceAddress;
+                contextParamsDevnet.currencyRateAddress = LIVE_CONTRACTS["bosagora_devnet"].CurrencyRateAddress;
                 contextParamsDevnet.shopCollectionAddress = LIVE_CONTRACTS["bosagora_devnet"].ShopCollectionAddress;
                 contextParamsDevnet.ledgerAddress = LIVE_CONTRACTS["bosagora_devnet"].LedgerAddress;
                 contextParamsDevnet.signer = new Wallet(users[50]);

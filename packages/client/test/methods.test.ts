@@ -1,7 +1,7 @@
 import { Server } from "ganache";
 import { GanacheServer } from "./helper/GanacheServer";
 import * as deployContracts from "./helper/deployContracts";
-import { purchaseData } from "./helper/deployContracts";
+import { purchaseData, shopData, userData } from "./helper/deployContracts";
 import { contextParamsLocalChain } from "./helper/constants";
 import {
     Amount,
@@ -16,12 +16,13 @@ import {
 import { FakerRelayServer } from "./helper/FakerRelayServer";
 import { BigNumber } from "@ethersproject/bignumber";
 import { Signer } from "@ethersproject/abstract-signer";
+import { AddressZero } from "@ethersproject/constants";
 
 describe("Client", () => {
     let node: Server;
     let deployment: deployContracts.Deployment;
     let fakerRelayServer: FakerRelayServer;
-    const [, , validator1, validator2, , user1] = GanacheServer.accounts();
+    const [, , , , validator1, , , user1] = GanacheServer.accounts();
 
     beforeAll(async () => {
         node = await GanacheServer.start();
@@ -30,9 +31,9 @@ describe("Client", () => {
 
         deployment = await deployContracts.deployAll(provider);
         contextParamsLocalChain.tokenAddress = deployment.token.address;
-        contextParamsLocalChain.emailLinkCollectionAddress = deployment.linkCollection.address;
+        contextParamsLocalChain.phoneLinkCollectionAddress = deployment.phoneLinkCollection.address;
         contextParamsLocalChain.validatorCollectionAddress = deployment.validatorCollection.address;
-        contextParamsLocalChain.tokenPriceAddress = deployment.tokenPrice.address;
+        contextParamsLocalChain.currencyRateAddress = deployment.currencyRate.address;
         contextParamsLocalChain.shopCollectionAddress = deployment.shopCollection.address;
         contextParamsLocalChain.ledgerAddress = deployment.ledger.address;
         contextParamsLocalChain.web3Providers = deployment.provider;
@@ -56,13 +57,13 @@ describe("Client", () => {
 
     let signer: Signer;
     let userAddress: string;
-    let email: string;
-    let emailHash: string;
+    let phone: string;
+    let phoneHash: string;
     beforeAll(async () => {
         signer = client.web3.getConnectedSigner();
         userAddress = await signer.getAddress();
-        email = purchaseData[0].userEmail;
-        emailHash = ContractUtils.sha256String(email);
+        phone = userData[purchaseData[0].userIndex].phone;
+        phoneHash = ContractUtils.getPhoneHash(phone);
     });
 
     it("Server Health Checking", async () => {
@@ -70,44 +71,52 @@ describe("Client", () => {
         expect(isUp).toEqual(true);
     });
 
-    it("Save Purchase Data", async () => {
+    it("Save Purchase Data 1", async () => {
         const purchaseAmount = Amount.make(purchaseData[0].amount, 18).value.mul(1000);
-        await deployment.ledger
-            .connect(validator1)
-            .savePurchase(
-                purchaseData[0].purchaseId,
-                purchaseData[0].timestamp,
-                purchaseAmount,
-                emailHash,
-                purchaseData[0].shopId,
-                purchaseData[0].method
-            );
-    });
-
-    it("Link email-address", async () => {
-        const nonce = await deployment.linkCollection.nonceOf(userAddress);
-        const signature = await ContractUtils.sign(signer, emailHash, nonce);
-        const requestId = ContractUtils.getRequestId(emailHash, userAddress, nonce);
-        //Add Email
-        await deployment.linkCollection.connect(signer).addRequest(requestId, emailHash, userAddress, signature);
-        // Vote
-        await deployment.linkCollection.connect(validator1).voteRequest(requestId);
-        await deployment.linkCollection.connect(validator2).voteRequest(requestId);
-        await deployment.linkCollection.connect(validator1).countVote(requestId);
+        await deployment.ledger.connect(validator1).savePurchase({
+            purchaseId: purchaseData[0].purchaseId,
+            timestamp: purchaseData[0].timestamp,
+            amount: purchaseAmount,
+            currency: purchaseData[0].currency.toLowerCase(),
+            shopId: shopData[purchaseData[0].shopIndex].shopId,
+            method: purchaseData[0].method,
+            account: AddressZero,
+            phone: phoneHash
+        });
     });
 
     it("Save Purchase Data 2", async () => {
         const purchaseAmount = Amount.make(purchaseData[0].amount, 18).value.mul(1000);
-        await deployment.ledger
-            .connect(validator1)
-            .savePurchase(
-                purchaseData[0].purchaseId,
-                purchaseData[0].timestamp,
-                purchaseAmount,
-                emailHash,
-                purchaseData[0].shopId,
-                purchaseData[0].method
-            );
+        await deployment.ledger.connect(validator1).savePurchase({
+            purchaseId: purchaseData[0].purchaseId,
+            timestamp: purchaseData[0].timestamp,
+            amount: purchaseAmount,
+            currency: purchaseData[0].currency.toLowerCase(),
+            shopId: shopData[purchaseData[0].shopIndex].shopId,
+            method: purchaseData[0].method,
+            account: userAddress,
+            phone: phoneHash
+        });
+    });
+
+    it("Change point type to 'token'", async () => {
+        const nonce = await deployment.ledger.nonceOf(userAddress);
+        const signature = await ContractUtils.signPointType(signer, 1, nonce);
+        await deployment.ledger.connect(validator1).setPointType(1, userAddress, signature);
+    });
+
+    it("Save Purchase Data 3", async () => {
+        const purchaseAmount = Amount.make(purchaseData[0].amount, 18).value.mul(1000);
+        await deployment.ledger.connect(validator1).savePurchase({
+            purchaseId: purchaseData[0].purchaseId,
+            timestamp: purchaseData[0].timestamp,
+            amount: purchaseAmount,
+            currency: purchaseData[0].currency.toLowerCase(),
+            shopId: shopData[purchaseData[0].shopIndex].shopId,
+            method: purchaseData[0].method,
+            account: userAddress,
+            phone: phoneHash
+        });
     });
 
     const purchaseAmount = Amount.make(purchaseData[0].amount, 18).value.mul(1000);
@@ -116,24 +125,29 @@ describe("Client", () => {
     const price = BigNumber.from(150).mul(multiple);
     const tokenAmount = pointAmount.mul(multiple).div(price);
 
+    it("Balance Check - Test getting the unpayable point balance", async () => {
+        const balance = await client.methods.getUnPayablePointBalance(phoneHash);
+        expect(balance).toEqual(pointAmount);
+    });
+
     it("Balance Check - Test getting the point balance", async () => {
-        const balance = await client.methods.getPointBalances(email);
+        const balance = await client.methods.getPointBalance(userAddress);
         expect(balance).toEqual(pointAmount);
     });
 
     it("Balance Check - Test getting the token balance", async () => {
-        const balance = await client.methods.getTokenBalances(email);
+        const balance = await client.methods.getTokenBalance(userAddress);
         expect(balance).toEqual(tokenAmount);
     });
 
     it("Test of pay point", async () => {
-        const exampleData = purchaseData[0];
-        const amount = Amount.make(exampleData.amount / 10, 18);
+        const purchase = purchaseData[0];
+        const amount = Amount.make(purchase.amount / 10, 18);
         const option = await client.methods.getPayPointOption(
-            exampleData.purchaseId,
+            purchase.purchaseId,
             amount.value,
-            exampleData.userEmail,
-            exampleData.shopId
+            purchase.currency.toLowerCase(),
+            shopData[purchase.shopIndex].shopId
         );
 
         for await (const step of client.methods.fetchPayPoint(option)) {
@@ -153,13 +167,13 @@ describe("Client", () => {
     });
 
     it("Test of pay token", async () => {
-        const exampleData = purchaseData[0];
-        const amount = Amount.make(exampleData.amount, 18);
+        const purchase = purchaseData[0];
+        const amount = Amount.make(purchase.amount, 18);
         const option = await client.methods.getPayTokenOption(
-            exampleData.purchaseId,
+            purchase.purchaseId,
             amount.value,
-            exampleData.userEmail,
-            exampleData.shopId
+            purchase.currency.toLowerCase(),
+            shopData[purchase.shopIndex].shopId
         );
 
         for await (const step of client.methods.fetchPayToken(option)) {
@@ -182,9 +196,9 @@ describe("Client", () => {
     const amountToTrade = Amount.make(tradeAmount, 18);
 
     it("Test of the deposit", async () => {
-        const beforeBalance = await deployment.ledger.tokenBalanceOf(emailHash);
+        const beforeBalance = await deployment.ledger.tokenBalanceOf(userAddress);
 
-        for await (const step of client.methods.deposit(email, amountToTrade.value)) {
+        for await (const step of client.methods.deposit(amountToTrade.value)) {
             switch (step.key) {
                 case DepositSteps.CHECKED_ALLOWANCE:
                     expect(step.allowance instanceof BigNumber).toBe(true);
@@ -211,14 +225,14 @@ describe("Client", () => {
             }
         }
 
-        const afterBalance = await deployment.ledger.tokenBalanceOf(emailHash);
+        const afterBalance = await deployment.ledger.tokenBalanceOf(userAddress);
         expect(afterBalance.toString()).toEqual(beforeBalance.add(amountToTrade.value).toString());
     });
 
     it("Test of the withdraw", async () => {
-        const beforeBalance = await deployment.ledger.tokenBalanceOf(emailHash);
+        const beforeBalance = await deployment.ledger.tokenBalanceOf(userAddress);
 
-        for await (const step of client.methods.withdraw(email, amountToTrade.value)) {
+        for await (const step of client.methods.withdraw(amountToTrade.value)) {
             switch (step.key) {
                 case WithdrawSteps.WITHDRAWING:
                     expect(typeof step.txHash).toBe("string");
@@ -233,7 +247,7 @@ describe("Client", () => {
             }
         }
 
-        const afterBalance = await deployment.ledger.tokenBalanceOf(emailHash);
+        const afterBalance = await deployment.ledger.tokenBalanceOf(userAddress);
         expect(afterBalance.toString()).toEqual(beforeBalance.sub(amountToTrade.value).toString());
     });
 });
