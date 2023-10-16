@@ -6,6 +6,7 @@ import { contextParamsLocalChain } from "./helper/constants";
 import {
     Amount,
     ChangeRoyaltyTypeSteps,
+    ChangeToPayablePointSteps,
     Client,
     Context,
     ContractUtils,
@@ -24,7 +25,7 @@ describe("Client", () => {
     let node: Server;
     let deployment: deployContracts.Deployment;
     let fakerRelayServer: FakerRelayServer;
-    const [, , , , validator1, , , user1] = GanacheServer.accounts();
+    const [, , , , validator1, validator2, , user1] = GanacheServer.accounts();
 
     beforeAll(async () => {
         node = await GanacheServer.start();
@@ -102,10 +103,13 @@ describe("Client", () => {
     });
 
     it("Change point type to 'token'", async () => {
-        const option = await client.methods.createOptionOfChangeRoyaltyType(RoyaltyType.TOKEN);
-        for await (const step of client.methods.changeRoyaltyType(option)) {
+        for await (const step of client.methods.changeRoyaltyType(RoyaltyType.TOKEN)) {
             switch (step.key) {
-                case ChangeRoyaltyTypeSteps.DOING:
+                case ChangeRoyaltyTypeSteps.PREPARED:
+                    expect(step.type).toEqual(RoyaltyType.TOKEN);
+                    expect(step.account).toEqual(userAddress);
+                    break;
+                case ChangeRoyaltyTypeSteps.SENT:
                     expect(typeof step.txHash).toBe("string");
                     expect(step.txHash).toMatch(/^0x[A-Fa-f0-9]{64}$/i);
                     break;
@@ -158,22 +162,39 @@ describe("Client", () => {
     it("Test of pay point", async () => {
         const purchase = purchaseData[0];
         const amount = Amount.make(purchase.amount / 10, 18);
-        const option = await client.methods.createOptionOfPayPoint(
+
+        const feeRate = await client.methods.getFeeRate();
+        const paidPoint = await client.methods.convertCurrencyToPoint(amount.value, purchase.currency);
+        const feePoint = await client.methods.convertCurrencyToPoint(
+            amount.value.mul(feeRate).div(100),
+            purchase.currency
+        );
+
+        for await (const step of client.methods.payPoint(
             purchase.purchaseId,
             amount.value,
             purchase.currency.toLowerCase(),
             shopData[purchase.shopIndex].shopId
-        );
-
-        for await (const step of client.methods.payPoint(option)) {
+        )) {
             switch (step.key) {
-                case PayPointSteps.PAYING_POINT:
-                    expect(typeof step.txHash).toBe("string");
+                case PayPointSteps.PREPARED:
+                    expect(step.purchaseId).toEqual(purchase.purchaseId);
+                    expect(step.amount).toEqual(amount.value);
+                    expect(step.currency).toEqual(purchase.currency.toLowerCase());
+                    expect(step.shopId).toEqual(shopData[purchase.shopIndex].shopId);
+                    expect(step.account).toEqual(userAddress);
+                    expect(step.signature).toMatch(/^0x[A-Fa-f0-9]{130}$/i);
+                    break;
+                case PayPointSteps.SENT:
                     expect(step.txHash).toMatch(/^0x[A-Fa-f0-9]{64}$/i);
                     break;
                 case PayPointSteps.DONE:
-                    expect(step.amount instanceof BigNumber).toBe(true);
-                    expect(step.amount.toString()).toBe(amount.toString());
+                    expect(step.purchaseId).toEqual(purchase.purchaseId);
+                    expect(step.purchaseAmount).toEqual(amount.value);
+                    expect(step.currency).toEqual(purchase.currency.toLowerCase());
+                    expect(step.shopId).toEqual(shopData[purchase.shopIndex].shopId);
+                    expect(step.paidPoint).toEqual(paidPoint);
+                    expect(step.feePoint).toEqual(feePoint);
                     break;
                 default:
                     throw new Error("Unexpected pay point step: " + JSON.stringify(step, null, 2));
@@ -184,22 +205,42 @@ describe("Client", () => {
     it("Test of pay token", async () => {
         const purchase = purchaseData[0];
         const amount = Amount.make(purchase.amount, 18);
-        const option = await client.methods.createOptionOfPayToken(
+
+        const feeRate = await client.methods.getFeeRate();
+        const paidPoint = await client.methods.convertCurrencyToPoint(amount.value, purchase.currency);
+        const feePoint = await client.methods.convertCurrencyToPoint(
+            amount.value.mul(feeRate).div(100),
+            purchase.currency
+        );
+        const paidToken = await client.methods.convertPointToToken(paidPoint);
+        const feeToken = await client.methods.convertPointToToken(feePoint);
+
+        for await (const step of client.methods.payToken(
             purchase.purchaseId,
             amount.value,
             purchase.currency.toLowerCase(),
             shopData[purchase.shopIndex].shopId
-        );
-
-        for await (const step of client.methods.payToken(option)) {
+        )) {
             switch (step.key) {
-                case PayTokenSteps.PAYING_TOKEN:
+                case PayTokenSteps.PREPARED:
+                    expect(step.purchaseId).toEqual(purchase.purchaseId);
+                    expect(step.amount).toEqual(amount.value);
+                    expect(step.currency).toEqual(purchase.currency.toLowerCase());
+                    expect(step.shopId).toEqual(shopData[purchase.shopIndex].shopId);
+                    expect(step.account).toEqual(userAddress);
+                    expect(step.signature).toMatch(/^0x[A-Fa-f0-9]{130}$/i);
+                    break;
+                case PayTokenSteps.SENT:
                     expect(typeof step.txHash).toBe("string");
                     expect(step.txHash).toMatch(/^0x[A-Fa-f0-9]{64}$/i);
                     break;
                 case PayTokenSteps.DONE:
-                    expect(step.amount instanceof BigNumber).toBe(true);
-                    expect(step.amount.toString()).toBe(amount.toString());
+                    expect(step.purchaseId).toEqual(purchase.purchaseId);
+                    expect(step.purchaseAmount).toEqual(amount.value);
+                    expect(step.currency).toEqual(purchase.currency.toLowerCase());
+                    expect(step.shopId).toEqual(shopData[purchase.shopIndex].shopId);
+                    expect(step.paidToken).toEqual(paidToken);
+                    expect(step.feeToken).toEqual(feeToken);
                     break;
                 default:
                     throw new Error("Unexpected pay token step: " + JSON.stringify(step, null, 2));
@@ -264,5 +305,43 @@ describe("Client", () => {
 
         const afterBalance = await deployment.ledger.tokenBalanceOf(userAddress);
         expect(afterBalance.toString()).toEqual(beforeBalance.sub(amountToTrade.value).toString());
+    });
+
+    it("Link phone-wallet", async () => {
+        const nonce = await deployment.phoneLinkCollection.nonceOf(userAddress);
+        const signature = await ContractUtils.signRequestHash(signer, phoneHash, nonce);
+        const requestId = ContractUtils.getRequestId(phoneHash, userAddress, nonce);
+        //Add Email
+        await deployment.phoneLinkCollection.connect(signer).addRequest(requestId, phoneHash, userAddress, signature);
+        // Vote
+        await deployment.phoneLinkCollection.connect(validator1).voteRequest(requestId);
+        await deployment.phoneLinkCollection.connect(validator2).voteRequest(requestId);
+        await deployment.phoneLinkCollection.connect(validator1).countVote(requestId);
+    });
+
+    it("Change to Payable Point", async () => {
+        const unPayableBalance1 = await client.methods.getUnPayablePointBalance(phoneHash);
+        const payableBalance1 = await client.methods.getPointBalance(userAddress);
+
+        for await (const step of client.methods.changeToPayablePoint(phone)) {
+            switch (step.key) {
+                case ChangeToPayablePointSteps.PREPARED:
+                    expect(step.phone).toEqual(phone);
+                    expect(step.phoneHash).toEqual(phoneHash);
+                    expect(step.account).toEqual(userAddress);
+                    expect(step.balance).toEqual(unPayableBalance1);
+                    break;
+                case ChangeToPayablePointSteps.SENT:
+                    expect(typeof step.txHash).toBe("string");
+                    expect(step.txHash).toMatch(/^0x[A-Fa-f0-9]{64}$/i);
+                    break;
+                case ChangeToPayablePointSteps.DONE:
+                    break;
+                default:
+                    throw new Error("Unexpected change payable point step: " + JSON.stringify(step, null, 2));
+            }
+        }
+        const payableBalance2 = await client.methods.getPointBalance(userAddress);
+        expect(payableBalance2.toString()).toEqual(payableBalance1.add(unPayableBalance1).toString());
     });
 });

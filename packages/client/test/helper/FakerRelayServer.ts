@@ -26,6 +26,7 @@ import { Signer } from "@ethersproject/abstract-signer";
 import { ContractUtils } from "../../src";
 import { GanacheServer } from "./GanacheServer";
 import { Deployment } from "./deployContracts";
+import { PhoneLinkCollection, PhoneLinkCollection__factory } from "del-osx-lib";
 import { Ledger, Ledger__factory } from "dms-osx-lib";
 
 import { Utils } from "./Utils";
@@ -136,6 +137,22 @@ export class FakerRelayServer {
             this.royaltyType.bind(this)
         );
 
+        this.app.post(
+            "/changeToPayablePoint",
+            [
+                body("phone")
+                    .exists()
+                    .matches(/^(0x)[0-9a-f]{64}$/i),
+                body("account")
+                    .exists()
+                    .isEthereumAddress(),
+                body("signature")
+                    .exists()
+                    .matches(/^(0x)[0-9a-f]{130}$/i)
+            ],
+            this.changeToPayablePoint.bind(this)
+        );
+
         // Listen on provided this.port on this.address.
         return new Promise<void>((resolve, reject) => {
             // Create HTTP server.
@@ -159,6 +176,13 @@ export class FakerRelayServer {
 
     private get ledgerContract(): Ledger {
         return Ledger__factory.connect(this.deployment.ledger.address, this.signer) as Ledger;
+    }
+
+    private get linkCollectionContract(): PhoneLinkCollection {
+        return PhoneLinkCollection__factory.connect(
+            this.deployment.phoneLinkCollection.address,
+            this.signer
+        ) as PhoneLinkCollection;
     }
 
     private get signer(): Signer {
@@ -278,6 +302,7 @@ export class FakerRelayServer {
             );
         }
     }
+
     private async royaltyType(req: express.Request, res: express.Response) {
         console.log(`POST /royaltyType`);
 
@@ -313,6 +338,58 @@ export class FakerRelayServer {
             let message = ContractUtils.cacheEVMError(error as any);
             if (message === "") message = "Failed change royalty type";
             console.error(`POST /royaltyType :`, message);
+            return res.status(200).json(
+                this.makeResponseData(500, undefined, {
+                    message
+                })
+            );
+        }
+    }
+    private async changeToPayablePoint(req: express.Request, res: express.Response) {
+        console.log(`POST /changeToPayablePoint`);
+
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(200).json(
+                this.makeResponseData(501, undefined, {
+                    message: "Failed to check the validity of parameters.",
+                    validation: errors.array()
+                })
+            );
+        }
+
+        try {
+            const phone: string = String(req.body.phone); // 구매 금액
+            const account: string = String(req.body.account); // 구매자의 주소
+            const signature: string = String(req.body.signature); // 서명
+
+            // 컨트랙트에서 전화번호 등록여부 체크 및 구매자 주소와 동일여부
+            const phoneToAddress: string = await this.linkCollectionContract.toAddress(phone);
+            if (phoneToAddress !== account) {
+                return res.status(200).json(
+                    this.makeResponseData(502, undefined, {
+                        message: "Phone is not valid."
+                    })
+                );
+            }
+
+            // 서명검증
+            const userNonce = await this.ledgerContract.nonceOf(account);
+            if (!ContractUtils.verifyChangePayablePoint(phone, account, userNonce, signature))
+                return res.status(200).json(
+                    this.makeResponseData(500, undefined, {
+                        message: "Signature is not valid."
+                    })
+                );
+
+            const tx = await this.ledgerContract.connect(this.signer).changeToPayablePoint(phone, account, signature);
+
+            console.log(`TxHash(changeToPayablePoint): `, tx.hash);
+            return res.status(200).json(this.makeResponseData(200, { txHash: tx.hash }));
+        } catch (error) {
+            let message = ContractUtils.cacheEVMError(error as any);
+            if (message === "") message = "Failed change to payable point";
+            console.error(`POST /changeToPayablePoint :`, message);
             return res.status(200).json(
                 this.makeResponseData(500, undefined, {
                     message

@@ -7,21 +7,19 @@ import {
     SupportedNetworksArray
 } from "../../client-common";
 import { IClientMethods } from "../../interface/IClient";
-import { Ledger, Ledger__factory, Token, Token__factory } from "dms-osx-lib";
+import { CurrencyRate, CurrencyRate__factory, Ledger, Ledger__factory, Token, Token__factory } from "dms-osx-lib";
 import { Provider } from "@ethersproject/providers";
 import { NoProviderError, NoSignerError, UnsupportedNetworkError, UpdateAllowanceError } from "dms-sdk-common";
 import { ContractUtils } from "../../utils/ContractUtils";
 import {
-    ChangeRoyaltyTypeOption,
     ChangeRoyaltyTypeSteps,
     ChangeRoyaltyTypeStepValue,
+    ChangeToPayablePointSteps,
+    ChangeToPayablePointStepValue,
     DepositSteps,
     DepositStepValue,
-    FetchPayOption,
-    PayPointOption,
     PayPointSteps,
     PayPointStepValue,
-    PayTokenOption,
     PayTokenSteps,
     PayTokenStepValue,
     QueryOption,
@@ -41,8 +39,10 @@ import {
     FailedWithdrawError,
     InsufficientBalanceError,
     InternalServerError,
+    MismatchApproveAddressError,
     NoHttpModuleError,
-    RoyaltyTypeMismatchError
+    RoyaltyTypeMismatchError,
+    UnregisteredPhoneError
 } from "../../utils/errors";
 import { Network } from "../../client-common/interfaces/network";
 import { findLog } from "../../client-common/utils";
@@ -53,7 +53,8 @@ import { getNetwork } from "@ethersproject/networks";
 import { QueryUserTradeHistory } from "../graphql-queries/history";
 import { QueryPaidToken } from "../graphql-queries/paidToken";
 import { QueryPaidPoint } from "../graphql-queries/paidPoint";
-import { BytesLike } from "@ethersproject/bytes";
+import { PhoneLinkCollection, PhoneLinkCollection__factory } from "del-osx-lib";
+import { AddressZero } from "@ethersproject/constants";
 
 /**
  * Methods module the SDK Generic Client
@@ -128,94 +129,106 @@ export class ClientMethods extends ClientCore implements IClientMethods, IClient
         return await ledgerInstance.tokenBalanceOf(account);
     }
 
-    /**
-     * 포인트 사용승인 하여 Relay 서버로 전송하기 위한 서명값을 생성한다.
-     * @param purchaseId - 거래 아이디
-     * @param amount - 거래금액
-     * @param currency - 통화코드
-     * @param shopId - 상점 아이디
-     * @return {Promise<PayPointOption>}
-     */
-    public async createOptionOfPayPoint(
-        purchaseId: string,
-        amount: BigNumber,
-        currency: string,
-        shopId: BytesLike
-    ): Promise<PayPointOption> {
-        const signer = this.web3.getConnectedSigner();
-        if (!signer) {
-            throw new NoSignerError();
-        } else if (!signer.provider) {
-            throw new NoProviderError();
-        }
+    public async getFeeRate(): Promise<number> {
+        const provider = this.web3.getProvider() as Provider;
+        if (!provider) throw new NoProviderError();
 
-        const network = getNetwork((await signer.provider.getNetwork()).chainId);
+        const network = getNetwork((await provider.getNetwork()).chainId);
         const networkName = network.name as SupportedNetworks;
         if (!SupportedNetworksArray.includes(networkName)) {
             throw new UnsupportedNetworkError(networkName);
         }
 
-        const ledgerContract: Ledger = Ledger__factory.connect(this.web3.getLedgerAddress(), signer);
+        const ledgerInstance: Ledger = Ledger__factory.connect(this.web3.getLedgerAddress(), provider);
 
-        const account: string = await signer.getAddress();
-
-        const nonce = await ledgerContract.nonceOf(account);
-        const signature = await ContractUtils.signPayment(signer, purchaseId, amount, currency, shopId, nonce);
-
-        const relayParam: FetchPayOption = {
-            purchaseId,
-            amount: amount.toString(),
-            currency,
-            shopId,
-            account,
-            signature
-        };
-        return Promise.resolve(relayParam);
+        return await ledgerInstance.fee();
     }
 
-    /**
-     * 토큰 사용승인 하여 Relay 서버로 전송하기 위한 서명값을 생성한다.
-     * @param purchaseId - 거래 아이디
-     * @param amount - 거래금액
-     * @param currency - 통화코드
-     * @param shopId - 상점 아이디
-     * @return {Promise<PayTokenOption>}
-     */
-    public async createOptionOfPayToken(
-        purchaseId: string,
-        amount: BigNumber,
-        currency: string,
-        shopId: BytesLike
-    ): Promise<PayTokenOption> {
-        const signer = this.web3.getConnectedSigner();
-        if (!signer) {
-            throw new NoSignerError();
-        } else if (!signer.provider) {
-            throw new NoProviderError();
-        }
+    public async getCurrencyRate(currency: string): Promise<BigNumber> {
+        if (currency === "krw") {
+            return this.getCurrencyMultiple();
+        } else {
+            const provider = this.web3.getProvider() as Provider;
+            if (!provider) throw new NoProviderError();
 
-        const network = getNetwork((await signer.provider.getNetwork()).chainId);
+            const network = getNetwork((await provider.getNetwork()).chainId);
+            const networkName = network.name as SupportedNetworks;
+            if (!SupportedNetworksArray.includes(networkName)) {
+                throw new UnsupportedNetworkError(networkName);
+            }
+
+            const contract: CurrencyRate = CurrencyRate__factory.connect(this.web3.getCurrencyRateAddress(), provider);
+
+            return await contract.get(currency);
+        }
+    }
+
+    private _CurrencyMultiple: BigNumber = BigNumber.from(0);
+    public async getCurrencyMultiple(): Promise<BigNumber> {
+        if (!this._CurrencyMultiple.eq(BigNumber.from(0))) {
+            return this._CurrencyMultiple;
+        } else {
+            const provider = this.web3.getProvider() as Provider;
+            if (!provider) throw new NoProviderError();
+
+            const network = getNetwork((await provider.getNetwork()).chainId);
+            const networkName = network.name as SupportedNetworks;
+            if (!SupportedNetworksArray.includes(networkName)) {
+                throw new UnsupportedNetworkError(networkName);
+            }
+
+            const contract: CurrencyRate = CurrencyRate__factory.connect(this.web3.getCurrencyRateAddress(), provider);
+
+            return await contract.MULTIPLE();
+        }
+    }
+
+    public async convertCurrencyToPoint(amount: BigNumber, currency: string): Promise<BigNumber> {
+        const rate = await this.getCurrencyRate(currency.toLowerCase());
+        const multiple = await this.getCurrencyMultiple();
+        return amount.mul(rate).div(multiple);
+    }
+
+    public async convertPointToToken(amount: BigNumber): Promise<BigNumber> {
+        const provider = this.web3.getProvider() as Provider;
+        if (!provider) throw new NoProviderError();
+
+        const network = getNetwork((await provider.getNetwork()).chainId);
         const networkName = network.name as SupportedNetworks;
         if (!SupportedNetworksArray.includes(networkName)) {
             throw new UnsupportedNetworkError(networkName);
         }
 
-        const ledgerContract: Ledger = Ledger__factory.connect(this.web3.getLedgerAddress(), signer);
+        const tokenContract: Token = Token__factory.connect(this.web3.getTokenAddress(), provider);
+        const symbol = await tokenContract.symbol();
+        const currencyRateContract: CurrencyRate = CurrencyRate__factory.connect(
+            this.web3.getCurrencyRateAddress(),
+            provider
+        );
+        const rate = await currencyRateContract.get(symbol);
+        const multiple = await this.getCurrencyMultiple();
+        return amount.mul(multiple).div(rate);
+    }
 
-        const account: string = await signer.getAddress();
+    public async convertTokenToPoint(amount: BigNumber): Promise<BigNumber> {
+        const provider = this.web3.getProvider() as Provider;
+        if (!provider) throw new NoProviderError();
 
-        const nonce = await ledgerContract.nonceOf(account);
-        const signature = await ContractUtils.signPayment(signer, purchaseId, amount, currency, shopId, nonce);
+        const network = getNetwork((await provider.getNetwork()).chainId);
+        const networkName = network.name as SupportedNetworks;
+        if (!SupportedNetworksArray.includes(networkName)) {
+            throw new UnsupportedNetworkError(networkName);
+        }
 
-        const relayParam: FetchPayOption = {
-            purchaseId,
-            amount: amount.toString(),
-            currency,
-            shopId,
-            account,
-            signature
-        };
-        return Promise.resolve(relayParam);
+        const tokenContract: Token = Token__factory.connect(this.web3.getTokenAddress(), provider);
+        const symbol = await tokenContract.symbol();
+        const currencyRateContract: CurrencyRate = CurrencyRate__factory.connect(
+            this.web3.getCurrencyRateAddress(),
+            provider
+        );
+        const rate = await currencyRateContract.get(symbol);
+        const multiple = await this.getCurrencyMultiple();
+        return amount.mul(rate).div(multiple);
     }
 
     /**
@@ -367,79 +380,164 @@ export class ClientMethods extends ClientCore implements IClientMethods, IClient
         };
     }
 
-    public async *payPoint(param: FetchPayOption): AsyncGenerator<PayPointStepValue> {
-        const provider = this.web3.getProvider();
-        if (!provider) throw new NoProviderError();
+    /**
+     * 포인트를 사용하여 상품을 구매한다.
+     * @param purchaseId - 거래 아이디
+     * @param amount - 거래금액
+     * @param currency - 통화코드
+     * @param shopId - 상점 아이디
+     */
+    public async *payPoint(
+        purchaseId: string,
+        amount: BigNumber,
+        currency: string,
+        shopId: string
+    ): AsyncGenerator<PayPointStepValue> {
+        const signer = this.web3.getConnectedSigner();
+        if (!signer) {
+            throw new NoSignerError();
+        } else if (!signer.provider) {
+            throw new NoProviderError();
+        }
 
-        const network = getNetwork((await provider.getNetwork()).chainId);
+        const network = getNetwork((await signer.provider.getNetwork()).chainId);
         const networkName = network.name as SupportedNetworks;
         if (!SupportedNetworksArray.includes(networkName)) {
             throw new UnsupportedNetworkError(networkName);
         }
+
+        const ledgerContract: Ledger = Ledger__factory.connect(this.web3.getLedgerAddress(), signer);
+        const account: string = await signer.getAddress();
+        const nonce = await ledgerContract.nonceOf(account);
+        const signature = await ContractUtils.signPayment(signer, purchaseId, amount, currency, shopId, nonce);
+
+        const param = {
+            purchaseId,
+            amount: amount.toString(),
+            currency,
+            shopId,
+            account,
+            signature
+        };
+
+        yield {
+            key: PayPointSteps.PREPARED,
+            purchaseId,
+            amount,
+            currency,
+            shopId,
+            account,
+            signature
+        };
 
         const res = await Network.post(await this.getEndpoint("payPoint"), param);
         if (res?.code !== 200) throw new InternalServerError(res.message);
         if (res?.data?.code && res.data.code !== 200) throw new InternalServerError(res?.data?.error?.message ?? "");
 
-        yield { key: PayPointSteps.PAYING_POINT, txHash: res.data.txHash, purchaseId: param.purchaseId };
+        yield { key: PayPointSteps.SENT, txHash: res.data.txHash, purchaseId: param.purchaseId };
 
-        const txResponse = (await provider.getTransaction(res.data.txHash)) as ContractTransaction;
+        const txResponse = (await signer.provider.getTransaction(res.data.txHash)) as ContractTransaction;
         const txReceipt = await txResponse.wait();
-        const ledgerContract: Ledger = Ledger__factory.connect(this.web3.getLedgerAddress(), provider);
 
         const log = findLog(txReceipt, ledgerContract.interface, "PaidPoint");
         if (!log) {
             throw new FailedPayPointError();
         }
-        const amount = BigNumber.from(param.amount);
         const parsedLog = ledgerContract.interface.parseLog(log);
-        if (!amount.eq(parsedLog.args["value"])) {
-            throw new AmountMismatchError(amount, parsedLog.args["value"]);
+        if (!amount.eq(parsedLog.args["purchaseAmount"])) {
+            throw new AmountMismatchError(amount, parsedLog.args["purchaseAmount"]);
         }
         yield {
             key: PayPointSteps.DONE,
-            purchaseId: param.purchaseId,
-            amount: amount,
-            paidAmountPoint: parsedLog.args["paidAmountPoint"],
-            balancePoint: parsedLog.args["balancePoint"]
+            purchaseId,
+            currency,
+            shopId,
+            paidPoint: parsedLog.args["paidAmountPoint"],
+            feePoint: parsedLog.args["fee"],
+            balancePoint: parsedLog.args["balancePoint"],
+            purchaseAmount: parsedLog.args["purchaseAmount"]
         };
     }
 
-    public async *payToken(param: FetchPayOption): AsyncGenerator<PayTokenStepValue> {
-        const provider = this.web3.getProvider();
-        if (!provider) throw new NoProviderError();
+    /**
+     * 토큰을 사용하여 상품을 구매한다.
+     * @param purchaseId - 거래 아이디
+     * @param amount - 거래금액
+     * @param currency - 통화코드
+     * @param shopId - 상점 아이디
+     * @return {Promise<PayTokenOption>}
+     */
+    public async *payToken(
+        purchaseId: string,
+        amount: BigNumber,
+        currency: string,
+        shopId: string
+    ): AsyncGenerator<PayTokenStepValue> {
+        const signer = this.web3.getConnectedSigner();
+        if (!signer) {
+            throw new NoSignerError();
+        } else if (!signer.provider) {
+            throw new NoProviderError();
+        }
 
-        const network = getNetwork((await provider.getNetwork()).chainId);
+        const network = getNetwork((await signer.provider.getNetwork()).chainId);
         const networkName = network.name as SupportedNetworks;
         if (!SupportedNetworksArray.includes(networkName)) {
             throw new UnsupportedNetworkError(networkName);
         }
 
+        const ledgerContract: Ledger = Ledger__factory.connect(this.web3.getLedgerAddress(), signer);
+
+        const account: string = await signer.getAddress();
+
+        const nonce = await ledgerContract.nonceOf(account);
+        const signature = await ContractUtils.signPayment(signer, purchaseId, amount, currency, shopId, nonce);
+
+        const param = {
+            purchaseId,
+            amount: amount.toString(),
+            currency,
+            shopId,
+            account,
+            signature
+        };
+
+        yield {
+            key: PayTokenSteps.PREPARED,
+            purchaseId,
+            amount,
+            currency,
+            shopId,
+            account,
+            signature
+        };
+
         const res = await Network.post(await this.getEndpoint("payToken"), param);
         if (res?.code !== 200) throw new InternalServerError(res.message);
         if (res?.data?.code && res.data.code !== 200) throw new InternalServerError(res?.data?.error?.message ?? "");
 
-        yield { key: PayTokenSteps.PAYING_TOKEN, txHash: res.data.txHash, purchaseId: param.purchaseId };
+        yield { key: PayTokenSteps.SENT, txHash: res.data.txHash, purchaseId: param.purchaseId };
 
-        const txResponse = (await provider.getTransaction(res.data.txHash)) as ContractTransaction;
+        const txResponse = (await signer.provider.getTransaction(res.data.txHash)) as ContractTransaction;
         const txReceipt = await txResponse.wait();
-        const ledgerContract: Ledger = Ledger__factory.connect(this.web3.getLedgerAddress(), provider);
 
         const log = findLog(txReceipt, ledgerContract.interface, "PaidToken");
         if (!log) {
             throw new FailedPayTokenError();
         }
-        const amount = BigNumber.from(param.amount);
         const parsedLog = ledgerContract.interface.parseLog(log);
-        if (!amount.eq(parsedLog.args["value"])) {
-            throw new AmountMismatchError(amount, parsedLog.args["value"]);
+        if (!amount.eq(parsedLog.args["purchaseAmount"])) {
+            throw new AmountMismatchError(amount, parsedLog.args["purchaseAmount"]);
         }
         yield {
             key: PayTokenSteps.DONE,
-            purchaseId: param.purchaseId,
-            amount: amount,
-            paidAmountToken: parsedLog.args["paidAmountToken"],
-            balanceToken: parsedLog.args["balanceToken"]
+            purchaseId,
+            currency,
+            shopId,
+            paidToken: parsedLog.args["paidAmountToken"],
+            feeToken: parsedLog.args["fee"],
+            balanceToken: parsedLog.args["balanceToken"],
+            purchaseAmount: parsedLog.args["purchaseAmount"]
         };
     }
 
@@ -479,11 +577,11 @@ export class ClientMethods extends ClientCore implements IClientMethods, IClient
     }
 
     /**
-     * 적립되는 로얄티의 종류를 설정하기 위한 옵션을 생성한다.
+     * 적립되는 로얄티의 종류를 변경한다.
      * @param type - 로얄티의 종류
      * @return {Promise<PayPointOption>}
      */
-    public async createOptionOfChangeRoyaltyType(type: RoyaltyType): Promise<ChangeRoyaltyTypeOption> {
+    public async *changeRoyaltyType(type: RoyaltyType): AsyncGenerator<ChangeRoyaltyTypeStepValue> {
         const signer = this.web3.getConnectedSigner();
         if (!signer) {
             throw new NoSignerError();
@@ -504,33 +602,22 @@ export class ClientMethods extends ClientCore implements IClientMethods, IClient
         const nonce = await ledgerContract.nonceOf(account);
         const signature = await ContractUtils.signRoyaltyType(signer, type, nonce);
 
-        const relayParam: ChangeRoyaltyTypeOption = {
+        yield { key: ChangeRoyaltyTypeSteps.PREPARED, type, account, signature };
+
+        const param = {
             type,
             account,
             signature
         };
-        return Promise.resolve(relayParam);
-    }
-
-    public async *changeRoyaltyType(param: ChangeRoyaltyTypeOption): AsyncGenerator<ChangeRoyaltyTypeStepValue> {
-        const provider = this.web3.getProvider();
-        if (!provider) throw new NoProviderError();
-
-        const network = getNetwork((await provider.getNetwork()).chainId);
-        const networkName = network.name as SupportedNetworks;
-        if (!SupportedNetworksArray.includes(networkName)) {
-            throw new UnsupportedNetworkError(networkName);
-        }
 
         const res = await Network.post(await this.getEndpoint("royaltyType"), param);
         if (res?.code !== 200) throw new InternalServerError(res.message);
         if (res?.data?.code && res.data.code !== 200) throw new InternalServerError(res?.data?.error?.message ?? "");
 
-        yield { key: ChangeRoyaltyTypeSteps.DOING, txHash: res.data.txHash };
+        yield { key: ChangeRoyaltyTypeSteps.SENT, txHash: res.data.txHash };
 
-        const txResponse = (await provider.getTransaction(res.data.txHash)) as ContractTransaction;
+        const txResponse = (await signer.provider.getTransaction(res.data.txHash)) as ContractTransaction;
         const txReceipt = await txResponse.wait();
-        const ledgerContract: Ledger = Ledger__factory.connect(this.web3.getLedgerAddress(), provider);
 
         const log = findLog(txReceipt, ledgerContract.interface, "ChangedPointType");
         if (!log) {
@@ -564,6 +651,70 @@ export class ClientMethods extends ClientCore implements IClientMethods, IClient
 
         const ledgerInstance: Ledger = Ledger__factory.connect(this.web3.getLedgerAddress(), provider);
         return await ledgerInstance.pointTypeOf(account);
+    }
+
+    public async *changeToPayablePoint(phone: string): AsyncGenerator<ChangeToPayablePointStepValue> {
+        const signer = this.web3.getConnectedSigner();
+        if (!signer) {
+            throw new NoSignerError();
+        } else if (!signer.provider) {
+            throw new NoProviderError();
+        }
+
+        const network = getNetwork((await signer.provider.getNetwork()).chainId);
+        const networkName = network.name as SupportedNetworks;
+        if (!SupportedNetworksArray.includes(networkName)) {
+            throw new UnsupportedNetworkError(networkName);
+        }
+
+        const phoneHash = ContractUtils.getPhoneHash(phone.trim());
+        const ledgerContract: Ledger = Ledger__factory.connect(this.web3.getLedgerAddress(), signer);
+
+        const account: string = await signer.getAddress();
+        const nonce = await ledgerContract.nonceOf(account);
+        const signature = await ContractUtils.signChangePayablePoint(signer, phoneHash, nonce);
+
+        const balance = await ledgerContract.unPayablePointBalanceOf(phoneHash);
+        if (balance.eq(BigNumber.from(0))) {
+            throw new InsufficientBalanceError();
+        }
+        yield { key: ChangeToPayablePointSteps.PREPARED, phone, phoneHash, account, signature, balance };
+
+        const linkContract: PhoneLinkCollection = PhoneLinkCollection__factory.connect(
+            this.web3.getLinkCollectionAddress(),
+            signer.provider
+        );
+
+        const param = {
+            phone: phoneHash,
+            account,
+            signature
+        };
+        const phoneToAddress: string = await linkContract.toAddress(param.phone);
+        if (phoneToAddress === AddressZero) throw new UnregisteredPhoneError();
+        if (phoneToAddress !== param.account) throw new MismatchApproveAddressError();
+
+        const res = await Network.post(await this.getEndpoint("changeToPayablePoint"), param);
+        if (res?.code !== 200) throw new InternalServerError(res.message);
+        if (res?.data?.code && res.data.code !== 200) throw new InternalServerError(res?.data?.error?.message ?? "");
+
+        yield { key: ChangeToPayablePointSteps.SENT, txHash: res.data.txHash };
+
+        const txResponse = (await signer.provider.getTransaction(res.data.txHash)) as ContractTransaction;
+        const txReceipt = await txResponse.wait();
+
+        const log = findLog(txReceipt, ledgerContract.interface, "ChangedToPayablePoint");
+        if (!log) {
+            throw new FailedPayTokenError();
+        }
+        const parsedLog = ledgerContract.interface.parseLog(log);
+        if (!balance.eq(parsedLog.args["changedAmountPoint"])) {
+            throw new AmountMismatchError(balance, parsedLog.args["changedAmountPoint"]);
+        }
+
+        yield {
+            key: ChangeToPayablePointSteps.DONE
+        };
     }
 
     public async getUserTradeHistory(
