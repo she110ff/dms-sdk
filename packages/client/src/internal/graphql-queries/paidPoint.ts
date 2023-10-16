@@ -4,9 +4,11 @@ export const QueryPaidPoint = gql`
     query PaidPoint($where: PaidPoint_filter!) {
         paidPoints(where: $where) {
             id
-            email
+            account
             paidAmountPoint
             value
+            fee
+            feeValue
             balancePoint
             purchaseId
             shopId

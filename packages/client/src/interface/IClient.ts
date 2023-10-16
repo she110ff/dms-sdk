@@ -34,11 +34,11 @@ export interface IClientMethods extends IClientCore, IClientHttpCore {
     deposit: (amount: BigNumber) => AsyncGenerator<DepositStepValue>;
     withdraw: (amount: BigNumber) => AsyncGenerator<WithdrawStepValue>;
     updateAllowance: (params: UpdateAllowanceParams) => AsyncGenerator<UpdateAllowanceStepValue>;
-    getUserTradeHistory: (email: string, option?: QueryOption) => Promise<any>;
-    getUserPointInputTradeHistory: (email: string, option?: QueryOption) => Promise<any>;
-    getUserTokenInputTradeHistory: (email: string, option?: QueryOption) => Promise<any>;
-    getUserPointOutputTradeHistory: (email: string, option?: QueryOption) => Promise<any>;
-    getUserTokenOutputTradeHistory: (email: string, option?: QueryOption) => Promise<any>;
-    getPaidToken: (email: string, purchaseId: string, option?: QueryOption) => Promise<any>;
-    getPaidPoint: (email: string, purchaseId: string, option?: QueryOption) => Promise<any>;
+    getUserTradeHistory: (account: string, option?: QueryOption) => Promise<any>;
+    getUserPointInputTradeHistory: (account: string, option?: QueryOption) => Promise<any>;
+    getUserTokenInputTradeHistory: (account: string, option?: QueryOption) => Promise<any>;
+    getUserPointOutputTradeHistory: (account: string, option?: QueryOption) => Promise<any>;
+    getUserTokenOutputTradeHistory: (account: string, option?: QueryOption) => Promise<any>;
+    getPaidToken: (account: string, purchaseId: string, option?: QueryOption) => Promise<any>;
+    getPaidPoint: (account: string, purchaseId: string, option?: QueryOption) => Promise<any>;
 }

@@ -4,9 +4,11 @@ export const QueryPaidToken = gql`
     query PaidToken($where: PaidToken_filter!) {
         paidTokens(where: $where) {
             id
-            email
+            account
             paidAmountToken
             value
+            fee
+            feeValue
             balanceToken
             purchaseId
             shopId

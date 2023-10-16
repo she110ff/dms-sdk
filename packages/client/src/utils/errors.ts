@@ -1,24 +1,6 @@
 import { UnfetchResponse } from "unfetch";
 import { BigNumber } from "@ethersproject/bignumber";
 
-export class InvalidEmailParamError extends Error {
-    constructor() {
-        super("The param does not email");
-    }
-}
-
-export class MismatchApproveAddressError extends Error {
-    constructor() {
-        super("Customer and approver mismatch");
-    }
-}
-
-export class UnregisteredEmailError extends Error {
-    constructor() {
-        super("Unregistered email error");
-    }
-}
-
 export class InsufficientBalanceError extends Error {
     constructor() {
         super("Insufficient balance error");

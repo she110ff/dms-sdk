@@ -37,10 +37,8 @@ import {
     FailedWithdrawError,
     InsufficientBalanceError,
     InternalServerError,
-    InvalidEmailParamError,
     NoHttpModuleError
 } from "../../utils/errors";
-import { checkEmail } from "../../utils";
 import { Network } from "../../client-common/interfaces/network";
 import { findLog } from "../../client-common/utils";
 
@@ -476,7 +474,7 @@ export class ClientMethods extends ClientCore implements IClientMethods, IClient
     }
 
     public async getUserTradeHistory(
-        email: string,
+        account: string,
         { limit, skip, sortDirection, sortBy }: QueryOption = {
             limit: 10,
             skip: 0,
@@ -484,10 +482,8 @@ export class ClientMethods extends ClientCore implements IClientMethods, IClient
             sortBy: SortByBlock.BLOCK_NUMBER
         }
     ): Promise<any> {
-        if (!checkEmail(email)) throw new InvalidEmailParamError();
-        const emailHash = ContractUtils.sha256String(email);
         const query = QueryUserTradeHistory;
-        const where = { email: emailHash };
+        const where = { account: account };
         const params = { where, limit, skip, direction: sortDirection, sortBy };
         const name = "user trade history";
         const res = await this.graphql.request({ query, params, name });
@@ -495,7 +491,7 @@ export class ClientMethods extends ClientCore implements IClientMethods, IClient
     }
 
     public async getUserPointInputTradeHistory(
-        email: string,
+        account: string,
         { limit, skip, sortDirection, sortBy }: QueryOption = {
             limit: 10,
             skip: 0,
@@ -503,10 +499,8 @@ export class ClientMethods extends ClientCore implements IClientMethods, IClient
             sortBy: SortByBlock.BLOCK_NUMBER
         }
     ): Promise<any> {
-        if (!checkEmail(email)) throw new InvalidEmailParamError();
-        const emailHash = ContractUtils.sha256String(email);
         const query = QueryUserTradeHistory;
-        const where = { email: emailHash, assetFlow: "PointInput" };
+        const where = { account: account, assetFlow: "PointInput" };
         const params = { where, limit, skip, direction: sortDirection, sortBy };
         const name = "user trade history";
         const res = await this.graphql.request({ query, params, name });
@@ -514,7 +508,7 @@ export class ClientMethods extends ClientCore implements IClientMethods, IClient
     }
 
     public async getUserTokenInputTradeHistory(
-        email: string,
+        account: string,
         { limit, skip, sortDirection, sortBy }: QueryOption = {
             limit: 10,
             skip: 0,
@@ -522,10 +516,8 @@ export class ClientMethods extends ClientCore implements IClientMethods, IClient
             sortBy: SortByBlock.BLOCK_NUMBER
         }
     ): Promise<any> {
-        if (!checkEmail(email)) throw new InvalidEmailParamError();
-        const emailHash = ContractUtils.sha256String(email);
         const query = QueryUserTradeHistory;
-        const where = { email: emailHash, assetFlow: "TokenInput" };
+        const where = { account: account, assetFlow: "TokenInput" };
         const params = { where, limit, skip, direction: sortDirection, sortBy };
         const name = "user trade history";
         const res = await this.graphql.request({ query, params, name });
@@ -533,7 +525,7 @@ export class ClientMethods extends ClientCore implements IClientMethods, IClient
     }
 
     public async getUserPointOutputTradeHistory(
-        email: string,
+        account: string,
         { limit, skip, sortDirection, sortBy }: QueryOption = {
             limit: 10,
             skip: 0,
@@ -541,10 +533,8 @@ export class ClientMethods extends ClientCore implements IClientMethods, IClient
             sortBy: SortByBlock.BLOCK_NUMBER
         }
     ): Promise<any> {
-        if (!checkEmail(email)) throw new InvalidEmailParamError();
-        const emailHash = ContractUtils.sha256String(email);
         const query = QueryUserTradeHistory;
-        const where = { email: emailHash, assetFlow: "PointOutput" };
+        const where = { account: account, assetFlow: "PointOutput" };
         const params = { where, limit, skip, direction: sortDirection, sortBy };
         const name = "user trade history";
         const res = await this.graphql.request({ query, params, name });
@@ -552,7 +542,7 @@ export class ClientMethods extends ClientCore implements IClientMethods, IClient
     }
 
     public async getUserTokenOutputTradeHistory(
-        email: string,
+        account: string,
         { limit, skip, sortDirection, sortBy }: QueryOption = {
             limit: 10,
             skip: 0,
@@ -560,32 +550,26 @@ export class ClientMethods extends ClientCore implements IClientMethods, IClient
             sortBy: SortByBlock.BLOCK_NUMBER
         }
     ): Promise<any> {
-        if (!checkEmail(email)) throw new InvalidEmailParamError();
-        const emailHash = ContractUtils.sha256String(email);
         const query = QueryUserTradeHistory;
-        const where = { email: emailHash, assetFlow: "TokenOutput" };
+        const where = { account: account, assetFlow: "TokenOutput" };
         const params = { where, limit, skip, direction: sortDirection, sortBy };
         const name = "user trade history";
         const res = await this.graphql.request({ query, params, name });
         return res;
     }
 
-    public async getPaidToken(email: string, purchaseId: string): Promise<any> {
-        if (!checkEmail(email)) throw new InvalidEmailParamError();
-        const emailHash = ContractUtils.sha256String(email);
+    public async getPaidToken(account: string, purchaseId: string): Promise<any> {
         const query = QueryPaidToken;
-        const where = { email: emailHash, purchaseId: purchaseId };
+        const where = { account: account, purchaseId: purchaseId };
         const params = { where };
         const name = "paid token";
         const res = await this.graphql.request({ query, params, name });
         return res;
     }
 
-    public async getPaidPoint(email: string, purchaseId: string): Promise<any> {
-        if (!checkEmail(email)) throw new InvalidEmailParamError();
-        const emailHash = ContractUtils.sha256String(email);
+    public async getPaidPoint(account: string, purchaseId: string): Promise<any> {
         const query = QueryPaidPoint;
-        const where = { email: emailHash, purchaseId: purchaseId };
+        const where = { account: account, purchaseId: purchaseId };
         const params = { where };
         const name = "paid token";
         const res = await this.graphql.request({ query, params, name });

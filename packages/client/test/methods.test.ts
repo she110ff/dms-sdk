@@ -121,7 +121,7 @@ describe("Client", () => {
 
     const purchaseAmount = Amount.make(purchaseData[0].amount, 18).value.mul(1000);
     const pointAmount = purchaseAmount.div(100);
-    const multiple = BigNumber.from(1000000000);
+    const multiple = BigNumber.from(1_000_000_000);
     const price = BigNumber.from(150).mul(multiple);
     const tokenAmount = pointAmount.mul(multiple).div(price);
 

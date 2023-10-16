@@ -10,7 +10,7 @@ export const QueryUserTradeHistory = gql`
     ) {
         userTradeHistories(where: $where, first: $limit, orderBy: $sortBy, orderDirection: $direction, skip: $skip) {
             id
-            email
+            account
             action
             assetFlow
             amountPoint
