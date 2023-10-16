@@ -7,7 +7,7 @@ dotenv.config({ path: "env/.env" });
 
 export const LIVE_CONTRACTS: { [K in SupportedNetworks]: NetworkDeployment } = {
     bosagora_mainnet: {
-        LinkCollectionAddress: delActiveContractList.bosagora_mainnet.LinkCollection,
+        EmailLinkCollectionAddress: delActiveContractList.bosagora_mainnet.EmailLinkCollection,
         TokenAddress: dmsActiveContractList.bosagora_mainnet.Token,
         ValidatorCollectionAddress: dmsActiveContractList.bosagora_mainnet.ValidatorCollection,
         TokenPriceAddress: dmsActiveContractList.bosagora_mainnet.TokenPrice,
@@ -16,7 +16,7 @@ export const LIVE_CONTRACTS: { [K in SupportedNetworks]: NetworkDeployment } = {
         relayEndpoint: process.env.MAINNET_RELAY_SERVER_URL
     },
     bosagora_testnet: {
-        LinkCollectionAddress: delActiveContractList.bosagora_testnet.LinkCollection,
+        EmailLinkCollectionAddress: delActiveContractList.bosagora_testnet.EmailLinkCollection,
         TokenAddress: dmsActiveContractList.bosagora_testnet.Token,
         ValidatorCollectionAddress: dmsActiveContractList.bosagora_testnet.ValidatorCollection,
         TokenPriceAddress: dmsActiveContractList.bosagora_testnet.TokenPrice,
@@ -25,7 +25,7 @@ export const LIVE_CONTRACTS: { [K in SupportedNetworks]: NetworkDeployment } = {
         relayEndpoint: process.env.TESTNET_RELAY_SERVER_URL
     },
     bosagora_devnet: {
-        LinkCollectionAddress: delActiveContractList.bosagora_devnet.LinkCollection,
+        EmailLinkCollectionAddress: delActiveContractList.bosagora_devnet.EmailLinkCollection,
         TokenAddress: dmsActiveContractList.bosagora_devnet.Token,
         ValidatorCollectionAddress: dmsActiveContractList.bosagora_devnet.ValidatorCollection,
         TokenPriceAddress: dmsActiveContractList.bosagora_devnet.TokenPrice,
@@ -34,7 +34,7 @@ export const LIVE_CONTRACTS: { [K in SupportedNetworks]: NetworkDeployment } = {
         relayEndpoint: process.env.DEVNET_RELAY_SERVER_URL
     },
     localhost: {
-        LinkCollectionAddress: "",
+        EmailLinkCollectionAddress: "",
         TokenAddress: "",
         ValidatorCollectionAddress: "",
         TokenPriceAddress: "",

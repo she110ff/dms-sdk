@@ -30,7 +30,7 @@ describe("Client", () => {
 
         deployment = await deployContracts.deployAll(provider);
         contextParamsLocalChain.tokenAddress = deployment.token.address;
-        contextParamsLocalChain.linkCollectionAddress = deployment.linkCollection.address;
+        contextParamsLocalChain.emailLinkCollectionAddress = deployment.linkCollection.address;
         contextParamsLocalChain.validatorCollectionAddress = deployment.validatorCollection.address;
         contextParamsLocalChain.tokenPriceAddress = deployment.tokenPrice.address;
         contextParamsLocalChain.shopCollectionAddress = deployment.shopCollection.address;

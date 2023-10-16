@@ -41,8 +41,8 @@ export class Web3Module implements IClientWeb3Core {
             tokenAddressMap.set(this, context.tokenAddress);
         }
 
-        if (context.linkCollectionAddress) {
-            linkCollectionAddressMap.set(this, context.linkCollectionAddress);
+        if (context.emailLinkCollectionAddress) {
+            linkCollectionAddressMap.set(this, context.emailLinkCollectionAddress);
         }
 
         if (context.validatorCollectionAddress) {
@@ -69,7 +69,7 @@ export class Web3Module implements IClientWeb3Core {
         return tokenAddressMap.get(this) || "";
     }
 
-    private get linkCollectionAddress(): string {
+    private get emailLinkCollectionAddress(): string {
         return linkCollectionAddressMap.get(this) || "";
     }
 
@@ -209,10 +209,10 @@ export class Web3Module implements IClientWeb3Core {
     }
 
     public getLinkCollectionAddress(): string {
-        if (!this.linkCollectionAddress) {
+        if (!this.emailLinkCollectionAddress) {
             throw new NoLinkCollectionAddress();
         }
-        return this.linkCollectionAddress;
+        return this.emailLinkCollectionAddress;
     }
 
     public getValidatorCollectionAddress(): string {

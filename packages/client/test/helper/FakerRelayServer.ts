@@ -26,7 +26,7 @@ import { Signer } from "@ethersproject/abstract-signer";
 import { ContractUtils } from "../../src";
 import { GanacheServer } from "./GanacheServer";
 import { Deployment } from "./deployContracts";
-import { LinkCollection, LinkCollection__factory } from "del-osx-lib";
+import { EmailLinkCollection, EmailLinkCollection__factory } from "del-osx-lib";
 import { Ledger, Ledger__factory } from "dms-osx-lib";
 
 import { Utils } from "./Utils";
@@ -148,8 +148,11 @@ export class FakerRelayServer {
         return Ledger__factory.connect(this.deployment.ledger.address, this.signer) as Ledger;
     }
 
-    private get linkCollectionContract(): LinkCollection {
-        return LinkCollection__factory.connect(this.deployment.linkCollection.address, this.signer) as LinkCollection;
+    private get linkCollectionContract(): EmailLinkCollection {
+        return EmailLinkCollection__factory.connect(
+            this.deployment.linkCollection.address,
+            this.signer
+        ) as EmailLinkCollection;
     }
 
     private get signer(): Signer {

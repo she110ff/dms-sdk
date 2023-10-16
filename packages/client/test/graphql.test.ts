@@ -14,7 +14,8 @@ describe("Client", () => {
             const users = JSON.parse(fs.readFileSync("test/helper/users.json", "utf8"));
             beforeAll(async () => {
                 contextParamsDevnet.tokenAddress = LIVE_CONTRACTS["bosagora_devnet"].TokenAddress;
-                contextParamsDevnet.linkCollectionAddress = LIVE_CONTRACTS["bosagora_devnet"].LinkCollectionAddress;
+                contextParamsDevnet.emailLinkCollectionAddress =
+                    LIVE_CONTRACTS["bosagora_devnet"].EmailLinkCollectionAddress;
                 contextParamsDevnet.validatorCollectionAddress =
                     LIVE_CONTRACTS["bosagora_devnet"].ValidatorCollectionAddress;
                 contextParamsDevnet.tokenPriceAddress = LIVE_CONTRACTS["bosagora_devnet"].TokenPriceAddress;

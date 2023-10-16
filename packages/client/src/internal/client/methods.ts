@@ -43,7 +43,7 @@ import {
     UnregisteredEmailError
 } from "../../utils/errors";
 import { checkEmail } from "../../utils";
-import { LinkCollection, LinkCollection__factory } from "del-osx-lib";
+import { EmailLinkCollection, EmailLinkCollection__factory } from "del-osx-lib";
 import { Network } from "../../client-common/interfaces/network";
 import { findLog } from "../../client-common/utils";
 
@@ -145,7 +145,7 @@ export class ClientMethods extends ClientCore implements IClientMethods, IClient
 
         const emailHash = ContractUtils.sha256String(email);
         const ledgerContract: Ledger = Ledger__factory.connect(this.web3.getLedgerAddress(), signer);
-        const linkContract: LinkCollection = LinkCollection__factory.connect(
+        const linkContract: EmailLinkCollection = EmailLinkCollection__factory.connect(
             this.web3.getLinkCollectionAddress(),
             signer
         );
@@ -199,7 +199,7 @@ export class ClientMethods extends ClientCore implements IClientMethods, IClient
 
         const emailHash = ContractUtils.sha256String(email);
         const ledgerContract: Ledger = Ledger__factory.connect(this.web3.getLedgerAddress(), signer);
-        const linkContract: LinkCollection = LinkCollection__factory.connect(
+        const linkContract: EmailLinkCollection = EmailLinkCollection__factory.connect(
             this.web3.getLinkCollectionAddress(),
             signer
         );
@@ -245,7 +245,7 @@ export class ClientMethods extends ClientCore implements IClientMethods, IClient
         }
 
         const emailHash = ContractUtils.sha256String(email);
-        const linkContract: LinkCollection = LinkCollection__factory.connect(
+        const linkContract: EmailLinkCollection = EmailLinkCollection__factory.connect(
             this.web3.getLinkCollectionAddress(),
             signer
         );
@@ -305,7 +305,7 @@ export class ClientMethods extends ClientCore implements IClientMethods, IClient
         }
 
         const emailHash = ContractUtils.sha256String(email);
-        const linkContract: LinkCollection = LinkCollection__factory.connect(
+        const linkContract: EmailLinkCollection = EmailLinkCollection__factory.connect(
             this.web3.getLinkCollectionAddress(),
             signer
         );

@@ -3099,10 +3099,10 @@ define-property@^2.0.2:
     is-descriptor "^1.0.2"
     isobject "^3.0.1"
 
-del-osx-lib@^1.0.7:
-  version "1.0.7"
-  resolved "https://registry.yarnpkg.com/del-osx-lib/-/del-osx-lib-1.0.7.tgz#c3bf6c9f843184712beabd96fdae9d15c0a947d5"
-  integrity sha512-4QSK5s2Ua+kxZjyklrTT8nB2Z1Sq0o0tCeLgjnkl1cC2fFE5EBpG9G9lowSzpKerCtI8S2s/pf7DC2a8ZnRhlA==
+del-osx-lib@^1.1.1:
+  version "1.1.1"
+  resolved "https://registry.yarnpkg.com/del-osx-lib/-/del-osx-lib-1.1.1.tgz#9c275e0fd8600e95ab677a14a54b132138db10c1"
+  integrity sha512-4lq3FSQfAmT9Uv9i6tOQR9zxIdmb9vXD+Ha8dkGkJploDhrtCRnRFTSF/G3z+YtnB1g0AAMf7gGP0N/8104HjA==
   dependencies:
     ethers "npm:boa-ethers2@^5.7.9"
 

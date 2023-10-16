@@ -1,7 +1,7 @@
 export const SupportedNetworksArray = ["bosagora_mainnet", "bosagora_testnet", "bosagora_devnet", "localhost"] as const;
 export type SupportedNetworks = typeof SupportedNetworksArray[number];
 export type NetworkDeployment = {
-    LinkCollectionAddress: string;
+    EmailLinkCollectionAddress: string;
     TokenAddress: string;
     ValidatorCollectionAddress: string;
     TokenPriceAddress: string;

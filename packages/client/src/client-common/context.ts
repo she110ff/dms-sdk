@@ -80,8 +80,8 @@ export class Context {
         return this.state.tokenAddress;
     }
 
-    get linkCollectionAddress(): string | undefined {
-        return this.state.linkCollectionAddress;
+    get emailLinkCollectionAddress(): string | undefined {
+        return this.state.emailLinkCollectionAddress;
     }
 
     get validatorCollectionAddress(): string | undefined {
@@ -176,7 +176,7 @@ export class Context {
             throw new Error("No web3 endpoints defined");
         } else if (!contextParams.tokenAddress) {
             throw new Error("Missing token contract address");
-        } else if (!contextParams.linkCollectionAddress) {
+        } else if (!contextParams.emailLinkCollectionAddress) {
             throw new Error("Missing link collection contract address");
         } else if (!contextParams.validatorCollectionAddress) {
             throw new Error("Missing validator collection contract address");
@@ -195,7 +195,7 @@ export class Context {
             signer: contextParams.signer,
             web3Providers: Context.resolveWeb3Providers(contextParams.web3Providers, contextParams.network),
             tokenAddress: contextParams.tokenAddress,
-            linkCollectionAddress: contextParams.linkCollectionAddress,
+            emailLinkCollectionAddress: contextParams.emailLinkCollectionAddress,
             validatorCollectionAddress: contextParams.validatorCollectionAddress,
             tokenPriceAddress: contextParams.tokenPriceAddress,
             shopCollectionAddress: contextParams.shopCollectionAddress,
@@ -220,8 +220,8 @@ export class Context {
         if (contextParams.tokenAddress) {
             this.state.tokenAddress = contextParams.tokenAddress;
         }
-        if (contextParams.linkCollectionAddress) {
-            this.state.linkCollectionAddress = contextParams.linkCollectionAddress;
+        if (contextParams.emailLinkCollectionAddress) {
+            this.state.emailLinkCollectionAddress = contextParams.emailLinkCollectionAddress;
         }
         if (contextParams.validatorCollectionAddress) {
             this.state.validatorCollectionAddress = contextParams.validatorCollectionAddress;

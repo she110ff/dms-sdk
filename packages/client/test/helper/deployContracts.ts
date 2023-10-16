@@ -17,11 +17,11 @@ import {
     ValidatorCollection__factory
 } from "dms-osx-lib";
 import { Amount, ContractUtils } from "../../src";
-import { LinkCollection, LinkCollection__factory } from "del-osx-lib";
+import { EmailLinkCollection, EmailLinkCollection__factory } from "del-osx-lib";
 
 export interface Deployment {
     provider: JsonRpcProvider;
-    linkCollection: LinkCollection;
+    linkCollection: EmailLinkCollection;
     token: Token;
     validatorCollection: ValidatorCollection;
     tokenPrice: TokenPrice;
@@ -49,7 +49,7 @@ export async function deployAll(provider: JsonRpcProvider): Promise<Deployment> 
         )) as ValidatorCollection;
 
         await depositValidators(tokenContract, validatorCollectionContract, validators);
-        const linkCollectionContract: LinkCollection = await deployLinkCollection(deployer, validators);
+        const linkCollectionContract: EmailLinkCollection = await deployLinkCollection(deployer, validators);
 
         const tokenPriceContract: TokenPrice = await deployTokenPrice(
             deployer,
@@ -141,11 +141,14 @@ async function depositValidators(
     await validatorContract.connect(validators[0]).makeActiveItems();
 }
 
-const deployLinkCollection = async (deployer: Wallet, validators: Wallet[]): Promise<LinkCollection> => {
-    const linkCollectionFactory = new ContractFactory(LinkCollection__factory.abi, LinkCollection__factory.bytecode);
-    const linkCollectionContract: LinkCollection = (await linkCollectionFactory
+const deployLinkCollection = async (deployer: Wallet, validators: Wallet[]): Promise<EmailLinkCollection> => {
+    const linkCollectionFactory = new ContractFactory(
+        EmailLinkCollection__factory.abi,
+        EmailLinkCollection__factory.bytecode
+    );
+    const linkCollectionContract: EmailLinkCollection = (await linkCollectionFactory
         .connect(deployer)
-        .deploy(validators.map((m) => m.address))) as LinkCollection;
+        .deploy(validators.map((m) => m.address))) as EmailLinkCollection;
     await linkCollectionContract.deployed();
     await linkCollectionContract.deployTransaction.wait();
 
@@ -209,7 +212,7 @@ const deployLedger = async (
 async function depositFoundationAsset(
     tokenContract: Token,
     ledgerContract: Ledger,
-    linkContract: LinkCollection,
+    linkContract: EmailLinkCollection,
     deployer: Wallet,
     foundation: Wallet,
     validators: Wallet[]
