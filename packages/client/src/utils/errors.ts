@@ -92,6 +92,12 @@ export class AmountMismatchError extends Error {
     }
 }
 
+export class RoyaltyTypeMismatchError extends Error {
+    constructor(expected: number, received: number) {
+        super(`Royalty type mismatch. Expected: ${expected}, received: ${received}`);
+    }
+}
+
 export class FailedWithdrawError extends Error {
     constructor() {
         super("Failed to withdraw");

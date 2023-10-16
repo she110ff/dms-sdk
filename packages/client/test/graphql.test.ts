@@ -169,7 +169,7 @@ describe("Client", () => {
 
                     purchase.userIndex = userIndex;
                     purchase.purchaseId = `P${ContractUtils.getTimeStamp()}`;
-                    const option = await client.methods.getPayTokenOption(
+                    const option = await client.methods.createOptionOfPayToken(
                         purchase.purchaseId,
                         amount,
                         purchase.currency,
@@ -178,7 +178,7 @@ describe("Client", () => {
 
                     await ContractUtils.delay(2000);
 
-                    for await (const step of client.methods.fetchPayToken(option)) {
+                    for await (const step of client.methods.payToken(option)) {
                         switch (step.key) {
                             case PayTokenSteps.PAYING_TOKEN:
                                 expect(typeof step.txHash).toBe("string");
@@ -225,7 +225,7 @@ describe("Client", () => {
 
                     purchase.userIndex = userIndex;
                     purchase.purchaseId = `P${ContractUtils.getTimeStamp()}`;
-                    const option = await client.methods.getPayPointOption(
+                    const option = await client.methods.createOptionOfPayPoint(
                         purchase.purchaseId,
                         amount,
                         purchase.currency,
@@ -234,7 +234,7 @@ describe("Client", () => {
 
                     await ContractUtils.delay(2000);
 
-                    for await (const step of client.methods.fetchPayPoint(option)) {
+                    for await (const step of client.methods.payPoint(option)) {
                         switch (step.key) {
                             case PayPointSteps.PAYING_POINT:
                                 expect(typeof step.txHash).toBe("string");

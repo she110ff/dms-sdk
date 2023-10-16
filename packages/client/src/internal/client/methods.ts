@@ -12,6 +12,9 @@ import { Provider } from "@ethersproject/providers";
 import { NoProviderError, NoSignerError, UnsupportedNetworkError, UpdateAllowanceError } from "dms-sdk-common";
 import { ContractUtils } from "../../utils/ContractUtils";
 import {
+    ChangeRoyaltyTypeOption,
+    ChangeRoyaltyTypeSteps,
+    ChangeRoyaltyTypeStepValue,
     DepositSteps,
     DepositStepValue,
     FetchPayOption,
@@ -22,6 +25,7 @@ import {
     PayTokenSteps,
     PayTokenStepValue,
     QueryOption,
+    RoyaltyType,
     SortByBlock,
     SortDirection,
     UpdateAllowanceParams,
@@ -37,7 +41,8 @@ import {
     FailedWithdrawError,
     InsufficientBalanceError,
     InternalServerError,
-    NoHttpModuleError
+    NoHttpModuleError,
+    RoyaltyTypeMismatchError
 } from "../../utils/errors";
 import { Network } from "../../client-common/interfaces/network";
 import { findLog } from "../../client-common/utils";
@@ -131,7 +136,7 @@ export class ClientMethods extends ClientCore implements IClientMethods, IClient
      * @param shopId - 상점 아이디
      * @return {Promise<PayPointOption>}
      */
-    public async getPayPointOption(
+    public async createOptionOfPayPoint(
         purchaseId: string,
         amount: BigNumber,
         currency: string,
@@ -176,7 +181,7 @@ export class ClientMethods extends ClientCore implements IClientMethods, IClient
      * @param shopId - 상점 아이디
      * @return {Promise<PayTokenOption>}
      */
-    public async getPayTokenOption(
+    public async createOptionOfPayToken(
         purchaseId: string,
         amount: BigNumber,
         currency: string,
@@ -362,7 +367,7 @@ export class ClientMethods extends ClientCore implements IClientMethods, IClient
         };
     }
 
-    public async *fetchPayPoint(param: FetchPayOption): AsyncGenerator<PayPointStepValue> {
+    public async *payPoint(param: FetchPayOption): AsyncGenerator<PayPointStepValue> {
         const provider = this.web3.getProvider();
         if (!provider) throw new NoProviderError();
 
@@ -400,7 +405,7 @@ export class ClientMethods extends ClientCore implements IClientMethods, IClient
         };
     }
 
-    public async *fetchPayToken(param: FetchPayOption): AsyncGenerator<PayTokenStepValue> {
+    public async *payToken(param: FetchPayOption): AsyncGenerator<PayTokenStepValue> {
         const provider = this.web3.getProvider();
         if (!provider) throw new NoProviderError();
 
@@ -471,6 +476,94 @@ export class ClientMethods extends ClientCore implements IClientMethods, IClient
             newUrl.pathname += "/";
         }
         return new URL(path, newUrl);
+    }
+
+    /**
+     * 적립되는 로얄티의 종류를 설정하기 위한 옵션을 생성한다.
+     * @param type - 로얄티의 종류
+     * @return {Promise<PayPointOption>}
+     */
+    public async createOptionOfChangeRoyaltyType(type: RoyaltyType): Promise<ChangeRoyaltyTypeOption> {
+        const signer = this.web3.getConnectedSigner();
+        if (!signer) {
+            throw new NoSignerError();
+        } else if (!signer.provider) {
+            throw new NoProviderError();
+        }
+
+        const network = getNetwork((await signer.provider.getNetwork()).chainId);
+        const networkName = network.name as SupportedNetworks;
+        if (!SupportedNetworksArray.includes(networkName)) {
+            throw new UnsupportedNetworkError(networkName);
+        }
+
+        const ledgerContract: Ledger = Ledger__factory.connect(this.web3.getLedgerAddress(), signer);
+
+        const account: string = await signer.getAddress();
+
+        const nonce = await ledgerContract.nonceOf(account);
+        const signature = await ContractUtils.signRoyaltyType(signer, type, nonce);
+
+        const relayParam: ChangeRoyaltyTypeOption = {
+            type,
+            account,
+            signature
+        };
+        return Promise.resolve(relayParam);
+    }
+
+    public async *changeRoyaltyType(param: ChangeRoyaltyTypeOption): AsyncGenerator<ChangeRoyaltyTypeStepValue> {
+        const provider = this.web3.getProvider();
+        if (!provider) throw new NoProviderError();
+
+        const network = getNetwork((await provider.getNetwork()).chainId);
+        const networkName = network.name as SupportedNetworks;
+        if (!SupportedNetworksArray.includes(networkName)) {
+            throw new UnsupportedNetworkError(networkName);
+        }
+
+        const res = await Network.post(await this.getEndpoint("royaltyType"), param);
+        if (res?.code !== 200) throw new InternalServerError(res.message);
+        if (res?.data?.code && res.data.code !== 200) throw new InternalServerError(res?.data?.error?.message ?? "");
+
+        yield { key: ChangeRoyaltyTypeSteps.DOING, txHash: res.data.txHash };
+
+        const txResponse = (await provider.getTransaction(res.data.txHash)) as ContractTransaction;
+        const txReceipt = await txResponse.wait();
+        const ledgerContract: Ledger = Ledger__factory.connect(this.web3.getLedgerAddress(), provider);
+
+        const log = findLog(txReceipt, ledgerContract.interface, "ChangedPointType");
+        if (!log) {
+            throw new FailedPayTokenError();
+        }
+        const parsedLog = ledgerContract.interface.parseLog(log);
+        if (!param.type === parsedLog.args["pointType"]) {
+            throw new RoyaltyTypeMismatchError(param.type, parsedLog.args["value"]);
+        }
+
+        yield {
+            key: ChangeRoyaltyTypeSteps.DONE,
+            type: parsedLog.args["pointType"]
+        };
+    }
+
+    /**
+     * 적립되는 로얄티의 종류를 리턴한다.
+     * @param {string} account - 지갑 주소
+     * @return {Promise<BigNumber>} 포인트 잔고
+     */
+    public async getRoyaltyType(account: string): Promise<RoyaltyType> {
+        const provider = this.web3.getProvider() as Provider;
+        if (!provider) throw new NoProviderError();
+
+        const network = getNetwork((await provider.getNetwork()).chainId);
+        const networkName = network.name as SupportedNetworks;
+        if (!SupportedNetworksArray.includes(networkName)) {
+            throw new UnsupportedNetworkError(networkName);
+        }
+
+        const ledgerInstance: Ledger = Ledger__factory.connect(this.web3.getLedgerAddress(), provider);
+        return await ledgerInstance.pointTypeOf(account);
     }
 
     public async getUserTradeHistory(

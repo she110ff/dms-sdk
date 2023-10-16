@@ -108,6 +108,26 @@ export type WithdrawStepValue =
     | { key: WithdrawSteps.WITHDRAWING; txHash: string }
     | { key: WithdrawSteps.DONE; amount: BigNumber };
 
+export enum RoyaltyType {
+    POINT,
+    TOKEN
+}
+
+export type ChangeRoyaltyTypeOption = {
+    type: RoyaltyType;
+    account: string;
+    signature: BytesLike;
+};
+
+export enum ChangeRoyaltyTypeSteps {
+    DOING = "doing",
+    DONE = "done"
+}
+
+export type ChangeRoyaltyTypeStepValue =
+    | { key: ChangeRoyaltyTypeSteps.DOING; txHash: string }
+    | { key: ChangeRoyaltyTypeSteps.DONE; type: RoyaltyType };
+
 export enum SortDirection {
     ASC = "asc",
     DESC = "desc"

@@ -5,17 +5,19 @@ import { purchaseData, shopData, userData } from "./helper/deployContracts";
 import { contextParamsLocalChain } from "./helper/constants";
 import {
     Amount,
+    ChangeRoyaltyTypeSteps,
     Client,
     Context,
     ContractUtils,
+    RoyaltyType,
     DepositSteps,
     PayPointSteps,
     PayTokenSteps,
     WithdrawSteps
 } from "../src";
 import { FakerRelayServer } from "./helper/FakerRelayServer";
-import { BigNumber } from "@ethersproject/bignumber";
 import { Signer } from "@ethersproject/abstract-signer";
+import { BigNumber } from "@ethersproject/bignumber";
 import { AddressZero } from "@ethersproject/constants";
 
 describe("Client", () => {
@@ -100,9 +102,22 @@ describe("Client", () => {
     });
 
     it("Change point type to 'token'", async () => {
-        const nonce = await deployment.ledger.nonceOf(userAddress);
-        const signature = await ContractUtils.signPointType(signer, 1, nonce);
-        await deployment.ledger.connect(validator1).setPointType(1, userAddress, signature);
+        const option = await client.methods.createOptionOfChangeRoyaltyType(RoyaltyType.TOKEN);
+        for await (const step of client.methods.changeRoyaltyType(option)) {
+            switch (step.key) {
+                case ChangeRoyaltyTypeSteps.DOING:
+                    expect(typeof step.txHash).toBe("string");
+                    expect(step.txHash).toMatch(/^0x[A-Fa-f0-9]{64}$/i);
+                    break;
+                case ChangeRoyaltyTypeSteps.DONE:
+                    expect(step.type).toBe(RoyaltyType.TOKEN);
+                    break;
+                default:
+                    throw new Error("Unexpected change royalty step: " + JSON.stringify(step, null, 2));
+            }
+        }
+        const type = await client.methods.getRoyaltyType(userAddress);
+        expect(type).toBe(RoyaltyType.TOKEN);
     });
 
     it("Save Purchase Data 3", async () => {
@@ -143,14 +158,14 @@ describe("Client", () => {
     it("Test of pay point", async () => {
         const purchase = purchaseData[0];
         const amount = Amount.make(purchase.amount / 10, 18);
-        const option = await client.methods.getPayPointOption(
+        const option = await client.methods.createOptionOfPayPoint(
             purchase.purchaseId,
             amount.value,
             purchase.currency.toLowerCase(),
             shopData[purchase.shopIndex].shopId
         );
 
-        for await (const step of client.methods.fetchPayPoint(option)) {
+        for await (const step of client.methods.payPoint(option)) {
             switch (step.key) {
                 case PayPointSteps.PAYING_POINT:
                     expect(typeof step.txHash).toBe("string");
@@ -169,14 +184,14 @@ describe("Client", () => {
     it("Test of pay token", async () => {
         const purchase = purchaseData[0];
         const amount = Amount.make(purchase.amount, 18);
-        const option = await client.methods.getPayTokenOption(
+        const option = await client.methods.createOptionOfPayToken(
             purchase.purchaseId,
             amount.value,
             purchase.currency.toLowerCase(),
             shopData[purchase.shopIndex].shopId
         );
 
-        for await (const step of client.methods.fetchPayToken(option)) {
+        for await (const step of client.methods.payToken(option)) {
             switch (step.key) {
                 case PayTokenSteps.PAYING_TOKEN:
                     expect(typeof step.txHash).toBe("string");

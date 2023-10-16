@@ -122,6 +122,20 @@ export class FakerRelayServer {
             this.payToken.bind(this)
         );
 
+        this.app.post(
+            "/royaltyType",
+            [
+                body("type").exists(),
+                body("account")
+                    .exists()
+                    .isEthereumAddress(),
+                body("signature")
+                    .exists()
+                    .matches(/^(0x)[0-9a-f]{130}$/i)
+            ],
+            this.royaltyType.bind(this)
+        );
+
         // Listen on provided this.port on this.address.
         return new Promise<void>((resolve, reject) => {
             // Create HTTP server.
@@ -257,6 +271,48 @@ export class FakerRelayServer {
             let message = ContractUtils.cacheEVMError(error as any);
             if (message === "") message = "Failed pay token";
             console.error(`POST /payToken :`, message);
+            return res.status(200).json(
+                this.makeResponseData(500, undefined, {
+                    message
+                })
+            );
+        }
+    }
+    private async royaltyType(req: express.Request, res: express.Response) {
+        console.log(`POST /royaltyType`);
+
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(200).json(
+                this.makeResponseData(501, undefined, {
+                    message: "Failed to check the validity of parameters.",
+                    validation: errors.array()
+                })
+            );
+        }
+
+        try {
+            const type: number = Number(req.body.type); // 구매 금액
+            const account: string = String(req.body.account); // 구매자의 주소
+            const signature: string = String(req.body.signature); // 서명
+
+            // 서명검증
+            const userNonce = await this.ledgerContract.nonceOf(account);
+            if (!ContractUtils.verifyRoyaltyType(type, account, userNonce, signature))
+                return res.status(200).json(
+                    this.makeResponseData(500, undefined, {
+                        message: "Signature is not valid."
+                    })
+                );
+
+            const tx = await this.ledgerContract.connect(this.signer).setPointType(type, account, signature);
+
+            console.log(`TxHash(royaltyType): `, tx.hash);
+            return res.status(200).json(this.makeResponseData(200, { txHash: tx.hash }));
+        } catch (error) {
+            let message = ContractUtils.cacheEVMError(error as any);
+            if (message === "") message = "Failed change royalty type";
+            console.error(`POST /royaltyType :`, message);
             return res.status(200).json(
                 this.makeResponseData(500, undefined, {
                     message

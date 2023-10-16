@@ -16,6 +16,7 @@ import { BytesLike } from "@ethersproject/bytes";
 import { arrayify } from "@ethersproject/bytes";
 import { keccak256 } from "@ethersproject/keccak256";
 import { verifyMessage } from "@ethersproject/wallet";
+import { RoyaltyType } from "../interfaces";
 
 export class ContractUtils {
     /**
@@ -193,23 +194,23 @@ export class ContractUtils {
         return res.toLowerCase() === account.toLowerCase();
     }
 
-    public static getPointTypeMessage(type: BigNumberish, account: string, nonce: BigNumberish): Uint8Array {
+    public static getRoyaltyTypeMessage(type: RoyaltyType, account: string, nonce: BigNumberish): Uint8Array {
         const encodedResult = defaultAbiCoder.encode(["uint256", "address", "uint256"], [type, account, nonce]);
         return arrayify(keccak256(encodedResult));
     }
 
-    public static async signPointType(signer: Signer, type: BigNumberish, nonce: BigNumberish): Promise<string> {
-        const message = ContractUtils.getPointTypeMessage(type, await signer.getAddress(), nonce);
+    public static async signRoyaltyType(signer: Signer, type: RoyaltyType, nonce: BigNumberish): Promise<string> {
+        const message = ContractUtils.getRoyaltyTypeMessage(type, await signer.getAddress(), nonce);
         return signer.signMessage(message);
     }
 
-    public static verifyPointType(
-        type: BigNumberish,
+    public static verifyRoyaltyType(
+        type: RoyaltyType,
         account: string,
         nonce: BigNumberish,
         signature: BytesLike
     ): boolean {
-        const message = ContractUtils.getPointTypeMessage(type, account, nonce);
+        const message = ContractUtils.getRoyaltyTypeMessage(type, account, nonce);
         let res: string;
         try {
             res = verifyMessage(message, signature);
