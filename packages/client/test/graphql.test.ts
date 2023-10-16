@@ -33,7 +33,7 @@ export interface IShopData {
     privateKey: string;
 }
 
-describe("Client", () => {
+describe("Integrated test", () => {
     describe("Save Purchase Data & Pay (point, token)", () => {
         describe("Method Check", () => {
             let client: Client;
@@ -54,12 +54,12 @@ describe("Client", () => {
             });
 
             it("Web3 Health Checking", async () => {
-                const isUp = await client.methods.web3.isUp();
+                const isUp = await client.ledger.web3.isUp();
                 expect(isUp).toEqual(true);
             });
 
             it("Server Health Checking", async () => {
-                const isUp = await client.methods.isRelayUp();
+                const isUp = await client.ledger.isRelayUp();
                 expect(isUp).toEqual(true);
             });
 
@@ -75,7 +75,7 @@ describe("Client", () => {
 
                 it("All History", async () => {
                     const user = users[50];
-                    const res = await client.methods.getUserTradeHistory(user.address);
+                    const res = await client.ledger.getUserTradeHistory(user.address);
                     const length = res.userTradeHistories.length;
                     expect(length).toBeGreaterThan(0);
                     expect(res.userTradeHistories[length - 1].account.toUpperCase()).toEqual(
@@ -86,7 +86,7 @@ describe("Client", () => {
                 it("Point Input History", async () => {
                     for (const user of users) {
                         if (user.pointType === 0) {
-                            const res = await client.methods.getUserPointInputTradeHistory(user.address);
+                            const res = await client.ledger.getUserPointInputTradeHistory(user.address);
                             const length = res.userTradeHistories.length;
                             if (length > 0) {
                                 expect(res.userTradeHistories[length - 1].account.toUpperCase()).toEqual(
@@ -101,7 +101,7 @@ describe("Client", () => {
                 it("Token Input History", async () => {
                     for (const user of users) {
                         if (user.pointType === 1) {
-                            const res = await client.methods.getUserTokenInputTradeHistory(user.address);
+                            const res = await client.ledger.getUserTokenInputTradeHistory(user.address);
                             const length = res.userTradeHistories.length;
                             if (length > 0) {
                                 expect(res.userTradeHistories[length - 1].account.toUpperCase()).toEqual(
@@ -116,7 +116,7 @@ describe("Client", () => {
                 it("Point Output History", async () => {
                     for (const user of users) {
                         if (user.pointType === 0) {
-                            const res = await client.methods.getUserPointOutputTradeHistory(user.address);
+                            const res = await client.ledger.getUserPointOutputTradeHistory(user.address);
                             const length = res.userTradeHistories.length;
                             if (length > 0) {
                                 expect(res.userTradeHistories[length - 1].account.toUpperCase()).toEqual(
@@ -131,7 +131,7 @@ describe("Client", () => {
                 it("Token Output History", async () => {
                     for (const user of users) {
                         if (user.pointType === 1) {
-                            const res = await client.methods.getUserTokenOutputTradeHistory(user.address);
+                            const res = await client.ledger.getUserTokenOutputTradeHistory(user.address);
                             const length = res.userTradeHistories.length;
                             if (length > 0) {
                                 expect(res.userTradeHistories[length - 1].account.toUpperCase()).toEqual(
@@ -150,7 +150,7 @@ describe("Client", () => {
                         amount: 1,
                         currency: "krw",
                         shopIndex: 0,
-                        userIndex: 0,
+                        userIndex: 50,
                         method: 0
                     };
 
@@ -160,7 +160,7 @@ describe("Client", () => {
                     const tokenAmount = amount.mul(multiple).div(price);
                     let userIndex = 0;
                     for (const user of users) {
-                        const balance = await client.methods.getTokenBalance(user.address);
+                        const balance = await client.ledger.getTokenBalance(user.address);
                         if (balance.gt(tokenAmount)) {
                             break;
                         }
@@ -169,33 +169,44 @@ describe("Client", () => {
 
                     purchase.userIndex = userIndex;
                     purchase.purchaseId = `P${ContractUtils.getTimeStamp()}`;
-                    const option = await client.methods.createOptionOfPayToken(
+
+                    // Change Signer
+                    contextParamsDevnet.signer = new Wallet(users[purchase.userIndex]);
+                    const ctx = new Context(contextParamsDevnet);
+                    client = new Client(ctx);
+
+                    await ContractUtils.delay(2000);
+
+                    for await (const step of client.ledger.payToken(
                         purchase.purchaseId,
                         amount,
                         purchase.currency,
                         shops[purchase.shopIndex].shopId
-                    );
-
-                    await ContractUtils.delay(2000);
-
-                    for await (const step of client.methods.payToken(option)) {
+                    )) {
                         switch (step.key) {
-                            case PayTokenSteps.PAYING_TOKEN:
+                            case PayTokenSteps.PREPARED:
+                                expect(step.purchaseId).toEqual(purchase.purchaseId);
+                                expect(step.amount).toEqual(amount);
+                                expect(step.currency).toEqual(purchase.currency.toLowerCase());
+                                expect(step.shopId).toEqual(shops[purchase.shopIndex].shopId);
+                                expect(step.account.toUpperCase()).toEqual(users[userIndex].address.toUpperCase());
+                                expect(step.signature).toMatch(/^0x[A-Fa-f0-9]{130}$/i);
+                                break;
+                            case PayTokenSteps.SENT:
                                 expect(typeof step.txHash).toBe("string");
                                 expect(step.txHash).toMatch(/^0x[A-Fa-f0-9]{64}$/i);
                                 expect(step.purchaseId).toEqual(purchase.purchaseId);
                                 break;
                             case PayTokenSteps.DONE:
-                                expect(step.amount instanceof BigNumber).toBe(true);
-                                expect(step.amount.toString()).toBe(amount.toString());
                                 expect(step.purchaseId).toEqual(purchase.purchaseId);
+                                expect(step.purchaseAmount).toEqual(amount);
                                 break;
                             default:
                                 throw new Error("Unexpected pay token step: " + JSON.stringify(step, null, 2));
                         }
                     }
 
-                    const res = await client.methods.getPaidToken(users[userIndex].address, purchase.purchaseId);
+                    const res = await client.ledger.getPaidToken(users[userIndex].address, purchase.purchaseId);
                     if (res.length == 1) {
                         expect(res.paidToken[0].account.toUpperCase()).toEqual(users[userIndex].address.toUpperCase());
                         expect(res.paidToken[0].purchaseId).toEqual(purchase.purchaseId);
@@ -216,7 +227,7 @@ describe("Client", () => {
                     const amount = Amount.make(purchase.amount * 10, 18).value;
                     let userIndex = 0;
                     for (const user of users) {
-                        const balance = await client.methods.getPointBalance(user.address);
+                        const balance = await client.ledger.getPointBalance(user.address);
                         if (balance.gt(amount)) {
                             break;
                         }
@@ -225,33 +236,44 @@ describe("Client", () => {
 
                     purchase.userIndex = userIndex;
                     purchase.purchaseId = `P${ContractUtils.getTimeStamp()}`;
-                    const option = await client.methods.createOptionOfPayPoint(
+
+                    // Change Signer
+                    contextParamsDevnet.signer = new Wallet(users[purchase.userIndex]);
+                    const ctx = new Context(contextParamsDevnet);
+                    client = new Client(ctx);
+
+                    await ContractUtils.delay(2000);
+
+                    for await (const step of client.ledger.payPoint(
                         purchase.purchaseId,
                         amount,
                         purchase.currency,
                         shops[purchase.shopIndex].shopId
-                    );
-
-                    await ContractUtils.delay(2000);
-
-                    for await (const step of client.methods.payPoint(option)) {
+                    )) {
                         switch (step.key) {
-                            case PayPointSteps.PAYING_POINT:
+                            case PayPointSteps.PREPARED:
+                                expect(step.purchaseId).toEqual(purchase.purchaseId);
+                                expect(step.amount).toEqual(amount);
+                                expect(step.currency).toEqual(purchase.currency.toLowerCase());
+                                expect(step.shopId).toEqual(shops[purchase.shopIndex].shopId);
+                                expect(step.account.toUpperCase()).toEqual(users[userIndex].address.toUpperCase());
+                                expect(step.signature).toMatch(/^0x[A-Fa-f0-9]{130}$/i);
+                                break;
+                            case PayPointSteps.SENT:
                                 expect(typeof step.txHash).toBe("string");
                                 expect(step.txHash).toMatch(/^0x[A-Fa-f0-9]{64}$/i);
                                 expect(step.purchaseId).toEqual(purchase.purchaseId);
                                 break;
                             case PayPointSteps.DONE:
-                                expect(step.amount instanceof BigNumber).toBe(true);
-                                expect(step.amount.toString()).toBe(amount.toString());
                                 expect(step.purchaseId).toEqual(purchase.purchaseId);
+                                expect(step.purchaseAmount).toEqual(amount);
                                 break;
                             default:
                                 throw new Error("Unexpected pay point step: " + JSON.stringify(step, null, 2));
                         }
                     }
 
-                    const res = await client.methods.getPaidPoint(users[userIndex].address, purchase.purchaseId);
+                    const res = await client.ledger.getPaidPoint(users[userIndex].address, purchase.purchaseId);
                     if (res.length == 1) {
                         expect(res.paidPoint[0].account.toUpperCase()).toEqual(users[userIndex].address.toUpperCase());
                         expect(res.paidPoint[0].purchaseId).toEqual(purchase.purchaseId);
