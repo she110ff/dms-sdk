@@ -13,23 +13,17 @@ import {
 } from "../interfaces";
 import { BigNumber } from "@ethersproject/bignumber";
 
-export interface IClient {
-    methods: IClientMethods;
+export interface ILedger {
+    ledger: ILedgerMethods;
 }
 
 /** Defines the shape of the general purpose Client class */
-export interface IClientMethods extends IClientCore, IClientHttpCore {
+export interface ILedgerMethods extends IClientCore, IClientHttpCore {
     getUnPayablePointBalance: (phone: string) => Promise<BigNumber>;
     getPointBalance: (account: string) => Promise<BigNumber>;
     getTokenBalance: (account: string) => Promise<BigNumber>;
 
     getFeeRate: () => Promise<number>;
-    getCurrencyRate: (currency: string) => Promise<BigNumber>;
-    getCurrencyMultiple: () => Promise<BigNumber>;
-
-    convertCurrencyToPoint: (amount: BigNumber, currency: string) => Promise<BigNumber>;
-    convertPointToToken: (amount: BigNumber) => Promise<BigNumber>;
-    convertTokenToPoint: (amount: BigNumber) => Promise<BigNumber>;
 
     payPoint: (
         purchaseId: string,

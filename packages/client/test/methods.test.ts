@@ -70,7 +70,7 @@ describe("Client", () => {
     });
 
     it("Server Health Checking", async () => {
-        const isUp = await client.methods.isRelayUp();
+        const isUp = await client.ledger.isRelayUp();
         expect(isUp).toEqual(true);
     });
 
@@ -103,7 +103,7 @@ describe("Client", () => {
     });
 
     it("Change point type to 'token'", async () => {
-        for await (const step of client.methods.changeRoyaltyType(RoyaltyType.TOKEN)) {
+        for await (const step of client.ledger.changeRoyaltyType(RoyaltyType.TOKEN)) {
             switch (step.key) {
                 case ChangeRoyaltyTypeSteps.PREPARED:
                     expect(step.type).toEqual(RoyaltyType.TOKEN);
@@ -120,7 +120,7 @@ describe("Client", () => {
                     throw new Error("Unexpected change royalty step: " + JSON.stringify(step, null, 2));
             }
         }
-        const type = await client.methods.getRoyaltyType(userAddress);
+        const type = await client.ledger.getRoyaltyType(userAddress);
         expect(type).toBe(RoyaltyType.TOKEN);
     });
 
@@ -145,17 +145,17 @@ describe("Client", () => {
     const tokenAmount = pointAmount.mul(multiple).div(price);
 
     it("Balance Check - Test getting the unpayable point balance", async () => {
-        const balance = await client.methods.getUnPayablePointBalance(phoneHash);
+        const balance = await client.ledger.getUnPayablePointBalance(phoneHash);
         expect(balance).toEqual(pointAmount);
     });
 
     it("Balance Check - Test getting the point balance", async () => {
-        const balance = await client.methods.getPointBalance(userAddress);
+        const balance = await client.ledger.getPointBalance(userAddress);
         expect(balance).toEqual(pointAmount);
     });
 
     it("Balance Check - Test getting the token balance", async () => {
-        const balance = await client.methods.getTokenBalance(userAddress);
+        const balance = await client.ledger.getTokenBalance(userAddress);
         expect(balance).toEqual(tokenAmount);
     });
 
@@ -163,14 +163,11 @@ describe("Client", () => {
         const purchase = purchaseData[0];
         const amount = Amount.make(purchase.amount / 10, 18);
 
-        const feeRate = await client.methods.getFeeRate();
-        const paidPoint = await client.methods.convertCurrencyToPoint(amount.value, purchase.currency);
-        const feePoint = await client.methods.convertCurrencyToPoint(
-            amount.value.mul(feeRate).div(100),
-            purchase.currency
-        );
+        const feeRate = await client.ledger.getFeeRate();
+        const paidPoint = await client.currency.toPoint(amount.value, purchase.currency);
+        const feePoint = await client.currency.toPoint(amount.value.mul(feeRate).div(100), purchase.currency);
 
-        for await (const step of client.methods.payPoint(
+        for await (const step of client.ledger.payPoint(
             purchase.purchaseId,
             amount.value,
             purchase.currency.toLowerCase(),
@@ -206,16 +203,13 @@ describe("Client", () => {
         const purchase = purchaseData[0];
         const amount = Amount.make(purchase.amount, 18);
 
-        const feeRate = await client.methods.getFeeRate();
-        const paidPoint = await client.methods.convertCurrencyToPoint(amount.value, purchase.currency);
-        const feePoint = await client.methods.convertCurrencyToPoint(
-            amount.value.mul(feeRate).div(100),
-            purchase.currency
-        );
-        const paidToken = await client.methods.convertPointToToken(paidPoint);
-        const feeToken = await client.methods.convertPointToToken(feePoint);
+        const feeRate = await client.ledger.getFeeRate();
+        const paidPoint = await client.currency.toPoint(amount.value, purchase.currency);
+        const feePoint = await client.currency.toPoint(amount.value.mul(feeRate).div(100), purchase.currency);
+        const paidToken = await client.currency.toToken(paidPoint);
+        const feeToken = await client.currency.toToken(feePoint);
 
-        for await (const step of client.methods.payToken(
+        for await (const step of client.ledger.payToken(
             purchase.purchaseId,
             amount.value,
             purchase.currency.toLowerCase(),
@@ -254,7 +248,7 @@ describe("Client", () => {
     it("Test of the deposit", async () => {
         const beforeBalance = await deployment.ledger.tokenBalanceOf(userAddress);
 
-        for await (const step of client.methods.deposit(amountToTrade.value)) {
+        for await (const step of client.ledger.deposit(amountToTrade.value)) {
             switch (step.key) {
                 case DepositSteps.CHECKED_ALLOWANCE:
                     expect(step.allowance instanceof BigNumber).toBe(true);
@@ -288,7 +282,7 @@ describe("Client", () => {
     it("Test of the withdraw", async () => {
         const beforeBalance = await deployment.ledger.tokenBalanceOf(userAddress);
 
-        for await (const step of client.methods.withdraw(amountToTrade.value)) {
+        for await (const step of client.ledger.withdraw(amountToTrade.value)) {
             switch (step.key) {
                 case WithdrawSteps.WITHDRAWING:
                     expect(typeof step.txHash).toBe("string");
@@ -320,10 +314,10 @@ describe("Client", () => {
     });
 
     it("Change to Payable Point", async () => {
-        const unPayableBalance1 = await client.methods.getUnPayablePointBalance(phoneHash);
-        const payableBalance1 = await client.methods.getPointBalance(userAddress);
+        const unPayableBalance1 = await client.ledger.getUnPayablePointBalance(phoneHash);
+        const payableBalance1 = await client.ledger.getPointBalance(userAddress);
 
-        for await (const step of client.methods.changeToPayablePoint(phone)) {
+        for await (const step of client.ledger.changeToPayablePoint(phone)) {
             switch (step.key) {
                 case ChangeToPayablePointSteps.PREPARED:
                     expect(step.phone).toEqual(phone);
@@ -341,7 +335,7 @@ describe("Client", () => {
                     throw new Error("Unexpected change payable point step: " + JSON.stringify(step, null, 2));
             }
         }
-        const payableBalance2 = await client.methods.getPointBalance(userAddress);
+        const payableBalance2 = await client.ledger.getPointBalance(userAddress);
         expect(payableBalance2.toString()).toEqual(payableBalance1.add(unPayableBalance1).toString());
     });
 });

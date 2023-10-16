@@ -320,6 +320,11 @@ async function deployCurrencyRate(
     const multiple = BigNumber.from(1000000000);
     const price = BigNumber.from(150).mul(multiple);
     await currencyRateContract.connect(validator).set(await tokenContract.symbol(), price);
+    await currencyRateContract.connect(validator).set("usd", BigNumber.from(3).mul(multiple));
+    await currencyRateContract.connect(validator).set("jpy", BigNumber.from(2).mul(multiple));
+    await currencyRateContract.connect(validator).set("cny", BigNumber.from(1).mul(multiple));
+    await currencyRateContract.connect(validator).set("krw", BigNumber.from(1).mul(multiple));
+    await currencyRateContract.connect(validator).set("point", BigNumber.from(1).mul(multiple));
     return currencyRateContract;
 }
 

@@ -6,8 +6,8 @@ import {
     SupportedNetworks,
     SupportedNetworksArray
 } from "../../client-common";
-import { IClientMethods } from "../../interface/IClient";
-import { CurrencyRate, CurrencyRate__factory, Ledger, Ledger__factory, Token, Token__factory } from "dms-osx-lib";
+import { ILedgerMethods } from "../../interface/ILedger";
+import { Ledger, Ledger__factory, Token, Token__factory } from "dms-osx-lib";
 import { Provider } from "@ethersproject/providers";
 import { NoProviderError, NoSignerError, UnsupportedNetworkError, UpdateAllowanceError } from "dms-sdk-common";
 import { ContractUtils } from "../../utils/ContractUtils";
@@ -59,7 +59,7 @@ import { AddressZero } from "@ethersproject/constants";
 /**
  * Methods module the SDK Generic Client
  */
-export class ClientMethods extends ClientCore implements IClientMethods, IClientHttpCore {
+export class LedgerMethods extends ClientCore implements ILedgerMethods, IClientHttpCore {
     private relayEndpoint: string | URL | undefined;
 
     constructor(context: Context) {
@@ -67,7 +67,7 @@ export class ClientMethods extends ClientCore implements IClientMethods, IClient
         if (context.relayEndpoint) {
             this.relayEndpoint = context.relayEndpoint;
         }
-        Object.freeze(ClientMethods.prototype);
+        Object.freeze(LedgerMethods.prototype);
         Object.freeze(this);
     }
 
@@ -142,93 +142,6 @@ export class ClientMethods extends ClientCore implements IClientMethods, IClient
         const ledgerInstance: Ledger = Ledger__factory.connect(this.web3.getLedgerAddress(), provider);
 
         return await ledgerInstance.fee();
-    }
-
-    public async getCurrencyRate(currency: string): Promise<BigNumber> {
-        if (currency === "krw") {
-            return this.getCurrencyMultiple();
-        } else {
-            const provider = this.web3.getProvider() as Provider;
-            if (!provider) throw new NoProviderError();
-
-            const network = getNetwork((await provider.getNetwork()).chainId);
-            const networkName = network.name as SupportedNetworks;
-            if (!SupportedNetworksArray.includes(networkName)) {
-                throw new UnsupportedNetworkError(networkName);
-            }
-
-            const contract: CurrencyRate = CurrencyRate__factory.connect(this.web3.getCurrencyRateAddress(), provider);
-
-            return await contract.get(currency);
-        }
-    }
-
-    private _CurrencyMultiple: BigNumber = BigNumber.from(0);
-    public async getCurrencyMultiple(): Promise<BigNumber> {
-        if (!this._CurrencyMultiple.eq(BigNumber.from(0))) {
-            return this._CurrencyMultiple;
-        } else {
-            const provider = this.web3.getProvider() as Provider;
-            if (!provider) throw new NoProviderError();
-
-            const network = getNetwork((await provider.getNetwork()).chainId);
-            const networkName = network.name as SupportedNetworks;
-            if (!SupportedNetworksArray.includes(networkName)) {
-                throw new UnsupportedNetworkError(networkName);
-            }
-
-            const contract: CurrencyRate = CurrencyRate__factory.connect(this.web3.getCurrencyRateAddress(), provider);
-
-            return await contract.MULTIPLE();
-        }
-    }
-
-    public async convertCurrencyToPoint(amount: BigNumber, currency: string): Promise<BigNumber> {
-        const rate = await this.getCurrencyRate(currency.toLowerCase());
-        const multiple = await this.getCurrencyMultiple();
-        return amount.mul(rate).div(multiple);
-    }
-
-    public async convertPointToToken(amount: BigNumber): Promise<BigNumber> {
-        const provider = this.web3.getProvider() as Provider;
-        if (!provider) throw new NoProviderError();
-
-        const network = getNetwork((await provider.getNetwork()).chainId);
-        const networkName = network.name as SupportedNetworks;
-        if (!SupportedNetworksArray.includes(networkName)) {
-            throw new UnsupportedNetworkError(networkName);
-        }
-
-        const tokenContract: Token = Token__factory.connect(this.web3.getTokenAddress(), provider);
-        const symbol = await tokenContract.symbol();
-        const currencyRateContract: CurrencyRate = CurrencyRate__factory.connect(
-            this.web3.getCurrencyRateAddress(),
-            provider
-        );
-        const rate = await currencyRateContract.get(symbol);
-        const multiple = await this.getCurrencyMultiple();
-        return amount.mul(multiple).div(rate);
-    }
-
-    public async convertTokenToPoint(amount: BigNumber): Promise<BigNumber> {
-        const provider = this.web3.getProvider() as Provider;
-        if (!provider) throw new NoProviderError();
-
-        const network = getNetwork((await provider.getNetwork()).chainId);
-        const networkName = network.name as SupportedNetworks;
-        if (!SupportedNetworksArray.includes(networkName)) {
-            throw new UnsupportedNetworkError(networkName);
-        }
-
-        const tokenContract: Token = Token__factory.connect(this.web3.getTokenAddress(), provider);
-        const symbol = await tokenContract.symbol();
-        const currencyRateContract: CurrencyRate = CurrencyRate__factory.connect(
-            this.web3.getCurrencyRateAddress(),
-            provider
-        );
-        const rate = await currencyRateContract.get(symbol);
-        const multiple = await this.getCurrencyMultiple();
-        return amount.mul(rate).div(multiple);
     }
 
     /**
