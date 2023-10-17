@@ -187,8 +187,8 @@ export class LedgerMethods extends ClientCore implements ILedgerMethods, IClient
         }
 
         const parsedLog = ledgerContract.interface.parseLog(log);
-        if (!amount.eq(parsedLog.args["depositAmount"])) {
-            throw new AmountMismatchError(amount, parsedLog.args["depositAmount"]);
+        if (!amount.eq(parsedLog.args["depositedToken"])) {
+            throw new AmountMismatchError(amount, parsedLog.args["depositedToken"]);
         }
         yield { key: DepositSteps.DONE, amount: amount };
     }
@@ -229,8 +229,8 @@ export class LedgerMethods extends ClientCore implements ILedgerMethods, IClient
         }
 
         const parsedLog = ledgerContract.interface.parseLog(log);
-        if (!amount.eq(parsedLog.args["withdrawAmount"])) {
-            throw new AmountMismatchError(amount, parsedLog.args["withdrawAmount"]);
+        if (!amount.eq(parsedLog.args["withdrawnToken"])) {
+            throw new AmountMismatchError(amount, parsedLog.args["withdrawnToken"]);
         }
         yield { key: WithdrawSteps.DONE, amount: amount };
     }
@@ -299,6 +299,7 @@ export class LedgerMethods extends ClientCore implements ILedgerMethods, IClient
      * @param amount - 거래금액
      * @param currency - 통화코드
      * @param shopId - 상점 아이디
+     * @return {AsyncGenerator<PayPointStepValue>}
      */
     public async *payPoint(
         purchaseId: string,
@@ -357,18 +358,19 @@ export class LedgerMethods extends ClientCore implements ILedgerMethods, IClient
             throw new FailedPayPointError();
         }
         const parsedLog = ledgerContract.interface.parseLog(log);
-        if (!amount.eq(parsedLog.args["purchaseAmount"])) {
-            throw new AmountMismatchError(amount, parsedLog.args["purchaseAmount"]);
+        if (!amount.eq(parsedLog.args["paidValue"])) {
+            throw new AmountMismatchError(amount, parsedLog.args["paidValue"]);
         }
         yield {
             key: PayPointSteps.DONE,
             purchaseId,
             currency,
             shopId,
-            paidPoint: parsedLog.args["paidAmountPoint"],
-            feePoint: parsedLog.args["fee"],
-            balancePoint: parsedLog.args["balancePoint"],
-            purchaseAmount: parsedLog.args["purchaseAmount"]
+            paidPoint: parsedLog.args["paidPoint"],
+            paidValue: parsedLog.args["paidValue"],
+            feePoint: parsedLog.args["feePoint"],
+            feeValue: parsedLog.args["feeValue"],
+            balancePoint: parsedLog.args["balancePoint"]
         };
     }
 
@@ -378,7 +380,7 @@ export class LedgerMethods extends ClientCore implements ILedgerMethods, IClient
      * @param amount - 거래금액
      * @param currency - 통화코드
      * @param shopId - 상점 아이디
-     * @return {Promise<PayTokenOption>}
+     * @return {AsyncGenerator<PayTokenStepValue>}
      */
     public async *payToken(
         purchaseId: string,
@@ -439,18 +441,19 @@ export class LedgerMethods extends ClientCore implements ILedgerMethods, IClient
             throw new FailedPayTokenError();
         }
         const parsedLog = ledgerContract.interface.parseLog(log);
-        if (!amount.eq(parsedLog.args["purchaseAmount"])) {
-            throw new AmountMismatchError(amount, parsedLog.args["purchaseAmount"]);
+        if (!amount.eq(parsedLog.args["paidValue"])) {
+            throw new AmountMismatchError(amount, parsedLog.args["paidValue"]);
         }
         yield {
             key: PayTokenSteps.DONE,
             purchaseId,
             currency,
             shopId,
-            paidToken: parsedLog.args["paidAmountToken"],
-            feeToken: parsedLog.args["fee"],
-            balanceToken: parsedLog.args["balanceToken"],
-            purchaseAmount: parsedLog.args["purchaseAmount"]
+            paidToken: parsedLog.args["paidToken"],
+            paidValue: parsedLog.args["paidValue"],
+            feeToken: parsedLog.args["feeToken"],
+            feeValue: parsedLog.args["feeValue"],
+            balanceToken: parsedLog.args["balanceToken"]
         };
     }
 
@@ -492,7 +495,7 @@ export class LedgerMethods extends ClientCore implements ILedgerMethods, IClient
     /**
      * 적립되는 로얄티의 종류를 변경한다.
      * @param type - 로얄티의 종류
-     * @return {Promise<PayPointOption>}
+     * @return {AsyncGenerator<ChangeRoyaltyTypeStepValue>}
      */
     public async *changeRoyaltyType(type: RoyaltyType): AsyncGenerator<ChangeRoyaltyTypeStepValue> {
         const signer = this.web3.getConnectedSigner();
@@ -523,7 +526,7 @@ export class LedgerMethods extends ClientCore implements ILedgerMethods, IClient
             signature
         };
 
-        const res = await Network.post(await this.getEndpoint("royaltyType"), param);
+        const res = await Network.post(await this.getEndpoint("changeRoyaltyType"), param);
         if (res?.code !== 200) throw new InternalServerError(res.message);
         if (res?.data?.code && res.data.code !== 200) throw new InternalServerError(res?.data?.error?.message ?? "");
 
@@ -532,18 +535,18 @@ export class LedgerMethods extends ClientCore implements ILedgerMethods, IClient
         const txResponse = (await signer.provider.getTransaction(res.data.txHash)) as ContractTransaction;
         const txReceipt = await txResponse.wait();
 
-        const log = findLog(txReceipt, ledgerContract.interface, "ChangedPointType");
+        const log = findLog(txReceipt, ledgerContract.interface, "ChangedRoyaltyType");
         if (!log) {
             throw new FailedPayTokenError();
         }
         const parsedLog = ledgerContract.interface.parseLog(log);
-        if (!param.type === parsedLog.args["pointType"]) {
+        if (!param.type === parsedLog.args["royaltyType"]) {
             throw new RoyaltyTypeMismatchError(param.type, parsedLog.args["value"]);
         }
 
         yield {
             key: ChangeRoyaltyTypeSteps.DONE,
-            type: parsedLog.args["pointType"]
+            type: parsedLog.args["royaltyType"]
         };
     }
 
@@ -563,7 +566,7 @@ export class LedgerMethods extends ClientCore implements ILedgerMethods, IClient
         }
 
         const ledgerInstance: Ledger = Ledger__factory.connect(this.web3.getLedgerAddress(), provider);
-        return await ledgerInstance.pointTypeOf(account);
+        return await ledgerInstance.royaltyTypeOf(account);
     }
 
     public async *changeToPayablePoint(phone: string): AsyncGenerator<ChangeToPayablePointStepValue> {
@@ -621,8 +624,8 @@ export class LedgerMethods extends ClientCore implements ILedgerMethods, IClient
             throw new FailedPayTokenError();
         }
         const parsedLog = ledgerContract.interface.parseLog(log);
-        if (!balance.eq(parsedLog.args["changedAmountPoint"])) {
-            throw new AmountMismatchError(balance, parsedLog.args["changedAmountPoint"]);
+        if (!balance.eq(parsedLog.args["changedPoint"])) {
+            throw new AmountMismatchError(balance, parsedLog.args["changedPoint"]);
         }
 
         yield {

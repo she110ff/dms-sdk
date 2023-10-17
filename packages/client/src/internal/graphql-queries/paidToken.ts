@@ -5,9 +5,9 @@ export const QueryPaidToken = gql`
         paidTokens(where: $where) {
             id
             account
-            paidAmountToken
-            value
-            fee
+            paidToken
+            paidValue
+            feeToken
             feeValue
             balanceToken
             purchaseId

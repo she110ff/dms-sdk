@@ -49,9 +49,10 @@ export type PayPointStepValue =
           currency: string;
           shopId: string;
           paidPoint: BigNumber;
+          paidValue: BigNumber;
           feePoint: BigNumber;
+          feeValue: BigNumber;
           balancePoint: BigNumber;
-          purchaseAmount: BigNumber;
       };
 
 export enum PayTokenSteps {
@@ -77,9 +78,10 @@ export type PayTokenStepValue =
           currency: string;
           shopId: string;
           paidToken: BigNumber;
+          paidValue: BigNumber;
           feeToken: BigNumber;
+          feeValue: BigNumber;
           balanceToken: BigNumber;
-          purchaseAmount: BigNumber;
       };
 
 export enum DepositSteps {

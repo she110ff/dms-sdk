@@ -124,7 +124,7 @@ export class FakerRelayServer {
         );
 
         this.app.post(
-            "/royaltyType",
+            "/changeRoyaltyType",
             [
                 body("type").exists(),
                 body("account")
@@ -134,7 +134,7 @@ export class FakerRelayServer {
                     .exists()
                     .matches(/^(0x)[0-9a-f]{130}$/i)
             ],
-            this.royaltyType.bind(this)
+            this.changeRoyaltyType.bind(this)
         );
 
         this.app.post(
@@ -303,8 +303,8 @@ export class FakerRelayServer {
         }
     }
 
-    private async royaltyType(req: express.Request, res: express.Response) {
-        console.log(`POST /royaltyType`);
+    private async changeRoyaltyType(req: express.Request, res: express.Response) {
+        console.log(`POST /changeRoyaltyType`);
 
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
@@ -330,7 +330,7 @@ export class FakerRelayServer {
                     })
                 );
 
-            const tx = await this.ledgerContract.connect(this.signer).setPointType(type, account, signature);
+            const tx = await this.ledgerContract.connect(this.signer).setRoyaltyType(type, account, signature);
 
             console.log(`TxHash(royaltyType): `, tx.hash);
             return res.status(200).json(this.makeResponseData(200, { txHash: tx.hash }));

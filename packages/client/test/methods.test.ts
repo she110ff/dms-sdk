@@ -187,10 +187,10 @@ describe("Client", () => {
                     break;
                 case PayPointSteps.DONE:
                     expect(step.purchaseId).toEqual(purchase.purchaseId);
-                    expect(step.purchaseAmount).toEqual(amount.value);
                     expect(step.currency).toEqual(purchase.currency.toLowerCase());
                     expect(step.shopId).toEqual(shopData[purchase.shopIndex].shopId);
                     expect(step.paidPoint).toEqual(paidPoint);
+                    expect(step.paidValue).toEqual(amount.value);
                     expect(step.feePoint).toEqual(feePoint);
                     break;
                 default:
@@ -230,10 +230,10 @@ describe("Client", () => {
                     break;
                 case PayTokenSteps.DONE:
                     expect(step.purchaseId).toEqual(purchase.purchaseId);
-                    expect(step.purchaseAmount).toEqual(amount.value);
                     expect(step.currency).toEqual(purchase.currency.toLowerCase());
                     expect(step.shopId).toEqual(shopData[purchase.shopIndex].shopId);
                     expect(step.paidToken).toEqual(paidToken);
+                    expect(step.paidValue).toEqual(amount.value);
                     expect(step.feeToken).toEqual(feeToken);
                     break;
                 default:

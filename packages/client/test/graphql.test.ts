@@ -21,7 +21,7 @@ interface IUserData {
     phone: string;
     address: string;
     privateKey: string;
-    pointType: number;
+    royaltyType: number;
 }
 
 export interface IShopData {
@@ -85,7 +85,7 @@ describe("Integrated test", () => {
 
                 it("Point Input History", async () => {
                     for (const user of users) {
-                        if (user.pointType === 0) {
+                        if (user.royaltyType === 0) {
                             const res = await client.ledger.getUserPointInputTradeHistory(user.address);
                             const length = res.userTradeHistories.length;
                             if (length > 0) {
@@ -100,7 +100,7 @@ describe("Integrated test", () => {
 
                 it("Token Input History", async () => {
                     for (const user of users) {
-                        if (user.pointType === 1) {
+                        if (user.royaltyType === 1) {
                             const res = await client.ledger.getUserTokenInputTradeHistory(user.address);
                             const length = res.userTradeHistories.length;
                             if (length > 0) {
@@ -115,7 +115,7 @@ describe("Integrated test", () => {
 
                 it("Point Output History", async () => {
                     for (const user of users) {
-                        if (user.pointType === 0) {
+                        if (user.royaltyType === 0) {
                             const res = await client.ledger.getUserPointOutputTradeHistory(user.address);
                             const length = res.userTradeHistories.length;
                             if (length > 0) {
@@ -130,7 +130,7 @@ describe("Integrated test", () => {
 
                 it("Token Output History", async () => {
                     for (const user of users) {
-                        if (user.pointType === 1) {
+                        if (user.royaltyType === 1) {
                             const res = await client.ledger.getUserTokenOutputTradeHistory(user.address);
                             const length = res.userTradeHistories.length;
                             if (length > 0) {
@@ -199,7 +199,7 @@ describe("Integrated test", () => {
                                 break;
                             case PayTokenSteps.DONE:
                                 expect(step.purchaseId).toEqual(purchase.purchaseId);
-                                expect(step.purchaseAmount).toEqual(amount);
+                                expect(step.paidValue).toEqual(amount);
                                 break;
                             default:
                                 throw new Error("Unexpected pay token step: " + JSON.stringify(step, null, 2));
@@ -266,7 +266,7 @@ describe("Integrated test", () => {
                                 break;
                             case PayPointSteps.DONE:
                                 expect(step.purchaseId).toEqual(purchase.purchaseId);
-                                expect(step.purchaseAmount).toEqual(amount);
+                                expect(step.paidValue).toEqual(amount);
                                 break;
                             default:
                                 throw new Error("Unexpected pay point step: " + JSON.stringify(step, null, 2));
