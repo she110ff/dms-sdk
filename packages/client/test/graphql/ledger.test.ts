@@ -1,5 +1,5 @@
-import { contextParamsDevnet } from "./helper/constants";
-import { Amount, Client, Context, ContractUtils, LIVE_CONTRACTS, PayPointSteps, PayTokenSteps } from "../src";
+import { contextParamsDevnet } from "../helper/constants";
+import { Amount, Client, Context, ContractUtils, LIVE_CONTRACTS, PayPointSteps, PayTokenSteps } from "../../src";
 import { BigNumber } from "@ethersproject/bignumber";
 import { Wallet } from "@ethersproject/wallet";
 
@@ -48,7 +48,7 @@ describe("Integrated test", () => {
                 contextParamsDevnet.currencyRateAddress = LIVE_CONTRACTS["bosagora_devnet"].CurrencyRateAddress;
                 contextParamsDevnet.shopCollectionAddress = LIVE_CONTRACTS["bosagora_devnet"].ShopCollectionAddress;
                 contextParamsDevnet.ledgerAddress = LIVE_CONTRACTS["bosagora_devnet"].LedgerAddress;
-                contextParamsDevnet.signer = new Wallet(users[50]);
+                contextParamsDevnet.signer = new Wallet(users[50].privateKey);
                 const ctx = new Context(contextParamsDevnet);
                 client = new Client(ctx);
             });

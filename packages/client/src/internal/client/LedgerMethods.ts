@@ -50,9 +50,9 @@ import { findLog } from "../../client-common/utils";
 import { BigNumber } from "@ethersproject/bignumber";
 import { ContractTransaction } from "@ethersproject/contracts";
 import { getNetwork } from "@ethersproject/networks";
-import { QueryUserTradeHistory } from "../graphql-queries/history";
-import { QueryPaidToken } from "../graphql-queries/paidToken";
-import { QueryPaidPoint } from "../graphql-queries/paidPoint";
+import { QueryUserTradeHistory } from "../graphql-queries/user/history";
+import { QueryPaidToken } from "../graphql-queries/user/paidToken";
+import { QueryPaidPoint } from "../graphql-queries/user/paidPoint";
 import { PhoneLinkCollection, PhoneLinkCollection__factory } from "del-osx-lib";
 import { AddressZero } from "@ethersproject/constants";
 
