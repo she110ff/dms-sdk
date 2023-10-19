@@ -15,8 +15,11 @@ import {
     CloseWithdrawalShopStepValue,
     NormalSteps,
     OpenWithdrawalShopStepValue,
+    QueryOption,
     RemoveShopStepValue,
     ShopData,
+    SortByBlock,
+    SortDirection,
     UpdateShopStepValue
 } from "../../interfaces";
 import { FailedAddShopError, InternalServerError, NoHttpModuleError } from "../../utils/errors";
@@ -28,6 +31,8 @@ import { ContractTransaction } from "@ethersproject/contracts";
 import { getNetwork } from "@ethersproject/networks";
 import { IShopMethods } from "../../interface/IShop";
 import { BytesLike } from "@ethersproject/bytes";
+
+import { QueryShopTradeHistory } from "../graphql-queries/shop/history";
 
 /**
  * Methods module the SDK Generic Client
@@ -441,5 +446,89 @@ export class ShopMethods extends ClientCore implements IShopMethods, IClientHttp
             amount: parsedLog.args["amount"],
             account: parsedLog.args["account"]
         };
+    }
+    public async getShopTradeHistory(
+        shopId: BytesLike,
+        { limit, skip, sortDirection, sortBy }: QueryOption = {
+            limit: 10,
+            skip: 0,
+            sortDirection: SortDirection.DESC,
+            sortBy: SortByBlock.BLOCK_NUMBER
+        }
+    ): Promise<any> {
+        const query = QueryShopTradeHistory;
+        const where = { shopId: shopId };
+        const params = { where, limit, skip, direction: sortDirection, sortBy };
+        const name = "user trade history";
+        const res = await this.graphql.request({ query, params, name });
+        return res;
+    }
+
+    public async getShopProvidedTradeHistory(
+        shopId: BytesLike,
+        { limit, skip, sortDirection, sortBy }: QueryOption = {
+            limit: 10,
+            skip: 0,
+            sortDirection: SortDirection.DESC,
+            sortBy: SortByBlock.BLOCK_NUMBER
+        }
+    ): Promise<any> {
+        const query = QueryShopTradeHistory;
+        const where = { shopId: shopId, action: "ProvidedPoint" };
+        const params = { where, limit, skip, direction: sortDirection, sortBy };
+        const name = "shop trade history";
+        const res = await this.graphql.request({ query, params, name });
+        return res;
+    }
+
+    public async getShopUsedTradeHistory(
+        shopId: BytesLike,
+        { limit, skip, sortDirection, sortBy }: QueryOption = {
+            limit: 10,
+            skip: 0,
+            sortDirection: SortDirection.DESC,
+            sortBy: SortByBlock.BLOCK_NUMBER
+        }
+    ): Promise<any> {
+        const query = QueryShopTradeHistory;
+        const where = { shopId: shopId, action: "UsedPoint" };
+        const params = { where, limit, skip, direction: sortDirection, sortBy };
+        const name = "shop trade history";
+        const res = await this.graphql.request({ query, params, name });
+        return res;
+    }
+
+    public async getShopOpenWithdrawnTradeHistory(
+        shopId: BytesLike,
+        { limit, skip, sortDirection, sortBy }: QueryOption = {
+            limit: 10,
+            skip: 0,
+            sortDirection: SortDirection.DESC,
+            sortBy: SortByBlock.BLOCK_NUMBER
+        }
+    ): Promise<any> {
+        const query = QueryShopTradeHistory;
+        const where = { shopId: shopId, action: "OpenWithdrawnPoint" };
+        const params = { where, limit, skip, direction: sortDirection, sortBy };
+        const name = "shop trade history";
+        const res = await this.graphql.request({ query, params, name });
+        return res;
+    }
+
+    public async getShopCloseWithdrawnTradeHistory(
+        shopId: BytesLike,
+        { limit, skip, sortDirection, sortBy }: QueryOption = {
+            limit: 10,
+            skip: 0,
+            sortDirection: SortDirection.DESC,
+            sortBy: SortByBlock.BLOCK_NUMBER
+        }
+    ): Promise<any> {
+        const query = QueryShopTradeHistory;
+        const where = { shopId: shopId, action: "CloseWithdrawnPoint" };
+        const params = { where, limit, skip, direction: sortDirection, sortBy };
+        const name = "shop trade history";
+        const res = await this.graphql.request({ query, params, name });
+        return res;
     }
 }

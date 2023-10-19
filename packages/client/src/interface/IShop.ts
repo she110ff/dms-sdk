@@ -1,12 +1,13 @@
 import { IClientCore, IClientHttpCore } from "../client-common";
-import { BigNumberish } from "@ethersproject/bignumber";
+import { BigNumber, BigNumberish } from "@ethersproject/bignumber";
 import {
     AddShopStepValue,
     UpdateShopStepValue,
     RemoveShopStepValue,
     OpenWithdrawalShopStepValue,
     CloseWithdrawalShopStepValue,
-    ShopData
+    ShopData,
+    QueryOption
 } from "../interfaces";
 import { BytesLike } from "@ethersproject/bytes";
 
@@ -31,6 +32,12 @@ export interface IShopMethods extends IClientCore, IClientHttpCore {
     remove: (shopId: BytesLike) => AsyncGenerator<RemoveShopStepValue>;
     openWithdrawal: (shopId: BytesLike, amount: BigNumberish) => AsyncGenerator<OpenWithdrawalShopStepValue>;
     closeWithdrawal: (shopId: BytesLike) => AsyncGenerator<CloseWithdrawalShopStepValue>;
-    getWithdrawableAmount: (shopId: BytesLike) => Promise<BigNumberish>;
+    getWithdrawableAmount: (shopId: BytesLike) => Promise<BigNumber>;
     getShopInfo: (shopId: BytesLike) => Promise<ShopData>;
+
+    getShopTradeHistory: (shopId: BytesLike, option?: QueryOption) => Promise<any>;
+    getShopProvidedTradeHistory: (shopId: BytesLike, option?: QueryOption) => Promise<any>;
+    getShopUsedTradeHistory: (shopId: BytesLike, option?: QueryOption) => Promise<any>;
+    getShopOpenWithdrawnTradeHistory: (shopId: BytesLike, option?: QueryOption) => Promise<any>;
+    getShopCloseWithdrawnTradeHistory: (shopId: BytesLike, option?: QueryOption) => Promise<any>;
 }
