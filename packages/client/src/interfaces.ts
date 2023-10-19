@@ -1,33 +1,8 @@
 import { BigNumberish } from "@ethersproject/bignumber";
 import { BigNumber } from "@ethersproject/bignumber";
-import { Signer } from "@ethersproject/abstract-signer";
-import { JsonRpcProvider, Networkish } from "@ethersproject/providers";
 import { BytesLike } from "@ethersproject/bytes";
 
-export type PurchaseParam = {
-    purchaseId: string;
-    amount: BigNumberish;
-    userEmail: string;
-    shopId: string;
-};
-
-export type SingPaymentParam = {
-    signer: Signer;
-    purchaseId: string;
-    amount: BigNumberish;
-    userEmail: string;
-    shopId: string;
-    nonce: BigNumberish;
-};
-
-export type ClientParams = {
-    network?: Networkish;
-    signer?: Signer;
-    web3Provider?: JsonRpcProvider;
-    relayEndpoint?: string;
-};
-
-export enum PayPointSteps {
+export enum NormalSteps {
     PREPARED = "prepare",
     SENT = "sent",
     DONE = "done"
@@ -35,7 +10,7 @@ export enum PayPointSteps {
 
 export type PayPointStepValue =
     | {
-          key: PayPointSteps.PREPARED;
+          key: NormalSteps.PREPARED;
           purchaseId: string;
           amount: BigNumber;
           currency: string;
@@ -43,9 +18,9 @@ export type PayPointStepValue =
           account: string;
           signature: string;
       }
-    | { key: PayPointSteps.SENT; txHash: string; purchaseId: string }
+    | { key: NormalSteps.SENT; txHash: string; purchaseId: string }
     | {
-          key: PayPointSteps.DONE;
+          key: NormalSteps.DONE;
           purchaseId: string;
           currency: string;
           shopId: string;
@@ -56,15 +31,9 @@ export type PayPointStepValue =
           balancePoint: BigNumber;
       };
 
-export enum PayTokenSteps {
-    PREPARED = "prepare",
-    SENT = "sent",
-    DONE = "done"
-}
-
 export type PayTokenStepValue =
     | {
-          key: PayTokenSteps.PREPARED;
+          key: NormalSteps.PREPARED;
           purchaseId: string;
           amount: BigNumber;
           currency: string;
@@ -72,9 +41,9 @@ export type PayTokenStepValue =
           account: string;
           signature: string;
       }
-    | { key: PayTokenSteps.SENT; txHash: string; purchaseId: string }
+    | { key: NormalSteps.SENT; txHash: string; purchaseId: string }
     | {
-          key: PayTokenSteps.DONE;
+          key: NormalSteps.DONE;
           purchaseId: string;
           currency: string;
           shopId: string;
@@ -122,45 +91,27 @@ export enum RoyaltyType {
     TOKEN
 }
 
-export enum ChangeRoyaltyTypeSteps {
-    PREPARED = "prepare",
-    SENT = "sent",
-    DONE = "done"
-}
-
 export type ChangeRoyaltyTypeStepValue =
     | {
-          key: ChangeRoyaltyTypeSteps.PREPARED;
+          key: NormalSteps.PREPARED;
           type: RoyaltyType;
           account: string;
           signature: string;
       }
-    | { key: ChangeRoyaltyTypeSteps.SENT; txHash: string }
-    | { key: ChangeRoyaltyTypeSteps.DONE; type: RoyaltyType };
-
-export enum ChangeToPayablePointSteps {
-    PREPARED = "prepare",
-    SENT = "sent",
-    DONE = "done"
-}
+    | { key: NormalSteps.SENT; txHash: string }
+    | { key: NormalSteps.DONE; type: RoyaltyType };
 
 export type ChangeToPayablePointStepValue =
     | {
-          key: ChangeToPayablePointSteps.PREPARED;
+          key: NormalSteps.PREPARED;
           phone: string;
           phoneHash: string;
           account: string;
           signature: string;
           balance: BigNumberish;
       }
-    | { key: ChangeToPayablePointSteps.SENT; txHash: string }
-    | { key: ChangeToPayablePointSteps.DONE };
-
-export enum NormalSteps {
-    PREPARED = "prepare",
-    SENT = "sent",
-    DONE = "done"
-}
+    | { key: NormalSteps.SENT; txHash: string }
+    | { key: NormalSteps.DONE };
 
 export type AddShopStepValue =
     | {

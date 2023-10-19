@@ -5,15 +5,12 @@ import { purchaseData, shopData, userData } from "../helper/deployContracts";
 import { contextParamsLocalChain } from "../helper/constants";
 import {
     Amount,
-    ChangeRoyaltyTypeSteps,
-    ChangeToPayablePointSteps,
     Client,
     Context,
     ContractUtils,
     RoyaltyType,
     DepositSteps,
-    PayPointSteps,
-    PayTokenSteps,
+    NormalSteps,
     WithdrawSteps
 } from "../../src";
 import { FakerRelayServer } from "../helper/FakerRelayServer";
@@ -105,15 +102,15 @@ describe("Ledger", () => {
     it("Change point type to 'token'", async () => {
         for await (const step of client.ledger.changeRoyaltyType(RoyaltyType.TOKEN)) {
             switch (step.key) {
-                case ChangeRoyaltyTypeSteps.PREPARED:
+                case NormalSteps.PREPARED:
                     expect(step.type).toEqual(RoyaltyType.TOKEN);
                     expect(step.account).toEqual(userAddress);
                     break;
-                case ChangeRoyaltyTypeSteps.SENT:
+                case NormalSteps.SENT:
                     expect(typeof step.txHash).toBe("string");
                     expect(step.txHash).toMatch(/^0x[A-Fa-f0-9]{64}$/i);
                     break;
-                case ChangeRoyaltyTypeSteps.DONE:
+                case NormalSteps.DONE:
                     expect(step.type).toBe(RoyaltyType.TOKEN);
                     break;
                 default:
@@ -174,7 +171,7 @@ describe("Ledger", () => {
             shopData[purchase.shopIndex].shopId
         )) {
             switch (step.key) {
-                case PayPointSteps.PREPARED:
+                case NormalSteps.PREPARED:
                     expect(step.purchaseId).toEqual(purchase.purchaseId);
                     expect(step.amount).toEqual(amount.value);
                     expect(step.currency).toEqual(purchase.currency.toLowerCase());
@@ -182,10 +179,10 @@ describe("Ledger", () => {
                     expect(step.account).toEqual(userAddress);
                     expect(step.signature).toMatch(/^0x[A-Fa-f0-9]{130}$/i);
                     break;
-                case PayPointSteps.SENT:
+                case NormalSteps.SENT:
                     expect(step.txHash).toMatch(/^0x[A-Fa-f0-9]{64}$/i);
                     break;
-                case PayPointSteps.DONE:
+                case NormalSteps.DONE:
                     expect(step.purchaseId).toEqual(purchase.purchaseId);
                     expect(step.currency).toEqual(purchase.currency.toLowerCase());
                     expect(step.shopId).toEqual(shopData[purchase.shopIndex].shopId);
@@ -216,7 +213,7 @@ describe("Ledger", () => {
             shopData[purchase.shopIndex].shopId
         )) {
             switch (step.key) {
-                case PayTokenSteps.PREPARED:
+                case NormalSteps.PREPARED:
                     expect(step.purchaseId).toEqual(purchase.purchaseId);
                     expect(step.amount).toEqual(amount.value);
                     expect(step.currency).toEqual(purchase.currency.toLowerCase());
@@ -224,11 +221,11 @@ describe("Ledger", () => {
                     expect(step.account).toEqual(userAddress);
                     expect(step.signature).toMatch(/^0x[A-Fa-f0-9]{130}$/i);
                     break;
-                case PayTokenSteps.SENT:
+                case NormalSteps.SENT:
                     expect(typeof step.txHash).toBe("string");
                     expect(step.txHash).toMatch(/^0x[A-Fa-f0-9]{64}$/i);
                     break;
-                case PayTokenSteps.DONE:
+                case NormalSteps.DONE:
                     expect(step.purchaseId).toEqual(purchase.purchaseId);
                     expect(step.currency).toEqual(purchase.currency.toLowerCase());
                     expect(step.shopId).toEqual(shopData[purchase.shopIndex].shopId);
@@ -319,17 +316,17 @@ describe("Ledger", () => {
 
         for await (const step of client.ledger.changeToPayablePoint(phone)) {
             switch (step.key) {
-                case ChangeToPayablePointSteps.PREPARED:
+                case NormalSteps.PREPARED:
                     expect(step.phone).toEqual(phone);
                     expect(step.phoneHash).toEqual(phoneHash);
                     expect(step.account).toEqual(userAddress);
                     expect(step.balance).toEqual(unPayableBalance1);
                     break;
-                case ChangeToPayablePointSteps.SENT:
+                case NormalSteps.SENT:
                     expect(typeof step.txHash).toBe("string");
                     expect(step.txHash).toMatch(/^0x[A-Fa-f0-9]{64}$/i);
                     break;
-                case ChangeToPayablePointSteps.DONE:
+                case NormalSteps.DONE:
                     break;
                 default:
                     throw new Error("Unexpected change payable point step: " + JSON.stringify(step, null, 2));

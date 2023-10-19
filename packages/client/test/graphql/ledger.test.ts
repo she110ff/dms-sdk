@@ -1,5 +1,5 @@
 import { contextParamsDevnet } from "../helper/constants";
-import { Amount, Client, Context, ContractUtils, LIVE_CONTRACTS, PayPointSteps, PayTokenSteps } from "../../src";
+import { Amount, Client, Context, ContractUtils, LIVE_CONTRACTS, NormalSteps } from "../../src";
 import { BigNumber } from "@ethersproject/bignumber";
 import { Wallet } from "@ethersproject/wallet";
 
@@ -181,7 +181,7 @@ describe("Integrated test of Ledger", () => {
                     shops[purchase.shopIndex].shopId
                 )) {
                     switch (step.key) {
-                        case PayTokenSteps.PREPARED:
+                        case NormalSteps.PREPARED:
                             expect(step.purchaseId).toEqual(purchase.purchaseId);
                             expect(step.amount).toEqual(amount);
                             expect(step.currency).toEqual(purchase.currency.toLowerCase());
@@ -189,12 +189,12 @@ describe("Integrated test of Ledger", () => {
                             expect(step.account.toUpperCase()).toEqual(users[userIndex].address.toUpperCase());
                             expect(step.signature).toMatch(/^0x[A-Fa-f0-9]{130}$/i);
                             break;
-                        case PayTokenSteps.SENT:
+                        case NormalSteps.SENT:
                             expect(typeof step.txHash).toBe("string");
                             expect(step.txHash).toMatch(/^0x[A-Fa-f0-9]{64}$/i);
                             expect(step.purchaseId).toEqual(purchase.purchaseId);
                             break;
-                        case PayTokenSteps.DONE:
+                        case NormalSteps.DONE:
                             expect(step.purchaseId).toEqual(purchase.purchaseId);
                             expect(step.paidValue).toEqual(amount);
                             break;
@@ -248,7 +248,7 @@ describe("Integrated test of Ledger", () => {
                     shops[purchase.shopIndex].shopId
                 )) {
                     switch (step.key) {
-                        case PayPointSteps.PREPARED:
+                        case NormalSteps.PREPARED:
                             expect(step.purchaseId).toEqual(purchase.purchaseId);
                             expect(step.amount).toEqual(amount);
                             expect(step.currency).toEqual(purchase.currency.toLowerCase());
@@ -256,12 +256,12 @@ describe("Integrated test of Ledger", () => {
                             expect(step.account.toUpperCase()).toEqual(users[userIndex].address.toUpperCase());
                             expect(step.signature).toMatch(/^0x[A-Fa-f0-9]{130}$/i);
                             break;
-                        case PayPointSteps.SENT:
+                        case NormalSteps.SENT:
                             expect(typeof step.txHash).toBe("string");
                             expect(step.txHash).toMatch(/^0x[A-Fa-f0-9]{64}$/i);
                             expect(step.purchaseId).toEqual(purchase.purchaseId);
                             break;
-                        case PayPointSteps.DONE:
+                        case NormalSteps.DONE:
                             expect(step.purchaseId).toEqual(purchase.purchaseId);
                             expect(step.paidValue).toEqual(amount);
                             break;

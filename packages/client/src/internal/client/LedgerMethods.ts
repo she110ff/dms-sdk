@@ -12,15 +12,12 @@ import { Provider } from "@ethersproject/providers";
 import { NoProviderError, NoSignerError, UnsupportedNetworkError, UpdateAllowanceError } from "dms-sdk-common";
 import { ContractUtils } from "../../utils/ContractUtils";
 import {
-    ChangeRoyaltyTypeSteps,
     ChangeRoyaltyTypeStepValue,
-    ChangeToPayablePointSteps,
     ChangeToPayablePointStepValue,
     DepositSteps,
     DepositStepValue,
-    PayPointSteps,
+    NormalSteps,
     PayPointStepValue,
-    PayTokenSteps,
     PayTokenStepValue,
     QueryOption,
     RoyaltyType,
@@ -335,7 +332,7 @@ export class LedgerMethods extends ClientCore implements ILedgerMethods, IClient
         };
 
         yield {
-            key: PayPointSteps.PREPARED,
+            key: NormalSteps.PREPARED,
             purchaseId,
             amount,
             currency,
@@ -348,7 +345,7 @@ export class LedgerMethods extends ClientCore implements ILedgerMethods, IClient
         if (res?.code !== 200) throw new InternalServerError(res.message);
         if (res?.data?.code && res.data.code !== 200) throw new InternalServerError(res?.data?.error?.message ?? "");
 
-        yield { key: PayPointSteps.SENT, txHash: res.data.txHash, purchaseId: param.purchaseId };
+        yield { key: NormalSteps.SENT, txHash: res.data.txHash, purchaseId: param.purchaseId };
 
         const txResponse = (await signer.provider.getTransaction(res.data.txHash)) as ContractTransaction;
         const txReceipt = await txResponse.wait();
@@ -362,7 +359,7 @@ export class LedgerMethods extends ClientCore implements ILedgerMethods, IClient
             throw new AmountMismatchError(amount, parsedLog.args["paidValue"]);
         }
         yield {
-            key: PayPointSteps.DONE,
+            key: NormalSteps.DONE,
             purchaseId,
             currency,
             shopId,
@@ -418,7 +415,7 @@ export class LedgerMethods extends ClientCore implements ILedgerMethods, IClient
         };
 
         yield {
-            key: PayTokenSteps.PREPARED,
+            key: NormalSteps.PREPARED,
             purchaseId,
             amount,
             currency,
@@ -431,7 +428,7 @@ export class LedgerMethods extends ClientCore implements ILedgerMethods, IClient
         if (res?.code !== 200) throw new InternalServerError(res.message);
         if (res?.data?.code && res.data.code !== 200) throw new InternalServerError(res?.data?.error?.message ?? "");
 
-        yield { key: PayTokenSteps.SENT, txHash: res.data.txHash, purchaseId: param.purchaseId };
+        yield { key: NormalSteps.SENT, txHash: res.data.txHash, purchaseId: param.purchaseId };
 
         const txResponse = (await signer.provider.getTransaction(res.data.txHash)) as ContractTransaction;
         const txReceipt = await txResponse.wait();
@@ -445,7 +442,7 @@ export class LedgerMethods extends ClientCore implements ILedgerMethods, IClient
             throw new AmountMismatchError(amount, parsedLog.args["paidValue"]);
         }
         yield {
-            key: PayTokenSteps.DONE,
+            key: NormalSteps.DONE,
             purchaseId,
             currency,
             shopId,
@@ -518,7 +515,7 @@ export class LedgerMethods extends ClientCore implements ILedgerMethods, IClient
         const nonce = await ledgerContract.nonceOf(account);
         const signature = await ContractUtils.signRoyaltyType(signer, type, nonce);
 
-        yield { key: ChangeRoyaltyTypeSteps.PREPARED, type, account, signature };
+        yield { key: NormalSteps.PREPARED, type, account, signature };
 
         const param = {
             type,
@@ -530,7 +527,7 @@ export class LedgerMethods extends ClientCore implements ILedgerMethods, IClient
         if (res?.code !== 200) throw new InternalServerError(res.message);
         if (res?.data?.code && res.data.code !== 200) throw new InternalServerError(res?.data?.error?.message ?? "");
 
-        yield { key: ChangeRoyaltyTypeSteps.SENT, txHash: res.data.txHash };
+        yield { key: NormalSteps.SENT, txHash: res.data.txHash };
 
         const txResponse = (await signer.provider.getTransaction(res.data.txHash)) as ContractTransaction;
         const txReceipt = await txResponse.wait();
@@ -545,7 +542,7 @@ export class LedgerMethods extends ClientCore implements ILedgerMethods, IClient
         }
 
         yield {
-            key: ChangeRoyaltyTypeSteps.DONE,
+            key: NormalSteps.DONE,
             type: parsedLog.args["royaltyType"]
         };
     }
@@ -594,7 +591,7 @@ export class LedgerMethods extends ClientCore implements ILedgerMethods, IClient
         if (balance.eq(BigNumber.from(0))) {
             throw new InsufficientBalanceError();
         }
-        yield { key: ChangeToPayablePointSteps.PREPARED, phone, phoneHash, account, signature, balance };
+        yield { key: NormalSteps.PREPARED, phone, phoneHash, account, signature, balance };
 
         const linkContract: PhoneLinkCollection = PhoneLinkCollection__factory.connect(
             this.web3.getLinkCollectionAddress(),
@@ -614,7 +611,7 @@ export class LedgerMethods extends ClientCore implements ILedgerMethods, IClient
         if (res?.code !== 200) throw new InternalServerError(res.message);
         if (res?.data?.code && res.data.code !== 200) throw new InternalServerError(res?.data?.error?.message ?? "");
 
-        yield { key: ChangeToPayablePointSteps.SENT, txHash: res.data.txHash };
+        yield { key: NormalSteps.SENT, txHash: res.data.txHash };
 
         const txResponse = (await signer.provider.getTransaction(res.data.txHash)) as ContractTransaction;
         const txReceipt = await txResponse.wait();
@@ -629,7 +626,7 @@ export class LedgerMethods extends ClientCore implements ILedgerMethods, IClient
         }
 
         yield {
-            key: ChangeToPayablePointSteps.DONE
+            key: NormalSteps.DONE
         };
     }
 

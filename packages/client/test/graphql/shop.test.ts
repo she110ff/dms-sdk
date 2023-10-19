@@ -1,14 +1,5 @@
 import { contextParamsDevnet } from "../helper/constants";
-import {
-    Amount,
-    Client,
-    Context,
-    ContractUtils,
-    LIVE_CONTRACTS,
-    NormalSteps,
-    PayTokenSteps,
-    WithdrawStatus
-} from "../../src";
+import { Amount, Client, Context, ContractUtils, LIVE_CONTRACTS, NormalSteps, WithdrawStatus } from "../../src";
 import { Wallet } from "@ethersproject/wallet";
 
 // @ts-ignore
@@ -133,7 +124,7 @@ describe("Integrated test of ShopCollection", () => {
                             shops[purchase.shopIndex].shopId
                         )) {
                             switch (step.key) {
-                                case PayTokenSteps.PREPARED:
+                                case NormalSteps.PREPARED:
                                     expect(step.purchaseId).toEqual(purchase.purchaseId);
                                     expect(step.amount).toEqual(amount);
                                     expect(step.currency).toEqual(purchase.currency.toLowerCase());
@@ -141,12 +132,12 @@ describe("Integrated test of ShopCollection", () => {
                                     expect(step.account.toUpperCase()).toEqual(users[userIndex].address.toUpperCase());
                                     expect(step.signature).toMatch(/^0x[A-Fa-f0-9]{130}$/i);
                                     break;
-                                case PayTokenSteps.SENT:
+                                case NormalSteps.SENT:
                                     expect(typeof step.txHash).toBe("string");
                                     expect(step.txHash).toMatch(/^0x[A-Fa-f0-9]{64}$/i);
                                     expect(step.purchaseId).toEqual(purchase.purchaseId);
                                     break;
-                                case PayTokenSteps.DONE:
+                                case NormalSteps.DONE:
                                     expect(step.purchaseId).toEqual(purchase.purchaseId);
                                     expect(step.paidValue).toEqual(amount);
                                     break;

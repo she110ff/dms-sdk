@@ -3,16 +3,7 @@ import { GanacheServer } from "../helper/GanacheServer";
 import * as deployContracts from "../helper/deployContracts";
 import { shopData, IShopData, IPurchaseData, IUserData } from "../helper/deployContracts";
 import { contextParamsLocalChain } from "../helper/constants";
-import {
-    Amount,
-    Client,
-    Context,
-    ContractUtils,
-    NormalSteps,
-    PayPointSteps,
-    PayTokenSteps,
-    WithdrawStatus
-} from "../../src";
+import { Amount, Client, Context, ContractUtils, NormalSteps, WithdrawStatus } from "../../src";
 import { FakerRelayServer } from "../helper/FakerRelayServer";
 import { BigNumber } from "@ethersproject/bignumber";
 
@@ -244,7 +235,7 @@ describe("Shop Withdrawal", () => {
             shopData[purchase.shopIndex].shopId
         )) {
             switch (step.key) {
-                case PayPointSteps.PREPARED:
+                case NormalSteps.PREPARED:
                     expect(step.purchaseId).toEqual(purchase.purchaseId);
                     expect(step.amount.toString()).toEqual(purchaseAmount.toString());
                     expect(step.currency).toEqual(purchase.currency.toLowerCase());
@@ -252,10 +243,10 @@ describe("Shop Withdrawal", () => {
                     expect(step.account.toUpperCase()).toEqual(userWallets[purchase.userIndex].address.toUpperCase());
                     expect(step.signature).toMatch(/^0x[A-Fa-f0-9]{130}$/i);
                     break;
-                case PayPointSteps.SENT:
+                case NormalSteps.SENT:
                     expect(step.txHash).toMatch(/^0x[A-Fa-f0-9]{64}$/i);
                     break;
-                case PayPointSteps.DONE:
+                case NormalSteps.DONE:
                     expect(step.purchaseId).toEqual(purchase.purchaseId);
                     expect(step.currency).toEqual(purchase.currency.toLowerCase());
                     expect(step.shopId).toEqual(shopData[purchase.shopIndex].shopId);
@@ -297,7 +288,7 @@ describe("Shop Withdrawal", () => {
             shopData[purchase.shopIndex].shopId
         )) {
             switch (step.key) {
-                case PayTokenSteps.PREPARED:
+                case NormalSteps.PREPARED:
                     expect(step.purchaseId).toEqual(purchase.purchaseId);
                     expect(step.amount.toString()).toEqual(purchaseAmount.toString());
                     expect(step.currency).toEqual(purchase.currency.toLowerCase());
@@ -305,10 +296,10 @@ describe("Shop Withdrawal", () => {
                     expect(step.account.toUpperCase()).toEqual(userWallets[purchase.userIndex].address.toUpperCase());
                     expect(step.signature).toMatch(/^0x[A-Fa-f0-9]{130}$/i);
                     break;
-                case PayTokenSteps.SENT:
+                case NormalSteps.SENT:
                     expect(step.txHash).toMatch(/^0x[A-Fa-f0-9]{64}$/i);
                     break;
-                case PayTokenSteps.DONE:
+                case NormalSteps.DONE:
                     expect(step.purchaseId).toEqual(purchase.purchaseId);
                     expect(step.currency).toEqual(purchase.currency.toLowerCase());
                     expect(step.shopId).toEqual(shopData[purchase.shopIndex].shopId);
