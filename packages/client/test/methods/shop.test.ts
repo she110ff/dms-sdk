@@ -47,7 +47,7 @@ describe("Shop", () => {
             providePercent: 1,
             wallet: shopWallet
         };
-        shopData.shopId = ContractUtils.getShopId(shopData.name, shopData.wallet.address);
+        shopData.shopId = ContractUtils.getShopId(shopData.wallet.address);
         GanacheServer.setTestWeb3Signer(shopWallet);
     });
 

@@ -220,11 +220,8 @@ export class ContractUtils {
         return res.toLowerCase() === account.toLowerCase();
     }
 
-    public static getShopId(name: string, account: string): string {
-        const encodedResult = defaultAbiCoder.encode(
-            ["string", "address", "bytes32"],
-            [name, account, crypto.randomBytes(32)]
-        );
+    public static getShopId(account: string): string {
+        const encodedResult = defaultAbiCoder.encode(["address", "bytes32"], [account, crypto.randomBytes(32)]);
         return keccak256(encodedResult);
     }
 

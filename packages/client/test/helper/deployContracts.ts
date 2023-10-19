@@ -205,7 +205,7 @@ function createSampleData() {
     );
 
     for (const elem of shopData) {
-        elem.shopId = ContractUtils.getShopId(elem.name, elem.wallet.address);
+        elem.shopId = ContractUtils.getShopId(elem.wallet.address);
     }
 }
 
