@@ -2,6 +2,7 @@ import { BigNumberish } from "@ethersproject/bignumber";
 import { BigNumber } from "@ethersproject/bignumber";
 import { Signer } from "@ethersproject/abstract-signer";
 import { JsonRpcProvider, Networkish } from "@ethersproject/providers";
+import { BytesLike } from "@ethersproject/bytes";
 
 export type PurchaseParam = {
     purchaseId: string;
@@ -154,6 +155,108 @@ export type ChangeToPayablePointStepValue =
       }
     | { key: ChangeToPayablePointSteps.SENT; txHash: string }
     | { key: ChangeToPayablePointSteps.DONE };
+
+export enum NormalSteps {
+    PREPARED = "prepare",
+    SENT = "sent",
+    DONE = "done"
+}
+
+export type AddShopStepValue =
+    | {
+          key: NormalSteps.PREPARED;
+          shopId: BytesLike;
+          name: string;
+          provideWaitTime: BigNumberish;
+          providePercent: BigNumberish;
+          account: string;
+          signature: BytesLike;
+      }
+    | { key: NormalSteps.SENT; txHash: BytesLike; shopId: BytesLike }
+    | {
+          key: NormalSteps.DONE;
+          shopId: BytesLike;
+          name: string;
+          provideWaitTime: BigNumberish;
+          providePercent: BigNumberish;
+          account: string;
+      };
+
+export type UpdateShopStepValue =
+    | {
+          key: NormalSteps.PREPARED;
+          shopId: BytesLike;
+          name: string;
+          provideWaitTime: BigNumberish;
+          providePercent: BigNumberish;
+          account: string;
+          signature: BytesLike;
+      }
+    | { key: NormalSteps.SENT; txHash: BytesLike; shopId: BytesLike }
+    | {
+          key: NormalSteps.DONE;
+          shopId: BytesLike;
+          name: string;
+          provideWaitTime: BigNumberish;
+          providePercent: BigNumberish;
+          account: string;
+      };
+
+export type RemoveShopStepValue =
+    | {
+          key: NormalSteps.PREPARED;
+          shopId: BytesLike;
+          account: string;
+          signature: BytesLike;
+      }
+    | { key: NormalSteps.SENT; txHash: BytesLike; shopId: BytesLike }
+    | { key: NormalSteps.DONE; shopId: BytesLike };
+
+export type OpenWithdrawalShopStepValue =
+    | {
+          key: NormalSteps.PREPARED;
+          shopId: BytesLike;
+          amount: BigNumberish;
+          account: string;
+          signature: BytesLike;
+      }
+    | { key: NormalSteps.SENT; txHash: BytesLike; shopId: BytesLike }
+    | { key: NormalSteps.DONE; shopId: BytesLike; amount: BigNumberish; account: string };
+
+export type CloseWithdrawalShopStepValue =
+    | {
+          key: NormalSteps.PREPARED;
+          shopId: BytesLike;
+          account: string;
+          signature: BytesLike;
+      }
+    | { key: NormalSteps.SENT; txHash: BytesLike; shopId: BytesLike }
+    | { key: NormalSteps.DONE; shopId: BytesLike; amount: BigNumberish; account: string };
+
+export enum ShopStatus {
+    INVALID,
+    ACTIVE
+}
+
+export enum WithdrawStatus {
+    CLOSE,
+    OPEN
+}
+
+export type ShopData = {
+    shopId: string;
+    name: string;
+    provideWaitTime: BigNumber; // 제품구매 후 포인트 지급시간
+    providePercent: BigNumber; // 구매금액에 대한 포인트 지급량
+    account: string; // 상점주의 지갑주소
+    providedPoint: BigNumber; // 제공된 포인트 총량
+    usedPoint: BigNumber; // 사용된 포인트 총량
+    settledPoint: BigNumber; // 정산된 포인트 총량
+    withdrawnPoint: BigNumber; // 정산된 포인트 총량
+    status: ShopStatus;
+    withdrawAmount: BigNumber;
+    withdrawStatus: WithdrawStatus;
+};
 
 export enum SortDirection {
     ASC = "asc",

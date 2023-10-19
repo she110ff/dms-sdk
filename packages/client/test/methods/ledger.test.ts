@@ -1,8 +1,8 @@
 import { Server } from "ganache";
-import { GanacheServer } from "./helper/GanacheServer";
-import * as deployContracts from "./helper/deployContracts";
-import { purchaseData, shopData, userData } from "./helper/deployContracts";
-import { contextParamsLocalChain } from "./helper/constants";
+import { GanacheServer } from "../helper/GanacheServer";
+import * as deployContracts from "../helper/deployContracts";
+import { purchaseData, shopData, userData } from "../helper/deployContracts";
+import { contextParamsLocalChain } from "../helper/constants";
 import {
     Amount,
     ChangeRoyaltyTypeSteps,
@@ -15,13 +15,13 @@ import {
     PayPointSteps,
     PayTokenSteps,
     WithdrawSteps
-} from "../src";
-import { FakerRelayServer } from "./helper/FakerRelayServer";
+} from "../../src";
+import { FakerRelayServer } from "../helper/FakerRelayServer";
 import { Signer } from "@ethersproject/abstract-signer";
 import { BigNumber } from "@ethersproject/bignumber";
 import { AddressZero } from "@ethersproject/constants";
 
-describe("Client", () => {
+describe("Ledger", () => {
     let node: Server;
     let deployment: deployContracts.Deployment;
     let fakerRelayServer: FakerRelayServer;

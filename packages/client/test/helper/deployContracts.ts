@@ -109,25 +109,47 @@ export const purchaseData: IPurchaseData[] = [
 ];
 
 function createSampleData() {
-    let accounts = GanacheServer.accounts();
+    const [
+        ,
+        ,
+        ,
+        ,
+        ,
+        ,
+        ,
+        user1,
+        user2,
+        user3,
+        user4,
+        user5,
+        shop1,
+        shop2,
+        shop3,
+        shop4,
+        shop5,
+        shop6
+    ] = GanacheServer.accounts();
+    const userWallets = [user1, user2, user3, user4, user5];
+    const shopWallets = [shop1, shop2, shop3, shop4, shop5, shop6];
     while (userData.length > 0) userData.pop();
+    while (shopData.length > 0) shopData.pop();
 
     userData.push(
         ...[
             {
                 phone: "08201012341001",
-                address: accounts[7].address,
-                privateKey: accounts[7].privateKey
+                address: userWallets[0].address,
+                privateKey: userWallets[0].privateKey
             },
             {
                 phone: "08201012341002",
-                address: accounts[8].address,
-                privateKey: accounts[8].privateKey
+                address: userWallets[1].address,
+                privateKey: userWallets[1].privateKey
             },
             {
                 phone: "08201012341003",
-                address: accounts[9].address,
-                privateKey: accounts[9].privateKey
+                address: userWallets[2].address,
+                privateKey: userWallets[2].privateKey
             },
             {
                 phone: "08201012341004",
@@ -149,35 +171,35 @@ function createSampleData() {
                 name: "Shop1",
                 provideWaitTime: 0,
                 providePercent: 1,
-                wallet: accounts[11]
+                wallet: shopWallets[0]
             },
             {
                 shopId: "",
                 name: "Shop2",
                 provideWaitTime: 0,
                 providePercent: 1,
-                wallet: accounts[12]
+                wallet: shopWallets[1]
             },
             {
                 shopId: "",
                 name: "Shop3",
                 provideWaitTime: 0,
                 providePercent: 1,
-                wallet: accounts[13]
+                wallet: shopWallets[2]
             },
             {
                 shopId: "",
                 name: "Shop4",
                 provideWaitTime: 0,
                 providePercent: 1,
-                wallet: accounts[14]
+                wallet: shopWallets[3]
             },
             {
                 shopId: "",
                 name: "Shop5",
                 provideWaitTime: 0,
                 providePercent: 1,
-                wallet: accounts[15]
+                wallet: shopWallets[4]
             }
         ]
     );
@@ -381,6 +403,6 @@ async function addShopData(shopCollection: ShopCollection) {
     for (const elem of shopData) {
         await shopCollection
             .connect(elem.wallet)
-            .add(elem.shopId, elem.name, elem.provideWaitTime, elem.providePercent);
+            .addDirect(elem.shopId, elem.name, elem.provideWaitTime, elem.providePercent);
     }
 }

@@ -139,3 +139,9 @@ export class InternalServerError extends Error {
         super(`Internal Server Error. Reason : ${message}`);
     }
 }
+
+export class FailedAddShopError extends Error {
+    constructor() {
+        super("Failed to add shop");
+    }
+}
