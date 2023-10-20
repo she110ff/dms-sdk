@@ -16,6 +16,10 @@ export class CurrencyMethods extends ClientCore implements ICurrencyMethods {
         Object.freeze(this);
     }
 
+    /**
+     * KRW 에 대한 환률정보를 제공한다
+     * @param currency 통화코드
+     */
     public async getRate(currency: string): Promise<BigNumber> {
         if (currency === "krw") {
             return this.getMultiple();
@@ -55,6 +59,10 @@ export class CurrencyMethods extends ClientCore implements ICurrencyMethods {
         }
     }
 
+    /**
+     * 포인트를 토큰의 량으로 환산한다.
+     * @param amount 포인트 량
+     */
     public async toToken(amount: BigNumber): Promise<BigNumber> {
         const provider = this.web3.getProvider() as Provider;
         if (!provider) throw new NoProviderError();
@@ -76,6 +84,12 @@ export class CurrencyMethods extends ClientCore implements ICurrencyMethods {
         return amount.mul(multiple).div(rate);
     }
 
+    /**
+     * 법정화폐 또는 토큰을 포인트로 변경한다.
+     * 포인트는 KRW 로 되어 있다.
+     * @param amount  currency 가 존재하면 법정화폐의 량이고, 그렇지 않으면 토큰의 량이다.
+     * @param currency 이값이 존재하면 법정화폐로 처리한다. 그렇지 않은면 토큰으로 인식한다
+     */
     public async toPoint(amount: BigNumber, currency?: string): Promise<BigNumber> {
         if (currency === undefined) {
             const provider = this.web3.getProvider() as Provider;

@@ -2,6 +2,9 @@ import { BigNumberish } from "@ethersproject/bignumber";
 import { BigNumber } from "@ethersproject/bignumber";
 import { BytesLike } from "@ethersproject/bytes";
 
+export const SignatureZero =
+    "0x0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000";
+
 export enum NormalSteps {
     PREPARED = "prepare",
     SENT = "sent",

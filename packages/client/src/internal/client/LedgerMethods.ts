@@ -26,7 +26,8 @@ import {
     UpdateAllowanceParams,
     UpdateAllowanceStepValue,
     WithdrawSteps,
-    WithdrawStepValue
+    WithdrawStepValue,
+    SignatureZero
 } from "../../interfaces";
 import {
     AmountMismatchError,
@@ -66,6 +67,50 @@ export class LedgerMethods extends ClientCore implements ILedgerMethods, IClient
         }
         Object.freeze(LedgerMethods.prototype);
         Object.freeze(this);
+    }
+
+    /**
+     * 릴레이 서버가 정상적인 상태인지 검사한다.
+     * @return {Promise<boolean>} 이 값이 true 이면 릴레이 서버가 정상이다.
+     */
+    public async isRelayUp(): Promise<boolean> {
+        try {
+            const res = await Network.get(await this.getEndpoint("/"));
+            return res === "OK";
+        } catch {
+            return false;
+        }
+    }
+
+    /**
+     * 릴레이 서버의 주소를 이용하여 엔드포인트를 생성한다
+     * @param path 경로
+     * @return {Promise<URL>} 엔드포인트의 주소
+     */
+    public async getEndpoint(path: string): Promise<URL> {
+        if (!path) throw Error("Not path");
+        let endpoint;
+        if (this.relayEndpoint) {
+            endpoint = this.relayEndpoint;
+        } else {
+            const provider = this.web3.getProvider();
+            if (!provider) throw new NoProviderError();
+
+            const network = await provider.getNetwork();
+            const networkName = network.name as SupportedNetworks;
+            if (!SupportedNetworksArray.includes(networkName)) {
+                throw new UnsupportedNetworkError(networkName);
+            }
+            endpoint = LIVE_CONTRACTS[networkName].relayEndpoint;
+        }
+
+        if (!endpoint) throw new NoHttpModuleError();
+
+        const newUrl = typeof endpoint === "string" ? new URL(endpoint) : endpoint;
+        if (newUrl && !newUrl?.pathname.endsWith("/")) {
+            newUrl.pathname += "/";
+        }
+        return new URL(path, newUrl);
     }
 
     /**
@@ -126,6 +171,9 @@ export class LedgerMethods extends ClientCore implements ILedgerMethods, IClient
         return await ledgerInstance.tokenBalanceOf(account);
     }
 
+    /**
+     * 컨트랙트에 저장된 수수료 율을 리턴한다.
+     */
     public async getFeeRate(): Promise<number> {
         const provider = this.web3.getProvider() as Provider;
         if (!provider) throw new NoProviderError();
@@ -233,11 +281,9 @@ export class LedgerMethods extends ClientCore implements ILedgerMethods, IClient
     }
 
     /**
-     * 수당이 충분한지 확인하고 업데이트합니다.
-     *
+     * 허용된 금액이 충분한지 확인하고 그렇지 않으면 업데이트합니다.
      * @param {UpdateAllowanceParams} params
      * @return {*}  {AsyncGenerator<UpdateAllowanceStepValue>}
-     * @memberof ClientMethods
      */
     public async *updateAllowance(params: UpdateAllowanceParams): AsyncGenerator<UpdateAllowanceStepValue> {
         const signer = this.web3.getConnectedSigner();
@@ -296,13 +342,15 @@ export class LedgerMethods extends ClientCore implements ILedgerMethods, IClient
      * @param amount - 거래금액
      * @param currency - 통화코드
      * @param shopId - 상점 아이디
+     * @param useRelay - 이값이 true 이면 릴레이 서버를 경유해서 전송합니다. 그렇지 않으면 직접 컨트랙트를 호출합니다.
      * @return {AsyncGenerator<PayPointStepValue>}
      */
     public async *payPoint(
         purchaseId: string,
         amount: BigNumber,
         currency: string,
-        shopId: string
+        shopId: string,
+        useRelay: boolean = true
     ): AsyncGenerator<PayPointStepValue> {
         const signer = this.web3.getConnectedSigner();
         if (!signer) {
@@ -319,36 +367,62 @@ export class LedgerMethods extends ClientCore implements ILedgerMethods, IClient
 
         const ledgerContract: Ledger = Ledger__factory.connect(this.web3.getLedgerAddress(), signer);
         const account: string = await signer.getAddress();
-        const nonce = await ledgerContract.nonceOf(account);
-        const signature = await ContractUtils.signPayment(signer, purchaseId, amount, currency, shopId, nonce);
+        let contractTx: ContractTransaction;
+        if (useRelay) {
+            const nonce = await ledgerContract.nonceOf(account);
+            const signature = await ContractUtils.signPayment(signer, purchaseId, amount, currency, shopId, nonce);
 
-        const param = {
-            purchaseId,
-            amount: amount.toString(),
-            currency,
-            shopId,
-            account,
-            signature
-        };
+            const param = {
+                purchaseId,
+                amount: amount.toString(),
+                currency,
+                shopId,
+                account,
+                signature
+            };
 
-        yield {
-            key: NormalSteps.PREPARED,
-            purchaseId,
-            amount,
-            currency,
-            shopId,
-            account,
-            signature
-        };
+            yield {
+                key: NormalSteps.PREPARED,
+                purchaseId,
+                amount,
+                currency,
+                shopId,
+                account,
+                signature
+            };
 
-        const res = await Network.post(await this.getEndpoint("payPoint"), param);
-        if (res?.code !== 200) throw new InternalServerError(res.message);
-        if (res?.data?.code && res.data.code !== 200) throw new InternalServerError(res?.data?.error?.message ?? "");
+            const res = await Network.post(await this.getEndpoint("payPoint"), param);
+            if (res?.code !== 200) throw new InternalServerError(res.message);
+            if (res?.data?.code && res.data.code !== 200)
+                throw new InternalServerError(res?.data?.error?.message ?? "");
 
-        yield { key: NormalSteps.SENT, txHash: res.data.txHash, purchaseId: param.purchaseId };
+            contractTx = (await signer.provider.getTransaction(res.data.txHash)) as ContractTransaction;
 
-        const txResponse = (await signer.provider.getTransaction(res.data.txHash)) as ContractTransaction;
-        const txReceipt = await txResponse.wait();
+            yield { key: NormalSteps.SENT, txHash: res.data.txHash, purchaseId: param.purchaseId };
+        } else {
+            const param = {
+                purchaseId,
+                amount: amount.toString(),
+                currency,
+                shopId
+            };
+
+            yield {
+                key: NormalSteps.PREPARED,
+                purchaseId,
+                amount,
+                currency,
+                shopId,
+                account,
+                signature: SignatureZero
+            };
+
+            contractTx = await ledgerContract.payPointDirect(param);
+
+            yield { key: NormalSteps.SENT, txHash: contractTx.hash, purchaseId: param.purchaseId };
+        }
+
+        const txReceipt = await contractTx.wait();
 
         const log = findLog(txReceipt, ledgerContract.interface, "PaidPoint");
         if (!log) {
@@ -377,13 +451,15 @@ export class LedgerMethods extends ClientCore implements ILedgerMethods, IClient
      * @param amount - 거래금액
      * @param currency - 통화코드
      * @param shopId - 상점 아이디
+     * @param useRelay - 이값이 true 이면 릴레이 서버를 경유해서 전송합니다. 그렇지 않으면 직접 컨트랙트를 호출합니다.
      * @return {AsyncGenerator<PayTokenStepValue>}
      */
     public async *payToken(
         purchaseId: string,
         amount: BigNumber,
         currency: string,
-        shopId: string
+        shopId: string,
+        useRelay: boolean = true
     ): AsyncGenerator<PayTokenStepValue> {
         const signer = this.web3.getConnectedSigner();
         if (!signer) {
@@ -399,48 +475,76 @@ export class LedgerMethods extends ClientCore implements ILedgerMethods, IClient
         }
 
         const ledgerContract: Ledger = Ledger__factory.connect(this.web3.getLedgerAddress(), signer);
-
         const account: string = await signer.getAddress();
+        let contractTx: ContractTransaction;
+        if (useRelay) {
+            const nonce = await ledgerContract.nonceOf(account);
+            const signature = await ContractUtils.signPayment(signer, purchaseId, amount, currency, shopId, nonce);
 
-        const nonce = await ledgerContract.nonceOf(account);
-        const signature = await ContractUtils.signPayment(signer, purchaseId, amount, currency, shopId, nonce);
+            const param = {
+                purchaseId,
+                amount: amount.toString(),
+                currency,
+                shopId,
+                account,
+                signature
+            };
 
-        const param = {
-            purchaseId,
-            amount: amount.toString(),
-            currency,
-            shopId,
-            account,
-            signature
-        };
+            yield {
+                key: NormalSteps.PREPARED,
+                purchaseId,
+                amount,
+                currency,
+                shopId,
+                account,
+                signature
+            };
 
-        yield {
-            key: NormalSteps.PREPARED,
-            purchaseId,
-            amount,
-            currency,
-            shopId,
-            account,
-            signature
-        };
+            const res = await Network.post(await this.getEndpoint("payToken"), param);
+            if (res?.code !== 200) throw new InternalServerError(res.message);
+            if (res?.data?.code && res.data.code !== 200)
+                throw new InternalServerError(res?.data?.error?.message ?? "");
 
-        const res = await Network.post(await this.getEndpoint("payToken"), param);
-        if (res?.code !== 200) throw new InternalServerError(res.message);
-        if (res?.data?.code && res.data.code !== 200) throw new InternalServerError(res?.data?.error?.message ?? "");
+            yield { key: NormalSteps.SENT, txHash: res.data.txHash, purchaseId: param.purchaseId };
 
-        yield { key: NormalSteps.SENT, txHash: res.data.txHash, purchaseId: param.purchaseId };
+            contractTx = (await signer.provider.getTransaction(res.data.txHash)) as ContractTransaction;
 
-        const txResponse = (await signer.provider.getTransaction(res.data.txHash)) as ContractTransaction;
-        const txReceipt = await txResponse.wait();
+            yield { key: NormalSteps.SENT, txHash: res.data.txHash, purchaseId: param.purchaseId };
+        } else {
+            const param = {
+                purchaseId,
+                amount: amount.toString(),
+                currency,
+                shopId
+            };
+
+            yield {
+                key: NormalSteps.PREPARED,
+                purchaseId,
+                amount,
+                currency,
+                shopId,
+                account,
+                signature: SignatureZero
+            };
+
+            contractTx = await ledgerContract.payTokenDirect(param);
+
+            yield { key: NormalSteps.SENT, txHash: contractTx.hash, purchaseId: param.purchaseId };
+        }
+
+        const txReceipt = await contractTx.wait();
 
         const log = findLog(txReceipt, ledgerContract.interface, "PaidToken");
         if (!log) {
             throw new FailedPayTokenError();
         }
+
         const parsedLog = ledgerContract.interface.parseLog(log);
         if (!amount.eq(parsedLog.args["paidValue"])) {
             throw new AmountMismatchError(amount, parsedLog.args["paidValue"]);
         }
+
         yield {
             key: NormalSteps.DONE,
             purchaseId,
@@ -454,47 +558,16 @@ export class LedgerMethods extends ClientCore implements ILedgerMethods, IClient
         };
     }
 
-    public async isRelayUp(): Promise<boolean> {
-        try {
-            const res = await Network.get(await this.getEndpoint("/"));
-            return res === "OK";
-        } catch {
-            return false;
-        }
-    }
-
-    public async getEndpoint(path: string): Promise<URL> {
-        if (!path) throw Error("Not path");
-        let endpoint;
-        if (this.relayEndpoint) {
-            endpoint = this.relayEndpoint;
-        } else {
-            const provider = this.web3.getProvider();
-            if (!provider) throw new NoProviderError();
-
-            const network = await provider.getNetwork();
-            const networkName = network.name as SupportedNetworks;
-            if (!SupportedNetworksArray.includes(networkName)) {
-                throw new UnsupportedNetworkError(networkName);
-            }
-            endpoint = LIVE_CONTRACTS[networkName].relayEndpoint;
-        }
-
-        if (!endpoint) throw new NoHttpModuleError();
-
-        const newUrl = typeof endpoint === "string" ? new URL(endpoint) : endpoint;
-        if (newUrl && !newUrl?.pathname.endsWith("/")) {
-            newUrl.pathname += "/";
-        }
-        return new URL(path, newUrl);
-    }
-
     /**
      * 적립되는 로얄티의 종류를 변경한다.
      * @param type - 로얄티의 종류
+     * @param useRelay - 이값이 true 이면 릴레이 서버를 경유해서 전송합니다. 그렇지 않으면 직접 컨트랙트를 호출합니다.
      * @return {AsyncGenerator<ChangeRoyaltyTypeStepValue>}
      */
-    public async *changeRoyaltyType(type: RoyaltyType): AsyncGenerator<ChangeRoyaltyTypeStepValue> {
+    public async *changeRoyaltyType(
+        type: RoyaltyType,
+        useRelay: boolean = true
+    ): AsyncGenerator<ChangeRoyaltyTypeStepValue> {
         const signer = this.web3.getConnectedSigner();
         if (!signer) {
             throw new NoSignerError();
@@ -509,36 +582,43 @@ export class LedgerMethods extends ClientCore implements ILedgerMethods, IClient
         }
 
         const ledgerContract: Ledger = Ledger__factory.connect(this.web3.getLedgerAddress(), signer);
-
         const account: string = await signer.getAddress();
+        let contractTx: ContractTransaction;
+        if (useRelay) {
+            const nonce = await ledgerContract.nonceOf(account);
+            const signature = await ContractUtils.signRoyaltyType(signer, type, nonce);
 
-        const nonce = await ledgerContract.nonceOf(account);
-        const signature = await ContractUtils.signRoyaltyType(signer, type, nonce);
+            yield { key: NormalSteps.PREPARED, type, account, signature };
 
-        yield { key: NormalSteps.PREPARED, type, account, signature };
+            const param = {
+                type,
+                account,
+                signature
+            };
+            const res = await Network.post(await this.getEndpoint("changeRoyaltyType"), param);
+            if (res?.code !== 200) throw new InternalServerError(res.message);
+            if (res?.data?.code && res.data.code !== 200)
+                throw new InternalServerError(res?.data?.error?.message ?? "");
 
-        const param = {
-            type,
-            account,
-            signature
-        };
+            contractTx = (await signer.provider.getTransaction(res.data.txHash)) as ContractTransaction;
 
-        const res = await Network.post(await this.getEndpoint("changeRoyaltyType"), param);
-        if (res?.code !== 200) throw new InternalServerError(res.message);
-        if (res?.data?.code && res.data.code !== 200) throw new InternalServerError(res?.data?.error?.message ?? "");
+            yield { key: NormalSteps.SENT, txHash: res.data.txHash };
+        } else {
+            yield { key: NormalSteps.PREPARED, type, account, signature: SignatureZero };
 
-        yield { key: NormalSteps.SENT, txHash: res.data.txHash };
+            contractTx = await ledgerContract.setRoyaltyTypeDirect(type);
 
-        const txResponse = (await signer.provider.getTransaction(res.data.txHash)) as ContractTransaction;
-        const txReceipt = await txResponse.wait();
+            yield { key: NormalSteps.SENT, txHash: contractTx.hash };
+        }
+        const txReceipt = await contractTx.wait();
 
         const log = findLog(txReceipt, ledgerContract.interface, "ChangedRoyaltyType");
         if (!log) {
             throw new FailedPayTokenError();
         }
         const parsedLog = ledgerContract.interface.parseLog(log);
-        if (!param.type === parsedLog.args["royaltyType"]) {
-            throw new RoyaltyTypeMismatchError(param.type, parsedLog.args["value"]);
+        if (!type === parsedLog.args["royaltyType"]) {
+            throw new RoyaltyTypeMismatchError(type, parsedLog.args["value"]);
         }
 
         yield {
@@ -566,7 +646,16 @@ export class LedgerMethods extends ClientCore implements ILedgerMethods, IClient
         return await ledgerInstance.royaltyTypeOf(account);
     }
 
-    public async *changeToPayablePoint(phone: string): AsyncGenerator<ChangeToPayablePointStepValue> {
+    /**
+     * 사용가능한 포인트로 변환한다.
+     * @param phone 전화번호
+     * @param useRelay - 이값이 true 이면 릴레이 서버를 경유해서 전송합니다. 그렇지 않으면 직접 컨트랙트를 호출합니다.
+     * @return {AsyncGenerator<ChangeToPayablePointStepValue>}
+     */
+    public async *changeToPayablePoint(
+        phone: string,
+        useRelay: boolean = true
+    ): AsyncGenerator<ChangeToPayablePointStepValue> {
         const signer = this.web3.getConnectedSigner();
         if (!signer) {
             throw new NoSignerError();
@@ -580,41 +669,59 @@ export class LedgerMethods extends ClientCore implements ILedgerMethods, IClient
             throw new UnsupportedNetworkError(networkName);
         }
 
-        const phoneHash = ContractUtils.getPhoneHash(phone.trim());
         const ledgerContract: Ledger = Ledger__factory.connect(this.web3.getLedgerAddress(), signer);
 
-        const account: string = await signer.getAddress();
-        const nonce = await ledgerContract.nonceOf(account);
-        const signature = await ContractUtils.signChangePayablePoint(signer, phoneHash, nonce);
-
+        const phoneHash = ContractUtils.getPhoneHash(phone.trim());
         const balance = await ledgerContract.unPayablePointBalanceOf(phoneHash);
         if (balance.eq(BigNumber.from(0))) {
             throw new InsufficientBalanceError();
         }
-        yield { key: NormalSteps.PREPARED, phone, phoneHash, account, signature, balance };
 
         const linkContract: PhoneLinkCollection = PhoneLinkCollection__factory.connect(
             this.web3.getLinkCollectionAddress(),
             signer.provider
         );
-
-        const param = {
-            phone: phoneHash,
-            account,
-            signature
-        };
-        const phoneToAddress: string = await linkContract.toAddress(param.phone);
+        const phoneToAddress: string = await linkContract.toAddress(phoneHash);
         if (phoneToAddress === AddressZero) throw new UnregisteredPhoneError();
-        if (phoneToAddress !== param.account) throw new MismatchApproveAddressError();
+        if (phoneToAddress !== (await signer.getAddress())) throw new MismatchApproveAddressError();
 
-        const res = await Network.post(await this.getEndpoint("changeToPayablePoint"), param);
-        if (res?.code !== 200) throw new InternalServerError(res.message);
-        if (res?.data?.code && res.data.code !== 200) throw new InternalServerError(res?.data?.error?.message ?? "");
+        const account: string = await signer.getAddress();
+        let contractTx: ContractTransaction;
+        if (useRelay) {
+            const nonce = await ledgerContract.nonceOf(account);
+            const signature = await ContractUtils.signChangePayablePoint(signer, phoneHash, nonce);
 
-        yield { key: NormalSteps.SENT, txHash: res.data.txHash };
+            const param = {
+                phone: phoneHash,
+                account,
+                signature
+            };
 
-        const txResponse = (await signer.provider.getTransaction(res.data.txHash)) as ContractTransaction;
-        const txReceipt = await txResponse.wait();
+            yield { key: NormalSteps.PREPARED, phone, phoneHash, account, signature, balance };
+
+            const res = await Network.post(await this.getEndpoint("changeToPayablePoint"), param);
+            if (res?.code !== 200) throw new InternalServerError(res.message);
+            if (res?.data?.code && res.data.code !== 200)
+                throw new InternalServerError(res?.data?.error?.message ?? "");
+
+            contractTx = (await signer.provider.getTransaction(res.data.txHash)) as ContractTransaction;
+
+            yield { key: NormalSteps.SENT, txHash: res.data.txHash };
+        } else {
+            yield {
+                key: NormalSteps.PREPARED,
+                phone,
+                phoneHash,
+                account,
+                signature: SignatureZero,
+                balance
+            };
+
+            contractTx = await ledgerContract.changeToPayablePointDirect(phoneHash);
+
+            yield { key: NormalSteps.SENT, txHash: contractTx.hash };
+        }
+        const txReceipt = await contractTx.wait();
 
         const log = findLog(txReceipt, ledgerContract.interface, "ChangedToPayablePoint");
         if (!log) {
@@ -630,6 +737,14 @@ export class LedgerMethods extends ClientCore implements ILedgerMethods, IClient
         };
     }
 
+    /**
+     * 사용자의 거래내역을 제공한다.
+     * @param account 사용자의 지갑주소
+     * @param limit
+     * @param skip
+     * @param sortDirection
+     * @param sortBy
+     */
     public async getUserTradeHistory(
         account: string,
         { limit, skip, sortDirection, sortBy }: QueryOption = {
@@ -643,10 +758,17 @@ export class LedgerMethods extends ClientCore implements ILedgerMethods, IClient
         const where = { account: account };
         const params = { where, limit, skip, direction: sortDirection, sortBy };
         const name = "user trade history";
-        const res = await this.graphql.request({ query, params, name });
-        return res;
+        return await this.graphql.request({ query, params, name });
     }
 
+    /**
+     * 사용자의 거래내역들 중 포인트 잔고가 증가하는 거래내역을 제공한다.
+     * @param account 사용자의 지갑주소
+     * @param limit
+     * @param skip
+     * @param sortDirection
+     * @param sortBy
+     */
     public async getUserPointInputTradeHistory(
         account: string,
         { limit, skip, sortDirection, sortBy }: QueryOption = {
@@ -660,10 +782,17 @@ export class LedgerMethods extends ClientCore implements ILedgerMethods, IClient
         const where = { account: account, assetFlow: "PointInput" };
         const params = { where, limit, skip, direction: sortDirection, sortBy };
         const name = "user trade history";
-        const res = await this.graphql.request({ query, params, name });
-        return res;
+        return await this.graphql.request({ query, params, name });
     }
 
+    /**
+     * 사용자의 거래내역들 중 토큰 잔고가 증가하는 거래내역을 제공한다.
+     * @param account 사용자의 지갑주소
+     * @param limit
+     * @param skip
+     * @param sortDirection
+     * @param sortBy
+     */
     public async getUserTokenInputTradeHistory(
         account: string,
         { limit, skip, sortDirection, sortBy }: QueryOption = {
@@ -677,10 +806,17 @@ export class LedgerMethods extends ClientCore implements ILedgerMethods, IClient
         const where = { account: account, assetFlow: "TokenInput" };
         const params = { where, limit, skip, direction: sortDirection, sortBy };
         const name = "user trade history";
-        const res = await this.graphql.request({ query, params, name });
-        return res;
+        return await this.graphql.request({ query, params, name });
     }
 
+    /**
+     * 사용자의 거래내역들 중 포인트 잔고가 감소하는 거래내역을 제공한다.
+     * @param account 사용자의 지갑주소
+     * @param limit
+     * @param skip
+     * @param sortDirection
+     * @param sortBy
+     */
     public async getUserPointOutputTradeHistory(
         account: string,
         { limit, skip, sortDirection, sortBy }: QueryOption = {
@@ -694,10 +830,17 @@ export class LedgerMethods extends ClientCore implements ILedgerMethods, IClient
         const where = { account: account, assetFlow: "PointOutput" };
         const params = { where, limit, skip, direction: sortDirection, sortBy };
         const name = "user trade history";
-        const res = await this.graphql.request({ query, params, name });
-        return res;
+        return await this.graphql.request({ query, params, name });
     }
 
+    /**
+     * 사용자의 거래내역들 중 토큰 잔고가 감소하는 거래내역을 제공한다.
+     * @param account 사용자의 지갑주소
+     * @param limit
+     * @param skip
+     * @param sortDirection
+     * @param sortBy
+     */
     public async getUserTokenOutputTradeHistory(
         account: string,
         { limit, skip, sortDirection, sortBy }: QueryOption = {
@@ -711,25 +854,32 @@ export class LedgerMethods extends ClientCore implements ILedgerMethods, IClient
         const where = { account: account, assetFlow: "TokenOutput" };
         const params = { where, limit, skip, direction: sortDirection, sortBy };
         const name = "user trade history";
-        const res = await this.graphql.request({ query, params, name });
-        return res;
+        return await this.graphql.request({ query, params, name });
     }
 
+    /**
+     * 사용자의 토큰구매 결과를 제공한다.
+     * @param account 사용자의 지갑주소
+     * @param purchaseId 구매번호
+     */
     public async getPaidToken(account: string, purchaseId: string): Promise<any> {
         const query = QueryPaidToken;
         const where = { account: account, purchaseId: purchaseId };
         const params = { where };
         const name = "paid token";
-        const res = await this.graphql.request({ query, params, name });
-        return res;
+        return await this.graphql.request({ query, params, name });
     }
 
+    /**
+     * 사용자의 포인트구매 결과를 제공한다.
+     * @param account 사용자의 지갑주소
+     * @param purchaseId 구매번호
+     */
     public async getPaidPoint(account: string, purchaseId: string): Promise<any> {
         const query = QueryPaidPoint;
         const where = { account: account, purchaseId: purchaseId };
         const params = { where };
         const name = "paid token";
-        const res = await this.graphql.request({ query, params, name });
-        return res;
+        return await this.graphql.request({ query, params, name });
     }
 }

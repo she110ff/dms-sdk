@@ -21,17 +21,23 @@ export interface IShopMethods extends IClientCore, IClientHttpCore {
         shopId: BytesLike,
         name: string,
         provideWaitTime: BigNumberish,
-        providePercent: BigNumberish
+        providePercent: BigNumberish,
+        useRelay?: boolean
     ) => AsyncGenerator<AddShopStepValue>;
     update: (
         shopId: BytesLike,
         name: string,
         provideWaitTime: BigNumberish,
-        providePercent: BigNumberish
+        providePercent: BigNumberish,
+        useRelay?: boolean
     ) => AsyncGenerator<UpdateShopStepValue>;
-    remove: (shopId: BytesLike) => AsyncGenerator<RemoveShopStepValue>;
-    openWithdrawal: (shopId: BytesLike, amount: BigNumberish) => AsyncGenerator<OpenWithdrawalShopStepValue>;
-    closeWithdrawal: (shopId: BytesLike) => AsyncGenerator<CloseWithdrawalShopStepValue>;
+    remove: (shopId: BytesLike, useRelay?: boolean) => AsyncGenerator<RemoveShopStepValue>;
+    openWithdrawal: (
+        shopId: BytesLike,
+        amount: BigNumberish,
+        useRelay?: boolean
+    ) => AsyncGenerator<OpenWithdrawalShopStepValue>;
+    closeWithdrawal: (shopId: BytesLike, useRelay?: boolean) => AsyncGenerator<CloseWithdrawalShopStepValue>;
     getWithdrawableAmount: (shopId: BytesLike) => Promise<BigNumber>;
     getShopInfo: (shopId: BytesLike) => Promise<ShopData>;
 

@@ -29,24 +29,26 @@ export interface ILedgerMethods extends IClientCore, IClientHttpCore {
         purchaseId: string,
         amount: BigNumber,
         currency: string,
-        shopId: string
+        shopId: string,
+        useRelay?: boolean
     ) => AsyncGenerator<PayPointStepValue>;
 
     payToken: (
         purchaseId: string,
         amount: BigNumber,
         currency: string,
-        shopId: string
+        shopId: string,
+        useRelay?: boolean
     ) => AsyncGenerator<PayTokenStepValue>;
 
     deposit: (amount: BigNumber) => AsyncGenerator<DepositStepValue>;
     withdraw: (amount: BigNumber) => AsyncGenerator<WithdrawStepValue>;
     updateAllowance: (params: UpdateAllowanceParams) => AsyncGenerator<UpdateAllowanceStepValue>;
 
-    changeRoyaltyType: (type: RoyaltyType) => AsyncGenerator<ChangeRoyaltyTypeStepValue>;
+    changeRoyaltyType: (type: RoyaltyType, useRelay?: boolean) => AsyncGenerator<ChangeRoyaltyTypeStepValue>;
     getRoyaltyType: (account: string) => Promise<RoyaltyType>;
 
-    changeToPayablePoint: (phone: string) => AsyncGenerator<ChangeToPayablePointStepValue>;
+    changeToPayablePoint: (phone: string, useRelay?: boolean) => AsyncGenerator<ChangeToPayablePointStepValue>;
 
     getUserTradeHistory: (account: string, option?: QueryOption) => Promise<any>;
     getUserPointInputTradeHistory: (account: string, option?: QueryOption) => Promise<any>;
