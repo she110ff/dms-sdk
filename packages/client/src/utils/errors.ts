@@ -110,9 +110,9 @@ export class AmountMismatchError extends Error {
     }
 }
 
-export class RoyaltyTypeMismatchError extends Error {
+export class LoyaltyTypeMismatchError extends Error {
     constructor(expected: number, received: number) {
-        super(`Royalty type mismatch. Expected: ${expected}, received: ${received}`);
+        super(`Loyalty type mismatch. Expected: ${expected}, received: ${received}`);
     }
 }
 

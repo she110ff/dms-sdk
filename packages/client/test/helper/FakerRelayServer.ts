@@ -124,7 +124,7 @@ export class FakerRelayServer {
         );
 
         this.app.post(
-            "/changeRoyaltyType",
+            "/changeLoyaltyType",
             [
                 body("type").exists(),
                 body("account")
@@ -134,7 +134,7 @@ export class FakerRelayServer {
                     .exists()
                     .matches(/^(0x)[0-9a-f]{130}$/i)
             ],
-            this.changeRoyaltyType.bind(this)
+            this.changeLoyaltyType.bind(this)
         );
 
         this.app.post(
@@ -403,8 +403,8 @@ export class FakerRelayServer {
         }
     }
 
-    private async changeRoyaltyType(req: express.Request, res: express.Response) {
-        console.log(`POST /changeRoyaltyType`);
+    private async changeLoyaltyType(req: express.Request, res: express.Response) {
+        console.log(`POST /changeLoyaltyType`);
 
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
@@ -423,21 +423,21 @@ export class FakerRelayServer {
 
             // 서명검증
             const userNonce = await this.ledgerContract.nonceOf(account);
-            if (!ContractUtils.verifyRoyaltyType(type, account, userNonce, signature))
+            if (!ContractUtils.verifyLoyaltyType(type, account, userNonce, signature))
                 return res.status(200).json(
                     this.makeResponseData(500, undefined, {
                         message: "Signature is not valid."
                     })
                 );
 
-            const tx = await this.ledgerContract.connect(this.signer).setRoyaltyType(type, account, signature);
+            const tx = await this.ledgerContract.connect(this.signer).setLoyaltyType(type, account, signature);
 
-            console.log(`TxHash(royaltyType): `, tx.hash);
+            console.log(`TxHash(loyaltyType): `, tx.hash);
             return res.status(200).json(this.makeResponseData(200, { txHash: tx.hash }));
         } catch (error) {
             let message = ContractUtils.cacheEVMError(error as any);
-            if (message === "") message = "Failed change royalty type";
-            console.error(`POST /royaltyType :`, message);
+            if (message === "") message = "Failed change loyalty type";
+            console.error(`POST /loyaltyType :`, message);
             return res.status(200).json(
                 this.makeResponseData(500, undefined, {
                     message

@@ -89,20 +89,20 @@ export type WithdrawStepValue =
     | { key: WithdrawSteps.WITHDRAWING; txHash: string }
     | { key: WithdrawSteps.DONE; amount: BigNumber };
 
-export enum RoyaltyType {
+export enum LoyaltyType {
     POINT,
     TOKEN
 }
 
-export type ChangeRoyaltyTypeStepValue =
+export type ChangeLoyaltyTypeStepValue =
     | {
           key: NormalSteps.PREPARED;
-          type: RoyaltyType;
+          type: LoyaltyType;
           account: string;
           signature: string;
       }
     | { key: NormalSteps.SENT; txHash: string }
-    | { key: NormalSteps.DONE; type: RoyaltyType };
+    | { key: NormalSteps.DONE; type: LoyaltyType };
 
 export type ChangeToPayablePointStepValue =
     | {

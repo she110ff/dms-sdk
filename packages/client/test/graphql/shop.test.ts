@@ -21,7 +21,7 @@ interface IUserData {
     phone: string;
     address: string;
     privateKey: string;
-    royaltyType: number;
+    loyaltyType: number;
 }
 
 export interface IShopData {

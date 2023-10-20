@@ -21,7 +21,7 @@ interface IUserData {
     phone: string;
     address: string;
     privateKey: string;
-    royaltyType: number;
+    loyaltyType: number;
 }
 
 export interface IShopData {
@@ -82,7 +82,7 @@ describe("Integrated test of Ledger", () => {
 
             it("Point Input History", async () => {
                 for (const user of users) {
-                    if (user.royaltyType === 0) {
+                    if (user.loyaltyType === 0) {
                         const res = await client.ledger.getUserPointInputTradeHistory(user.address);
                         const length = res.userTradeHistories.length;
                         if (length > 0) {
@@ -97,7 +97,7 @@ describe("Integrated test of Ledger", () => {
 
             it("Token Input History", async () => {
                 for (const user of users) {
-                    if (user.royaltyType === 1) {
+                    if (user.loyaltyType === 1) {
                         const res = await client.ledger.getUserTokenInputTradeHistory(user.address);
                         const length = res.userTradeHistories.length;
                         if (length > 0) {
@@ -112,7 +112,7 @@ describe("Integrated test of Ledger", () => {
 
             it("Point Output History", async () => {
                 for (const user of users) {
-                    if (user.royaltyType === 0) {
+                    if (user.loyaltyType === 0) {
                         const res = await client.ledger.getUserPointOutputTradeHistory(user.address);
                         const length = res.userTradeHistories.length;
                         if (length > 0) {
@@ -127,7 +127,7 @@ describe("Integrated test of Ledger", () => {
 
             it("Token Output History", async () => {
                 for (const user of users) {
-                    if (user.royaltyType === 1) {
+                    if (user.loyaltyType === 1) {
                         const res = await client.ledger.getUserTokenOutputTradeHistory(user.address);
                         const length = res.userTradeHistories.length;
                         if (length > 0) {

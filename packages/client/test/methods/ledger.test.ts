@@ -8,7 +8,7 @@ import {
     Client,
     Context,
     ContractUtils,
-    RoyaltyType,
+    LoyaltyType,
     DepositSteps,
     NormalSteps,
     WithdrawSteps
@@ -101,10 +101,10 @@ describe("Ledger", () => {
         });
 
         it("Change point type to 'token'", async () => {
-            for await (const step of client.ledger.changeRoyaltyType(RoyaltyType.TOKEN)) {
+            for await (const step of client.ledger.changeLoyaltyType(LoyaltyType.TOKEN)) {
                 switch (step.key) {
                     case NormalSteps.PREPARED:
-                        expect(step.type).toEqual(RoyaltyType.TOKEN);
+                        expect(step.type).toEqual(LoyaltyType.TOKEN);
                         expect(step.account).toEqual(userAddress);
                         break;
                     case NormalSteps.SENT:
@@ -112,14 +112,14 @@ describe("Ledger", () => {
                         expect(step.txHash).toMatch(/^0x[A-Fa-f0-9]{64}$/i);
                         break;
                     case NormalSteps.DONE:
-                        expect(step.type).toBe(RoyaltyType.TOKEN);
+                        expect(step.type).toBe(LoyaltyType.TOKEN);
                         break;
                     default:
-                        throw new Error("Unexpected change royalty step: " + JSON.stringify(step, null, 2));
+                        throw new Error("Unexpected change loyalty step: " + JSON.stringify(step, null, 2));
                 }
             }
-            const type = await client.ledger.getRoyaltyType(userAddress);
-            expect(type).toBe(RoyaltyType.TOKEN);
+            const type = await client.ledger.getLoyaltyType(userAddress);
+            expect(type).toBe(LoyaltyType.TOKEN);
         });
 
         it("Save Purchase Data 3", async () => {
@@ -422,10 +422,10 @@ describe("Ledger", () => {
         });
 
         it("Change point type to 'token'", async () => {
-            for await (const step of client.ledger.changeRoyaltyType(RoyaltyType.TOKEN, false)) {
+            for await (const step of client.ledger.changeLoyaltyType(LoyaltyType.TOKEN, false)) {
                 switch (step.key) {
                     case NormalSteps.PREPARED:
-                        expect(step.type).toEqual(RoyaltyType.TOKEN);
+                        expect(step.type).toEqual(LoyaltyType.TOKEN);
                         expect(step.account).toEqual(userAddress);
                         break;
                     case NormalSteps.SENT:
@@ -433,14 +433,14 @@ describe("Ledger", () => {
                         expect(step.txHash).toMatch(/^0x[A-Fa-f0-9]{64}$/i);
                         break;
                     case NormalSteps.DONE:
-                        expect(step.type).toBe(RoyaltyType.TOKEN);
+                        expect(step.type).toBe(LoyaltyType.TOKEN);
                         break;
                     default:
-                        throw new Error("Unexpected change royalty step: " + JSON.stringify(step, null, 2));
+                        throw new Error("Unexpected change loyalty step: " + JSON.stringify(step, null, 2));
                 }
             }
-            const type = await client.ledger.getRoyaltyType(userAddress);
-            expect(type).toBe(RoyaltyType.TOKEN);
+            const type = await client.ledger.getLoyaltyType(userAddress);
+            expect(type).toBe(LoyaltyType.TOKEN);
         });
 
         it("Save Purchase Data 3", async () => {

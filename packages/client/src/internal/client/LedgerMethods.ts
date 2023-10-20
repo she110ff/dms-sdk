@@ -12,7 +12,7 @@ import { Provider } from "@ethersproject/providers";
 import { NoProviderError, NoSignerError, UnsupportedNetworkError, UpdateAllowanceError } from "dms-sdk-common";
 import { ContractUtils } from "../../utils/ContractUtils";
 import {
-    ChangeRoyaltyTypeStepValue,
+    ChangeLoyaltyTypeStepValue,
     ChangeToPayablePointStepValue,
     DepositSteps,
     DepositStepValue,
@@ -20,7 +20,7 @@ import {
     PayPointStepValue,
     PayTokenStepValue,
     QueryOption,
-    RoyaltyType,
+    LoyaltyType,
     SortByBlock,
     SortDirection,
     UpdateAllowanceParams,
@@ -39,7 +39,7 @@ import {
     InternalServerError,
     MismatchApproveAddressError,
     NoHttpModuleError,
-    RoyaltyTypeMismatchError,
+    LoyaltyTypeMismatchError,
     UnregisteredPhoneError
 } from "../../utils/errors";
 import { Network } from "../../client-common/interfaces/network";
@@ -562,12 +562,12 @@ export class LedgerMethods extends ClientCore implements ILedgerMethods, IClient
      * 적립되는 로얄티의 종류를 변경한다.
      * @param type - 로얄티의 종류
      * @param useRelay - 이값이 true 이면 릴레이 서버를 경유해서 전송합니다. 그렇지 않으면 직접 컨트랙트를 호출합니다.
-     * @return {AsyncGenerator<ChangeRoyaltyTypeStepValue>}
+     * @return {AsyncGenerator<ChangeLoyaltyTypeStepValue>}
      */
-    public async *changeRoyaltyType(
-        type: RoyaltyType,
+    public async *changeLoyaltyType(
+        type: LoyaltyType,
         useRelay: boolean = true
-    ): AsyncGenerator<ChangeRoyaltyTypeStepValue> {
+    ): AsyncGenerator<ChangeLoyaltyTypeStepValue> {
         const signer = this.web3.getConnectedSigner();
         if (!signer) {
             throw new NoSignerError();
@@ -586,7 +586,7 @@ export class LedgerMethods extends ClientCore implements ILedgerMethods, IClient
         let contractTx: ContractTransaction;
         if (useRelay) {
             const nonce = await ledgerContract.nonceOf(account);
-            const signature = await ContractUtils.signRoyaltyType(signer, type, nonce);
+            const signature = await ContractUtils.signLoyaltyType(signer, type, nonce);
 
             yield { key: NormalSteps.PREPARED, type, account, signature };
 
@@ -595,7 +595,7 @@ export class LedgerMethods extends ClientCore implements ILedgerMethods, IClient
                 account,
                 signature
             };
-            const res = await Network.post(await this.getEndpoint("changeRoyaltyType"), param);
+            const res = await Network.post(await this.getEndpoint("changeLoyaltyType"), param);
             if (res?.code !== 200) throw new InternalServerError(res.message);
             if (res?.data?.code && res.data.code !== 200)
                 throw new InternalServerError(res?.data?.error?.message ?? "");
@@ -606,24 +606,24 @@ export class LedgerMethods extends ClientCore implements ILedgerMethods, IClient
         } else {
             yield { key: NormalSteps.PREPARED, type, account, signature: SignatureZero };
 
-            contractTx = await ledgerContract.setRoyaltyTypeDirect(type);
+            contractTx = await ledgerContract.setLoyaltyTypeDirect(type);
 
             yield { key: NormalSteps.SENT, txHash: contractTx.hash };
         }
         const txReceipt = await contractTx.wait();
 
-        const log = findLog(txReceipt, ledgerContract.interface, "ChangedRoyaltyType");
+        const log = findLog(txReceipt, ledgerContract.interface, "ChangedLoyaltyType");
         if (!log) {
             throw new FailedPayTokenError();
         }
         const parsedLog = ledgerContract.interface.parseLog(log);
-        if (!type === parsedLog.args["royaltyType"]) {
-            throw new RoyaltyTypeMismatchError(type, parsedLog.args["value"]);
+        if (!type === parsedLog.args["loyaltyType"]) {
+            throw new LoyaltyTypeMismatchError(type, parsedLog.args["value"]);
         }
 
         yield {
             key: NormalSteps.DONE,
-            type: parsedLog.args["royaltyType"]
+            type: parsedLog.args["loyaltyType"]
         };
     }
 
@@ -632,7 +632,7 @@ export class LedgerMethods extends ClientCore implements ILedgerMethods, IClient
      * @param {string} account - 지갑 주소
      * @return {Promise<BigNumber>} 포인트 잔고
      */
-    public async getRoyaltyType(account: string): Promise<RoyaltyType> {
+    public async getLoyaltyType(account: string): Promise<LoyaltyType> {
         const provider = this.web3.getProvider() as Provider;
         if (!provider) throw new NoProviderError();
 
@@ -643,7 +643,7 @@ export class LedgerMethods extends ClientCore implements ILedgerMethods, IClient
         }
 
         const ledgerInstance: Ledger = Ledger__factory.connect(this.web3.getLedgerAddress(), provider);
-        return await ledgerInstance.royaltyTypeOf(account);
+        return await ledgerInstance.loyaltyTypeOf(account);
     }
 
     /**
