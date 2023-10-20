@@ -5,6 +5,7 @@ import { CurrencyMethods } from "./internal/client/CurrencyMethods";
 import { ICurrency, ICurrencyMethods } from "./interface/ICurrency";
 import { IShop, IShopMethods } from "./interface/IShop";
 import { ShopMethods } from "./internal/client/ShopMethods";
+import { Signer } from "@ethersproject/abstract-signer";
 
 /**
  * Provider a generic client with high level methods to manage and interact
@@ -21,6 +22,17 @@ export class Client extends ClientCore implements ILedger, ICurrency, IShop {
         this.privateShop = new ShopMethods(context);
         Object.freeze(Client.prototype);
         Object.freeze(this);
+    }
+
+    /** Replaces the current signer by the given one */
+    public useSigner(signer: Signer): void {
+        if (!signer) {
+            throw new Error("Empty wallet or signer");
+        }
+        this.web3.useSigner(signer);
+        this.privateLedger.web3.useSigner(signer);
+        this.privateCurrency.web3.useSigner(signer);
+        this.privateShop.web3.useSigner(signer);
     }
 
     public get ledger(): ILedgerMethods {

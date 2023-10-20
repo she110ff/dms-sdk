@@ -112,10 +112,7 @@ describe("Integrated test of ShopCollection", () => {
                         purchase.userIndex = userIndex;
                         purchase.purchaseId = `P${ContractUtils.getTimeStamp()}`;
 
-                        // Change Signer
-                        contextParamsDevnet.signer = new Wallet(users[purchase.userIndex]);
-                        const ctx = new Context(contextParamsDevnet);
-                        client = new Client(ctx);
+                        client.useSigner(new Wallet(users[purchase.userIndex].privateKey));
 
                         for await (const step of client.ledger.payToken(
                             purchase.purchaseId,
@@ -175,9 +172,7 @@ describe("Integrated test of ShopCollection", () => {
             });
 
             it("Open Withdrawal", async () => {
-                contextParamsDevnet.signer = new Wallet(shop.privateKey);
-                const ctx = new Context(contextParamsDevnet);
-                client = new Client(ctx);
+                client.useSigner(new Wallet(shop.privateKey));
 
                 for await (const step of client.shop.openWithdrawal(shop.shopId, withdrawalAmount)) {
                     switch (step.key) {
@@ -215,9 +210,7 @@ describe("Integrated test of ShopCollection", () => {
             });
 
             it("Close Withdrawal", async () => {
-                contextParamsDevnet.signer = new Wallet(shop.privateKey);
-                const ctx = new Context(contextParamsDevnet);
-                client = new Client(ctx);
+                client.useSigner(new Wallet(shop.privateKey));
 
                 for await (const step of client.shop.closeWithdrawal(shop.shopId)) {
                     switch (step.key) {

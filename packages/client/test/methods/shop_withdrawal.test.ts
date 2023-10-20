@@ -224,9 +224,7 @@ describe("Shop Withdrawal", () => {
 
         const purchaseAmount = Amount.make(purchase.amount, 18).value;
 
-        GanacheServer.setTestWeb3Signer(userWallets[purchase.userIndex]);
-        const ctx = new Context(contextParamsLocalChain);
-        client = new Client(ctx);
+        client.useSigner(userWallets[purchase.userIndex]);
 
         for await (const step of client.ledger.payPoint(
             purchase.purchaseId,
@@ -277,9 +275,7 @@ describe("Shop Withdrawal", () => {
 
         const purchaseAmount = Amount.make(purchase.amount, 18).value;
 
-        GanacheServer.setTestWeb3Signer(userWallets[purchase.userIndex]);
-        const ctx = new Context(contextParamsLocalChain);
-        client = new Client(ctx);
+        client.useSigner(userWallets[purchase.userIndex]);
 
         for await (const step of client.ledger.payToken(
             purchase.purchaseId,
@@ -325,9 +321,7 @@ describe("Shop Withdrawal", () => {
     });
 
     it("Open Withdrawal", async () => {
-        GanacheServer.setTestWeb3Signer(shopWallets[shopIndex]);
-        const ctx = new Context(contextParamsLocalChain);
-        client = new Client(ctx);
+        client.useSigner(shopWallets[shopIndex]);
 
         for await (const step of client.shop.openWithdrawal(shop.shopId, amount2)) {
             switch (step.key) {
@@ -358,9 +352,7 @@ describe("Shop Withdrawal", () => {
     });
 
     it("Close Withdrawal", async () => {
-        GanacheServer.setTestWeb3Signer(shopWallets[shopIndex]);
-        const ctx = new Context(contextParamsLocalChain);
-        client = new Client(ctx);
+        client.useSigner(shopWallets[shopIndex]);
 
         for await (const step of client.shop.closeWithdrawal(shop.shopId)) {
             switch (step.key) {

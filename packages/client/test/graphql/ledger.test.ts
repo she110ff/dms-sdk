@@ -167,10 +167,7 @@ describe("Integrated test of Ledger", () => {
                 purchase.userIndex = userIndex;
                 purchase.purchaseId = `P${ContractUtils.getTimeStamp()}`;
 
-                // Change Signer
-                contextParamsDevnet.signer = new Wallet(users[purchase.userIndex].privateKey);
-                const ctx = new Context(contextParamsDevnet);
-                client = new Client(ctx);
+                client.useSigner(new Wallet(users[purchase.userIndex].privateKey));
 
                 await ContractUtils.delay(2000);
 
@@ -234,10 +231,7 @@ describe("Integrated test of Ledger", () => {
                 purchase.userIndex = userIndex;
                 purchase.purchaseId = `P${ContractUtils.getTimeStamp()}`;
 
-                // Change Signer
-                contextParamsDevnet.signer = new Wallet(users[purchase.userIndex]);
-                const ctx = new Context(contextParamsDevnet);
-                client = new Client(ctx);
+                client.useSigner(new Wallet(users[purchase.userIndex].privateKey));
 
                 await ContractUtils.delay(2000);
 

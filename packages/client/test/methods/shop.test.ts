@@ -56,7 +56,6 @@ describe("Shop", () => {
         contextParamsLocalChain.signer = shopWallet;
         const ctx = new Context(contextParamsLocalChain);
         client = new Client(ctx);
-        client.web3.useSigner(shopWallet);
     });
 
     it("Server Health Checking", async () => {
