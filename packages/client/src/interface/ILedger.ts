@@ -50,11 +50,11 @@ export interface ILedgerMethods extends IClientCore, IClientHttpCore {
 
     changeToPayablePoint: (phone: string, useRelay?: boolean) => AsyncGenerator<ChangeToPayablePointStepValue>;
 
-    getUserTradeHistory: (account: string, option?: QueryOption) => Promise<any>;
-    getUserPointInputTradeHistory: (account: string, option?: QueryOption) => Promise<any>;
-    getUserTokenInputTradeHistory: (account: string, option?: QueryOption) => Promise<any>;
-    getUserPointOutputTradeHistory: (account: string, option?: QueryOption) => Promise<any>;
-    getUserTokenOutputTradeHistory: (account: string, option?: QueryOption) => Promise<any>;
+    getAllHistory: (account: string, option?: QueryOption) => Promise<any>;
+    getSaveHistory: (account: string, option?: QueryOption) => Promise<any>;
+    getUseHistory: (account: string, option?: QueryOption) => Promise<any>;
+    getDepositHistory: (account: string, option?: QueryOption) => Promise<any>;
+    getWithdrawHistory: (account: string, option?: QueryOption) => Promise<any>;
     getPaidToken: (account: string, purchaseId: string, option?: QueryOption) => Promise<any>;
     getPaidPoint: (account: string, purchaseId: string, option?: QueryOption) => Promise<any>;
 }

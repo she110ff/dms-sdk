@@ -74,68 +74,60 @@ describe("Integrated test of Ledger", () => {
 
             it("All History", async () => {
                 const user = users[50];
-                const res = await client.ledger.getUserTradeHistory(user.address);
+                const res = await client.ledger.getAllHistory(user.address);
                 const length = res.userTradeHistories.length;
                 expect(length).toBeGreaterThan(0);
                 expect(res.userTradeHistories[length - 1].account.toUpperCase()).toEqual(user.address.toUpperCase());
             });
 
-            it("Point Input History", async () => {
+            it("Save History", async () => {
                 for (const user of users) {
-                    if (user.loyaltyType === 0) {
-                        const res = await client.ledger.getUserPointInputTradeHistory(user.address);
-                        const length = res.userTradeHistories.length;
-                        if (length > 0) {
-                            expect(res.userTradeHistories[length - 1].account.toUpperCase()).toEqual(
-                                user.address.toUpperCase()
-                            );
-                            expect(res.userTradeHistories[length - 1].assetFlow).toEqual("PointInput");
-                        }
+                    const res = await client.ledger.getSaveHistory(user.address);
+                    const length = res.userTradeHistories.length;
+                    if (length > 0) {
+                        expect(res.userTradeHistories[length - 1].account.toUpperCase()).toEqual(
+                            user.address.toUpperCase()
+                        );
+                        expect(res.userTradeHistories[length - 1].assetFlow).toEqual("Save");
                     }
                 }
             });
 
-            it("Token Input History", async () => {
+            it("Use History", async () => {
                 for (const user of users) {
-                    if (user.loyaltyType === 1) {
-                        const res = await client.ledger.getUserTokenInputTradeHistory(user.address);
-                        const length = res.userTradeHistories.length;
-                        if (length > 0) {
-                            expect(res.userTradeHistories[length - 1].account.toUpperCase()).toEqual(
-                                user.address.toUpperCase()
-                            );
-                            expect(res.userTradeHistories[length - 1].assetFlow).toEqual("TokenInput");
-                        }
+                    const res = await client.ledger.getUseHistory(user.address);
+                    const length = res.userTradeHistories.length;
+                    if (length > 0) {
+                        expect(res.userTradeHistories[length - 1].account.toUpperCase()).toEqual(
+                            user.address.toUpperCase()
+                        );
+                        expect(res.userTradeHistories[length - 1].assetFlow).toEqual("Use");
                     }
                 }
             });
 
-            it("Point Output History", async () => {
+            it("Deposit History", async () => {
                 for (const user of users) {
-                    if (user.loyaltyType === 0) {
-                        const res = await client.ledger.getUserPointOutputTradeHistory(user.address);
-                        const length = res.userTradeHistories.length;
-                        if (length > 0) {
-                            expect(res.userTradeHistories[length - 1].account.toUpperCase()).toEqual(
-                                user.address.toUpperCase()
-                            );
-                            expect(res.userTradeHistories[length - 1].assetFlow).toEqual("PointOutput");
-                        }
+                    const res = await client.ledger.getDepositHistory(user.address);
+                    const length = res.userTradeHistories.length;
+                    if (length > 0) {
+                        expect(res.userTradeHistories[length - 1].account.toUpperCase()).toEqual(
+                            user.address.toUpperCase()
+                        );
+                        expect(res.userTradeHistories[length - 1].assetFlow).toEqual("Deposit");
                     }
                 }
             });
 
-            it("Token Output History", async () => {
+            it("Withdraw History", async () => {
                 for (const user of users) {
-                    if (user.loyaltyType === 1) {
-                        const res = await client.ledger.getUserTokenOutputTradeHistory(user.address);
-                        const length = res.userTradeHistories.length;
-                        if (length > 0) {
-                            expect(res.userTradeHistories[length - 1].account.toUpperCase()).toEqual(
-                                user.address.toUpperCase()
-                            );
-                            expect(res.userTradeHistories[length - 1].assetFlow).toEqual("TokenOutput");
-                        }
+                    const res = await client.ledger.getWithdrawHistory(user.address);
+                    const length = res.userTradeHistories.length;
+                    if (length > 0) {
+                        expect(res.userTradeHistories[length - 1].account.toUpperCase()).toEqual(
+                            user.address.toUpperCase()
+                        );
+                        expect(res.userTradeHistories[length - 1].assetFlow).toEqual("Withdraw");
                     }
                 }
             });

@@ -745,7 +745,7 @@ export class LedgerMethods extends ClientCore implements ILedgerMethods, IClient
      * @param sortDirection
      * @param sortBy
      */
-    public async getUserTradeHistory(
+    public async getAllHistory(
         account: string,
         { limit, skip, sortDirection, sortBy }: QueryOption = {
             limit: 10,
@@ -762,14 +762,14 @@ export class LedgerMethods extends ClientCore implements ILedgerMethods, IClient
     }
 
     /**
-     * 사용자의 거래내역들 중 포인트 잔고가 증가하는 거래내역을 제공한다.
+     * 사용자의 로열티 적립내역을 제공한다.
      * @param account 사용자의 지갑주소
      * @param limit
      * @param skip
      * @param sortDirection
      * @param sortBy
      */
-    public async getUserPointInputTradeHistory(
+    public async getSaveHistory(
         account: string,
         { limit, skip, sortDirection, sortBy }: QueryOption = {
             limit: 10,
@@ -779,21 +779,21 @@ export class LedgerMethods extends ClientCore implements ILedgerMethods, IClient
         }
     ): Promise<any> {
         const query = QueryUserTradeHistory;
-        const where = { account: account, assetFlow: "PointInput" };
+        const where = { account: account, assetFlow: "Save" };
         const params = { where, limit, skip, direction: sortDirection, sortBy };
         const name = "user trade history";
         return await this.graphql.request({ query, params, name });
     }
 
     /**
-     * 사용자의 거래내역들 중 토큰 잔고가 증가하는 거래내역을 제공한다.
+     * 사용자의 로열티 사용내역을 제공한다.
      * @param account 사용자의 지갑주소
      * @param limit
      * @param skip
      * @param sortDirection
      * @param sortBy
      */
-    public async getUserTokenInputTradeHistory(
+    public async getUseHistory(
         account: string,
         { limit, skip, sortDirection, sortBy }: QueryOption = {
             limit: 10,
@@ -803,21 +803,21 @@ export class LedgerMethods extends ClientCore implements ILedgerMethods, IClient
         }
     ): Promise<any> {
         const query = QueryUserTradeHistory;
-        const where = { account: account, assetFlow: "TokenInput" };
+        const where = { account: account, assetFlow: "Use" };
         const params = { where, limit, skip, direction: sortDirection, sortBy };
         const name = "user trade history";
         return await this.graphql.request({ query, params, name });
     }
 
     /**
-     * 사용자의 거래내역들 중 포인트 잔고가 감소하는 거래내역을 제공한다.
+     * 사용자의 토큰 예치 내역을 제공한다.
      * @param account 사용자의 지갑주소
      * @param limit
      * @param skip
      * @param sortDirection
      * @param sortBy
      */
-    public async getUserPointOutputTradeHistory(
+    public async getDepositHistory(
         account: string,
         { limit, skip, sortDirection, sortBy }: QueryOption = {
             limit: 10,
@@ -827,21 +827,21 @@ export class LedgerMethods extends ClientCore implements ILedgerMethods, IClient
         }
     ): Promise<any> {
         const query = QueryUserTradeHistory;
-        const where = { account: account, assetFlow: "PointOutput" };
+        const where = { account: account, assetFlow: "Deposit" };
         const params = { where, limit, skip, direction: sortDirection, sortBy };
         const name = "user trade history";
         return await this.graphql.request({ query, params, name });
     }
 
     /**
-     * 사용자의 거래내역들 중 토큰 잔고가 감소하는 거래내역을 제공한다.
+     * 사용자의 토큰 인출 내역을 제공한다.
      * @param account 사용자의 지갑주소
      * @param limit
      * @param skip
      * @param sortDirection
      * @param sortBy
      */
-    public async getUserTokenOutputTradeHistory(
+    public async getWithdrawHistory(
         account: string,
         { limit, skip, sortDirection, sortBy }: QueryOption = {
             limit: 10,
@@ -851,7 +851,7 @@ export class LedgerMethods extends ClientCore implements ILedgerMethods, IClient
         }
     ): Promise<any> {
         const query = QueryUserTradeHistory;
-        const where = { account: account, assetFlow: "TokenOutput" };
+        const where = { account: account, assetFlow: "Withdraw" };
         const params = { where, limit, skip, direction: sortDirection, sortBy };
         const name = "user trade history";
         return await this.graphql.request({ query, params, name });
