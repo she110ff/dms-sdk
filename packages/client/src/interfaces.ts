@@ -97,12 +97,17 @@ export enum LoyaltyType {
 export type ChangeLoyaltyTypeStepValue =
     | {
           key: NormalSteps.PREPARED;
-          type: LoyaltyType;
           account: string;
           signature: string;
       }
     | { key: NormalSteps.SENT; txHash: string }
-    | { key: NormalSteps.DONE; type: LoyaltyType };
+    | {
+          key: NormalSteps.DONE;
+          account: string;
+          amountToken: BigNumberish;
+          amountPoint: BigNumberish;
+          balanceToken: BigNumberish;
+      };
 
 export type ChangeToPayablePointStepValue =
     | {

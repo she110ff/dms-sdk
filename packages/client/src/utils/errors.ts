@@ -110,12 +110,6 @@ export class AmountMismatchError extends Error {
     }
 }
 
-export class LoyaltyTypeMismatchError extends Error {
-    constructor(expected: number, received: number) {
-        super(`Loyalty type mismatch. Expected: ${expected}, received: ${received}`);
-    }
-}
-
 export class FailedWithdrawError extends Error {
     constructor() {
         super("Failed to withdraw");

@@ -1,5 +1,5 @@
 import { contextParamsDevnet } from "../helper/constants";
-import { Amount, Client, Context, ContractUtils, LIVE_CONTRACTS, NormalSteps } from "../../src";
+import { Amount, Client, Context, ContractUtils, LIVE_CONTRACTS, LoyaltyType, NormalSteps } from "../../src";
 import { BigNumber } from "@ethersproject/bignumber";
 import { Wallet } from "@ethersproject/wallet";
 
@@ -150,7 +150,8 @@ describe("Integrated test of Ledger", () => {
                 let userIndex = 0;
                 for (const user of users) {
                     const balance = await client.ledger.getTokenBalance(user.address);
-                    if (balance.gt(tokenAmount)) {
+                    const type = await client.ledger.getLoyaltyType(user.address);
+                    if (balance.gt(tokenAmount) && type === LoyaltyType.TOKEN) {
                         break;
                     }
                     userIndex++;
@@ -214,7 +215,8 @@ describe("Integrated test of Ledger", () => {
                 let userIndex = 0;
                 for (const user of users) {
                     const balance = await client.ledger.getPointBalance(user.address);
-                    if (balance.gt(amount)) {
+                    const type = await client.ledger.getLoyaltyType(user.address);
+                    if (balance.gt(amount) && type === LoyaltyType.POINT) {
                         break;
                     }
                     userIndex++;

@@ -39,7 +39,6 @@ import {
     InternalServerError,
     MismatchApproveAddressError,
     NoHttpModuleError,
-    LoyaltyTypeMismatchError,
     UnregisteredPhoneError
 } from "../../utils/errors";
 import { Network } from "../../client-common/interfaces/network";
@@ -391,7 +390,7 @@ export class LedgerMethods extends ClientCore implements ILedgerMethods, IClient
                 signature
             };
 
-            const res = await Network.post(await this.getEndpoint("payPoint"), param);
+            const res = await Network.post(await this.getEndpoint("/ledger/payPoint"), param);
             if (res?.code !== 200) throw new InternalServerError(res.message);
             if (res?.data?.code && res.data.code !== 200)
                 throw new InternalServerError(res?.data?.error?.message ?? "");
@@ -500,7 +499,7 @@ export class LedgerMethods extends ClientCore implements ILedgerMethods, IClient
                 signature
             };
 
-            const res = await Network.post(await this.getEndpoint("payToken"), param);
+            const res = await Network.post(await this.getEndpoint("/ledger/payToken"), param);
             if (res?.code !== 200) throw new InternalServerError(res.message);
             if (res?.data?.code && res.data.code !== 200)
                 throw new InternalServerError(res?.data?.error?.message ?? "");
@@ -560,14 +559,10 @@ export class LedgerMethods extends ClientCore implements ILedgerMethods, IClient
 
     /**
      * 적립되는 로얄티의 종류를 변경한다.
-     * @param type - 로얄티의 종류
      * @param useRelay - 이값이 true 이면 릴레이 서버를 경유해서 전송합니다. 그렇지 않으면 직접 컨트랙트를 호출합니다.
      * @return {AsyncGenerator<ChangeLoyaltyTypeStepValue>}
      */
-    public async *changeLoyaltyType(
-        type: LoyaltyType,
-        useRelay: boolean = true
-    ): AsyncGenerator<ChangeLoyaltyTypeStepValue> {
+    public async *changeToLoyaltyToken(useRelay: boolean = true): AsyncGenerator<ChangeLoyaltyTypeStepValue> {
         const signer = this.web3.getConnectedSigner();
         if (!signer) {
             throw new NoSignerError();
@@ -586,16 +581,15 @@ export class LedgerMethods extends ClientCore implements ILedgerMethods, IClient
         let contractTx: ContractTransaction;
         if (useRelay) {
             const nonce = await ledgerContract.nonceOf(account);
-            const signature = await ContractUtils.signLoyaltyType(signer, type, nonce);
+            const signature = await ContractUtils.signLoyaltyType(signer, nonce);
 
-            yield { key: NormalSteps.PREPARED, type, account, signature };
+            yield { key: NormalSteps.PREPARED, account, signature };
 
             const param = {
-                type,
                 account,
                 signature
             };
-            const res = await Network.post(await this.getEndpoint("changeLoyaltyType"), param);
+            const res = await Network.post(await this.getEndpoint("/ledger/changeToLoyaltyToken"), param);
             if (res?.code !== 200) throw new InternalServerError(res.message);
             if (res?.data?.code && res.data.code !== 200)
                 throw new InternalServerError(res?.data?.error?.message ?? "");
@@ -604,26 +598,26 @@ export class LedgerMethods extends ClientCore implements ILedgerMethods, IClient
 
             yield { key: NormalSteps.SENT, txHash: res.data.txHash };
         } else {
-            yield { key: NormalSteps.PREPARED, type, account, signature: SignatureZero };
+            yield { key: NormalSteps.PREPARED, account, signature: SignatureZero };
 
-            contractTx = await ledgerContract.setLoyaltyTypeDirect(type);
+            contractTx = await ledgerContract.changeToLoyaltyTokenDirect();
 
             yield { key: NormalSteps.SENT, txHash: contractTx.hash };
         }
         const txReceipt = await contractTx.wait();
 
-        const log = findLog(txReceipt, ledgerContract.interface, "ChangedLoyaltyType");
+        const log = findLog(txReceipt, ledgerContract.interface, "ChangedToLoyaltyToken");
         if (!log) {
             throw new FailedPayTokenError();
         }
         const parsedLog = ledgerContract.interface.parseLog(log);
-        if (!type === parsedLog.args["loyaltyType"]) {
-            throw new LoyaltyTypeMismatchError(type, parsedLog.args["value"]);
-        }
 
         yield {
             key: NormalSteps.DONE,
-            type: parsedLog.args["loyaltyType"]
+            account: parsedLog.args["account"],
+            amountToken: parsedLog.args["amountToken"],
+            amountPoint: parsedLog.args["amountPoint"],
+            balanceToken: parsedLog.args["balanceToken"]
         };
     }
 
@@ -699,7 +693,7 @@ export class LedgerMethods extends ClientCore implements ILedgerMethods, IClient
 
             yield { key: NormalSteps.PREPARED, phone, phoneHash, account, signature, balance };
 
-            const res = await Network.post(await this.getEndpoint("changeToPayablePoint"), param);
+            const res = await Network.post(await this.getEndpoint("/ledger/changeToPayablePoint"), param);
             if (res?.code !== 200) throw new InternalServerError(res.message);
             if (res?.data?.code && res.data.code !== 200)
                 throw new InternalServerError(res?.data?.error?.message ?? "");

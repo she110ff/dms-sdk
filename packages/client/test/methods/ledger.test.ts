@@ -100,47 +100,9 @@ describe("Ledger", () => {
             });
         });
 
-        it("Change point type to 'token'", async () => {
-            for await (const step of client.ledger.changeLoyaltyType(LoyaltyType.TOKEN)) {
-                switch (step.key) {
-                    case NormalSteps.PREPARED:
-                        expect(step.type).toEqual(LoyaltyType.TOKEN);
-                        expect(step.account).toEqual(userAddress);
-                        break;
-                    case NormalSteps.SENT:
-                        expect(typeof step.txHash).toBe("string");
-                        expect(step.txHash).toMatch(/^0x[A-Fa-f0-9]{64}$/i);
-                        break;
-                    case NormalSteps.DONE:
-                        expect(step.type).toBe(LoyaltyType.TOKEN);
-                        break;
-                    default:
-                        throw new Error("Unexpected change loyalty step: " + JSON.stringify(step, null, 2));
-                }
-            }
-            const type = await client.ledger.getLoyaltyType(userAddress);
-            expect(type).toBe(LoyaltyType.TOKEN);
-        });
-
-        it("Save Purchase Data 3", async () => {
-            const purchaseAmount = Amount.make(purchaseData[0].amount, 18).value.mul(1000);
-            await deployment.ledger.connect(validator1).savePurchase({
-                purchaseId: purchaseData[0].purchaseId,
-                timestamp: purchaseData[0].timestamp,
-                amount: purchaseAmount,
-                currency: purchaseData[0].currency.toLowerCase(),
-                shopId: shopData[purchaseData[0].shopIndex].shopId,
-                method: purchaseData[0].method,
-                account: userAddress,
-                phone: phoneHash
-            });
-        });
-
         const purchaseAmount = Amount.make(purchaseData[0].amount, 18).value.mul(1000);
         const pointAmount = purchaseAmount.div(100);
-        const multiple = BigNumber.from(1_000_000_000);
-        const price = BigNumber.from(150).mul(multiple);
-        const tokenAmount = pointAmount.mul(multiple).div(price);
+        const tokenAmount = BigNumber.from(0);
 
         it("Balance Check - Test getting the unpayable point balance", async () => {
             const balance = await client.ledger.getUnPayablePointBalance(phoneHash);
@@ -195,6 +157,49 @@ describe("Ledger", () => {
                         throw new Error("Unexpected pay point step: " + JSON.stringify(step, null, 2));
                 }
             }
+        });
+
+        it("Change point type to 'token'", async () => {
+            const balancePoint = await client.ledger.getPointBalance(userAddress);
+            const multiple = BigNumber.from(1_000_000_000);
+            const price = BigNumber.from(150).mul(multiple);
+            const tokenAmount = balancePoint.mul(multiple).div(price);
+
+            for await (const step of client.ledger.changeToLoyaltyToken()) {
+                switch (step.key) {
+                    case NormalSteps.PREPARED:
+                        expect(step.account).toEqual(userAddress);
+                        break;
+                    case NormalSteps.SENT:
+                        expect(typeof step.txHash).toBe("string");
+                        expect(step.txHash).toMatch(/^0x[A-Fa-f0-9]{64}$/i);
+                        break;
+                    case NormalSteps.DONE:
+                        expect(step.account).toBe(user1.address);
+                        break;
+                    default:
+                        throw new Error("Unexpected change loyalty step: " + JSON.stringify(step, null, 2));
+                }
+            }
+            const type = await client.ledger.getLoyaltyType(userAddress);
+            expect(type).toBe(LoyaltyType.TOKEN);
+
+            const balance = await client.ledger.getTokenBalance(userAddress);
+            expect(balance).toEqual(tokenAmount);
+        });
+
+        it("Save Purchase Data 3", async () => {
+            const purchaseAmount = Amount.make(purchaseData[0].amount, 18).value.mul(1000);
+            await deployment.ledger.connect(validator1).savePurchase({
+                purchaseId: purchaseData[0].purchaseId,
+                timestamp: purchaseData[0].timestamp,
+                amount: purchaseAmount,
+                currency: purchaseData[0].currency.toLowerCase(),
+                shopId: shopData[purchaseData[0].shopIndex].shopId,
+                method: purchaseData[0].method,
+                account: userAddress,
+                phone: phoneHash
+            });
         });
 
         it("Test of pay token", async () => {
@@ -303,7 +308,7 @@ describe("Ledger", () => {
             const nonce = await deployment.phoneLinkCollection.nonceOf(userAddress);
             const signature = await ContractUtils.signRequestHash(signer, phoneHash, nonce);
             const requestId = ContractUtils.getRequestId(phoneHash, userAddress, nonce);
-            //Add Email
+            //Add Phone
             await deployment.phoneLinkCollection
                 .connect(signer)
                 .addRequest(requestId, phoneHash, userAddress, signature);
@@ -421,47 +426,9 @@ describe("Ledger", () => {
             });
         });
 
-        it("Change point type to 'token'", async () => {
-            for await (const step of client.ledger.changeLoyaltyType(LoyaltyType.TOKEN, false)) {
-                switch (step.key) {
-                    case NormalSteps.PREPARED:
-                        expect(step.type).toEqual(LoyaltyType.TOKEN);
-                        expect(step.account).toEqual(userAddress);
-                        break;
-                    case NormalSteps.SENT:
-                        expect(typeof step.txHash).toBe("string");
-                        expect(step.txHash).toMatch(/^0x[A-Fa-f0-9]{64}$/i);
-                        break;
-                    case NormalSteps.DONE:
-                        expect(step.type).toBe(LoyaltyType.TOKEN);
-                        break;
-                    default:
-                        throw new Error("Unexpected change loyalty step: " + JSON.stringify(step, null, 2));
-                }
-            }
-            const type = await client.ledger.getLoyaltyType(userAddress);
-            expect(type).toBe(LoyaltyType.TOKEN);
-        });
-
-        it("Save Purchase Data 3", async () => {
-            const purchaseAmount = Amount.make(purchaseData[0].amount, 18).value.mul(1000);
-            await deployment.ledger.connect(validator1).savePurchase({
-                purchaseId: purchaseData[0].purchaseId,
-                timestamp: purchaseData[0].timestamp,
-                amount: purchaseAmount,
-                currency: purchaseData[0].currency.toLowerCase(),
-                shopId: shopData[purchaseData[0].shopIndex].shopId,
-                method: purchaseData[0].method,
-                account: userAddress,
-                phone: phoneHash
-            });
-        });
-
         const purchaseAmount = Amount.make(purchaseData[0].amount, 18).value.mul(1000);
         const pointAmount = purchaseAmount.div(100);
-        const multiple = BigNumber.from(1_000_000_000);
-        const price = BigNumber.from(150).mul(multiple);
-        const tokenAmount = pointAmount.mul(multiple).div(price);
+        const tokenAmount = BigNumber.from(0);
 
         it("Balance Check - Test getting the unpayable point balance", async () => {
             const balance = await client.ledger.getUnPayablePointBalance(phoneHash);
@@ -517,6 +484,49 @@ describe("Ledger", () => {
                         throw new Error("Unexpected pay point step: " + JSON.stringify(step, null, 2));
                 }
             }
+        });
+
+        it("Change point type to 'token'", async () => {
+            const balancePoint = await client.ledger.getPointBalance(userAddress);
+            const multiple = BigNumber.from(1_000_000_000);
+            const price = BigNumber.from(150).mul(multiple);
+            const tokenAmount = balancePoint.mul(multiple).div(price);
+
+            for await (const step of client.ledger.changeToLoyaltyToken(false)) {
+                switch (step.key) {
+                    case NormalSteps.PREPARED:
+                        expect(step.account).toEqual(userAddress);
+                        break;
+                    case NormalSteps.SENT:
+                        expect(typeof step.txHash).toBe("string");
+                        expect(step.txHash).toMatch(/^0x[A-Fa-f0-9]{64}$/i);
+                        break;
+                    case NormalSteps.DONE:
+                        expect(step.account).toBe(user1.address);
+                        break;
+                    default:
+                        throw new Error("Unexpected change loyalty step: " + JSON.stringify(step, null, 2));
+                }
+            }
+            const type = await client.ledger.getLoyaltyType(userAddress);
+            expect(type).toBe(LoyaltyType.TOKEN);
+
+            const balance = await client.ledger.getTokenBalance(userAddress);
+            expect(balance).toEqual(tokenAmount);
+        });
+
+        it("Save Purchase Data 3", async () => {
+            const purchaseAmount = Amount.make(purchaseData[0].amount, 18).value.mul(1000);
+            await deployment.ledger.connect(validator1).savePurchase({
+                purchaseId: purchaseData[0].purchaseId,
+                timestamp: purchaseData[0].timestamp,
+                amount: purchaseAmount,
+                currency: purchaseData[0].currency.toLowerCase(),
+                shopId: shopData[purchaseData[0].shopIndex].shopId,
+                method: purchaseData[0].method,
+                account: userAddress,
+                phone: phoneHash
+            });
         });
 
         it("Test of pay token", async () => {
@@ -626,7 +636,7 @@ describe("Ledger", () => {
             const nonce = await deployment.phoneLinkCollection.nonceOf(userAddress);
             const signature = await ContractUtils.signRequestHash(signer, phoneHash, nonce);
             const requestId = ContractUtils.getRequestId(phoneHash, userAddress, nonce);
-            //Add Email
+            //Add Phone
             await deployment.phoneLinkCollection
                 .connect(signer)
                 .addRequest(requestId, phoneHash, userAddress, signature);
