@@ -194,7 +194,7 @@ describe("Integrated test of Ledger", () => {
                 }
 
                 const res = await client.ledger.getPaidToken(users[userIndex].address, purchase.purchaseId);
-                if (res.length == 1) {
+                if (res.length === 1) {
                     expect(res.paidToken[0].account.toUpperCase()).toEqual(users[userIndex].address.toUpperCase());
                     expect(res.paidToken[0].purchaseId).toEqual(purchase.purchaseId);
                 }
@@ -259,7 +259,7 @@ describe("Integrated test of Ledger", () => {
                 }
 
                 const res = await client.ledger.getPaidPoint(users[userIndex].address, purchase.purchaseId);
-                if (res.length == 1) {
+                if (res.length === 1) {
                     expect(res.paidPoint[0].account.toUpperCase()).toEqual(users[userIndex].address.toUpperCase());
                     expect(res.paidPoint[0].purchaseId).toEqual(purchase.purchaseId);
                 }

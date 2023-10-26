@@ -114,6 +114,35 @@ export class ContractUtils {
         return res.toLowerCase() === address.toLowerCase();
     }
 
+    public static getRequestPhone(phone: string, address: string, nonce: BigNumberish): Uint8Array {
+        const encodedResult = defaultAbiCoder.encode(
+            ["bytes32", "address", "uint256"],
+            [ContractUtils.getPhoneHash(phone), address, nonce]
+        );
+        return arrayify(keccak256(encodedResult));
+    }
+
+    public static async signRequestPhone(signer: Signer, phone: string, nonce: BigNumberish): Promise<string> {
+        const message = ContractUtils.getRequestPhone(phone, await signer.getAddress(), nonce);
+        return signer.signMessage(message);
+    }
+
+    public static verifyRequestPhone(
+        address: string,
+        phone: string,
+        nonce: BigNumberish,
+        signature: BytesLike
+    ): boolean {
+        const message = ContractUtils.getRequestPhone(phone, address, nonce);
+        let res: string;
+        try {
+            res = verifyMessage(message, signature);
+        } catch (error) {
+            return false;
+        }
+        return res.toLowerCase() === address.toLowerCase();
+    }
+
     public static getPaymentMessage(
         account: string,
         purchaseId: string,

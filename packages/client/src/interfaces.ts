@@ -217,6 +217,55 @@ export type ShopData = {
     withdrawStatus: WithdrawStatus;
 };
 
+export type ValidatorInfoValue = {
+    address: string;
+    index: number;
+    endpoint: string;
+    status: number;
+};
+
+export enum PhoneLinkRequestStatus {
+    INVALID,
+    REQUESTED,
+    ACCEPTED,
+    REJECTED
+}
+
+export enum PhoneLinkRegisterSteps {
+    SENDING = "sending",
+    REQUESTED = "requested",
+    ACCEPTED = "accepted",
+    REJECTED = "rejected",
+    TIMEOUT = "timeout"
+}
+
+export type PhoneLinkRegisterStepValue =
+    | { key: PhoneLinkRegisterSteps.SENDING; requestId: string; phone: string; address: string }
+    | {
+          key: PhoneLinkRegisterSteps.REQUESTED;
+          requestId: string;
+          phone: string;
+          address: string;
+      }
+    | {
+          key: PhoneLinkRegisterSteps.ACCEPTED;
+          requestId: string;
+          phone: string;
+          address: string;
+      }
+    | {
+          key: PhoneLinkRegisterSteps.REJECTED;
+          requestId: string;
+          phone: string;
+          address: string;
+      }
+    | {
+          key: PhoneLinkRegisterSteps.TIMEOUT;
+          requestId: string;
+          phone: string;
+          address: string;
+      };
+
 export enum SortDirection {
     ASC = "asc",
     DESC = "desc"

@@ -139,3 +139,9 @@ export class FailedAddShopError extends Error {
         super("Failed to add shop");
     }
 }
+
+export class NoValidator extends Error {
+    constructor() {
+        super("No Validators");
+    }
+}
