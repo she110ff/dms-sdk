@@ -2,28 +2,22 @@ import { IClientHttpCore, SupportedNetworks, SupportedNetworksArray } from "../.
 import { PhoneLinkCollection__factory } from "del-osx-lib";
 import { NoProviderError, NoSignerError, UnsupportedNetworkError } from "dms-sdk-common";
 import { PhoneLinkRequestStatus, PhoneLinkRegisterSteps, PhoneLinkRegisterStepValue } from "../../interfaces";
-import { ClientCore, Context, IHttpConfig } from "../../client-common";
+import { ClientCore, Context } from "../../client-common";
 import { ContractUtils } from "../../utils/ContractUtils";
-import { InternalServerError, NoValidator } from "../../utils/errors";
 
 import { IPhoneLinkMethods } from "../../interface/IPhoneLink";
 import { Network } from "../../client-common/interfaces/network";
 
 import { getNetwork } from "@ethersproject/networks";
 
+import { InternalServerError, NoValidator } from "../../utils/errors";
+
 /**
- * Methods module the SDK Generic Client
+ * 사용자의 전화번화와 지갑주소를 링크하여 스마트컨트랙트에 저장하는 기능이 포함되어 있다.
  */
 export class PhoneLinkMethods extends ClientCore implements IPhoneLinkMethods, IClientHttpCore {
-    public config: IHttpConfig;
-
     constructor(context: Context) {
         super(context);
-
-        this.config = {
-            url: new URL("http://localhost"),
-            headers: {}
-        };
 
         Object.freeze(PhoneLinkMethods.prototype);
         Object.freeze(this);
@@ -104,8 +98,10 @@ export class PhoneLinkMethods extends ClientCore implements IPhoneLinkMethods, I
         const signature = await ContractUtils.signRequestPhone(signer, phone, nonce);
         const param = { phone, address, signature };
         const res = await Network.post(await this.getEndpoint("/request"), param);
-        if (res?.code !== 200) throw new InternalServerError(res.message);
-        if (res?.data?.code && res.data.code !== 200) throw new InternalServerError(res?.data?.error?.message ?? "");
+
+        if (res.code !== 200) {
+            throw new InternalServerError(res?.error?.message ?? "");
+        }
 
         yield {
             key: PhoneLinkRegisterSteps.SENDING,

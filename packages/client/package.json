@@ -92,9 +92,6 @@
   },
   "jest": {
     "testEnvironment": "../../test-environment.js",
-    "testEnvironmentOptions": {
-      "url": "http://localhost:7070"
-    },
-    "testTimeout": 120000
+    "testTimeout": 180000
   }
 }

@@ -37,7 +37,7 @@ import {
     FailedWithdrawError,
     InsufficientBalanceError,
     InternalServerError,
-    MismatchApproveAddressError,
+    MismatchedAddressError,
     NoHttpModuleError,
     UnregisteredPhoneError
 } from "../../utils/errors";
@@ -54,7 +54,7 @@ import { PhoneLinkCollection, PhoneLinkCollection__factory } from "del-osx-lib";
 import { AddressZero } from "@ethersproject/constants";
 
 /**
- * Methods module the SDK Generic Client
+ * 사용자의 포인트/토큰의 잔고와 제품구매를 하는 기능이 포함되어 있다.
  */
 export class LedgerMethods extends ClientCore implements ILedgerMethods, IClientHttpCore {
     private relayEndpoint: string | URL | undefined;
@@ -391,9 +391,9 @@ export class LedgerMethods extends ClientCore implements ILedgerMethods, IClient
             };
 
             const res = await Network.post(await this.getEndpoint("/ledger/payPoint"), param);
-            if (res?.code !== 200) throw new InternalServerError(res.message);
-            if (res?.data?.code && res.data.code !== 200)
-                throw new InternalServerError(res?.data?.error?.message ?? "");
+            if (res.code !== 200) {
+                throw new InternalServerError(res?.error?.message ?? "");
+            }
 
             contractTx = (await signer.provider.getTransaction(res.data.txHash)) as ContractTransaction;
 
@@ -500,9 +500,9 @@ export class LedgerMethods extends ClientCore implements ILedgerMethods, IClient
             };
 
             const res = await Network.post(await this.getEndpoint("/ledger/payToken"), param);
-            if (res?.code !== 200) throw new InternalServerError(res.message);
-            if (res?.data?.code && res.data.code !== 200)
-                throw new InternalServerError(res?.data?.error?.message ?? "");
+            if (res.code !== 200) {
+                throw new InternalServerError(res?.error?.message ?? "");
+            }
 
             yield { key: NormalSteps.SENT, txHash: res.data.txHash, purchaseId: param.purchaseId };
 
@@ -590,9 +590,9 @@ export class LedgerMethods extends ClientCore implements ILedgerMethods, IClient
                 signature
             };
             const res = await Network.post(await this.getEndpoint("/ledger/changeToLoyaltyToken"), param);
-            if (res?.code !== 200) throw new InternalServerError(res.message);
-            if (res?.data?.code && res.data.code !== 200)
-                throw new InternalServerError(res?.data?.error?.message ?? "");
+            if (res.code !== 200) {
+                throw new InternalServerError(res?.error?.message ?? "");
+            }
 
             contractTx = (await signer.provider.getTransaction(res.data.txHash)) as ContractTransaction;
 
@@ -677,7 +677,7 @@ export class LedgerMethods extends ClientCore implements ILedgerMethods, IClient
         );
         const phoneToAddress: string = await linkContract.toAddress(phoneHash);
         if (phoneToAddress === AddressZero) throw new UnregisteredPhoneError();
-        if (phoneToAddress !== (await signer.getAddress())) throw new MismatchApproveAddressError();
+        if (phoneToAddress !== (await signer.getAddress())) throw new MismatchedAddressError();
 
         const account: string = await signer.getAddress();
         let contractTx: ContractTransaction;
@@ -694,9 +694,9 @@ export class LedgerMethods extends ClientCore implements ILedgerMethods, IClient
             yield { key: NormalSteps.PREPARED, phone, phoneHash, account, signature, balance };
 
             const res = await Network.post(await this.getEndpoint("/ledger/changeToPayablePoint"), param);
-            if (res?.code !== 200) throw new InternalServerError(res.message);
-            if (res?.data?.code && res.data.code !== 200)
-                throw new InternalServerError(res?.data?.error?.message ?? "");
+            if (res.code !== 200) {
+                throw new InternalServerError(res?.error?.message ?? "");
+            }
 
             contractTx = (await signer.provider.getTransaction(res.data.txHash)) as ContractTransaction;
 

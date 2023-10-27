@@ -7,7 +7,7 @@ import { BigNumber } from "@ethersproject/bignumber";
 import { getNetwork } from "@ethersproject/networks";
 
 /**
- * Methods module the SDK Generic Client
+ * 환률정보를 제공하고, 통화량을 환산하는 기능이 포함된 클래스이다.
  */
 export class CurrencyMethods extends ClientCore implements ICurrencyMethods {
     constructor(context: Context) {

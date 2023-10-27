@@ -1,15 +1,40 @@
 import { UnfetchResponse } from "unfetch";
 import { BigNumber } from "@ethersproject/bignumber";
 
+export class NetworkError extends Error {
+    public status: number;
+    public statusText: string;
+    constructor(status: number, statusText: string) {
+        super(statusText);
+        this.name = "NetworkError";
+        this.status = status;
+        this.statusText = statusText;
+    }
+}
+
+export class NotFoundError extends NetworkError {
+    constructor(status: number, statusText: string) {
+        super(status, statusText);
+        this.name = "NotFoundError";
+    }
+}
+
+export class BadRequestError extends NetworkError {
+    constructor(status: number, statusText: string) {
+        super(status, statusText);
+        this.name = "BadRequestError";
+    }
+}
+
 export class InvalidPhoneParamError extends Error {
     constructor() {
         super("The param does not phone");
     }
 }
 
-export class MismatchApproveAddressError extends Error {
+export class MismatchedAddressError extends Error {
     constructor() {
-        super("Customer and approver mismatch");
+        super("The wallet address associated with the phone number has a different signer");
     }
 }
 
@@ -130,7 +155,7 @@ export class FailedPayTokenError extends Error {
 
 export class InternalServerError extends Error {
     constructor(message: string) {
-        super(`Internal Server Error. Reason : ${message}`);
+        super(`Internal Server Error. Reason: ${message}`);
     }
 }
 
@@ -142,6 +167,6 @@ export class FailedAddShopError extends Error {
 
 export class NoValidator extends Error {
     constructor() {
-        super("No Validators");
+        super("Validators not found");
     }
 }

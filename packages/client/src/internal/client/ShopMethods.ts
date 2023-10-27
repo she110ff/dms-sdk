@@ -36,7 +36,7 @@ import { BytesLike } from "@ethersproject/bytes";
 import { QueryShopTradeHistory } from "../graphql-queries/shop/history";
 
 /**
- * Methods module the SDK Generic Client
+ * 상점의 정보를 추가/수정하는 기능과 정산의 요청/확인이 포함된 클래스이다.
  */
 export class ShopMethods extends ClientCore implements IShopMethods, IClientHttpCore {
     private relayEndpoint: string | URL | undefined;
@@ -218,9 +218,9 @@ export class ShopMethods extends ClientCore implements IShopMethods, IClientHttp
             };
 
             const res = await Network.post(await this.getEndpoint("/shop/add"), param);
-            if (res?.code !== 200) throw new InternalServerError(res.message);
-            if (res?.data?.code && res.data.code !== 200)
-                throw new InternalServerError(res?.data?.error?.message ?? "");
+            if (res.code !== 200) {
+                throw new InternalServerError(res?.error?.message ?? "");
+            }
 
             contractTx = (await signer.provider.getTransaction(res.data.txHash)) as ContractTransaction;
 
@@ -324,9 +324,9 @@ export class ShopMethods extends ClientCore implements IShopMethods, IClientHttp
             };
 
             const res = await Network.post(await this.getEndpoint("/shop/update"), param);
-            if (res?.code !== 200) throw new InternalServerError(res.message);
-            if (res?.data?.code && res.data.code !== 200)
-                throw new InternalServerError(res?.data?.error?.message ?? "");
+            if (res.code !== 200) {
+                throw new InternalServerError(res?.error?.message ?? "");
+            }
 
             contractTx = (await signer.provider.getTransaction(res.data.txHash)) as ContractTransaction;
 
@@ -409,9 +409,9 @@ export class ShopMethods extends ClientCore implements IShopMethods, IClientHttp
             };
 
             const res = await Network.post(await this.getEndpoint("/shop/remove"), param);
-            if (res?.code !== 200) throw new InternalServerError(res.message);
-            if (res?.data?.code && res.data.code !== 200)
-                throw new InternalServerError(res?.data?.error?.message ?? "");
+            if (res.code !== 200) {
+                throw new InternalServerError(res?.error?.message ?? "");
+            }
 
             contractTx = (await signer.provider.getTransaction(res.data.txHash)) as ContractTransaction;
 
@@ -444,7 +444,7 @@ export class ShopMethods extends ClientCore implements IShopMethods, IClientHttp
     }
 
     /**
-     * 상점주가 인출금 신청을 오픈한다.
+     * 상점주가 정산금 출금 신청을 오픈한다.
      * @param shopId
      * @param amount
      * @param useRelay
@@ -494,9 +494,9 @@ export class ShopMethods extends ClientCore implements IShopMethods, IClientHttp
             };
 
             const res = await Network.post(await this.getEndpoint("/shop/openWithdrawal"), param);
-            if (res?.code !== 200) throw new InternalServerError(res.message);
-            if (res?.data?.code && res.data.code !== 200)
-                throw new InternalServerError(res?.data?.error?.message ?? "");
+            if (res.code !== 200) {
+                throw new InternalServerError(res?.error?.message ?? "");
+            }
 
             contractTx = (await signer.provider.getTransaction(res.data.txHash)) as ContractTransaction;
 
@@ -532,7 +532,7 @@ export class ShopMethods extends ClientCore implements IShopMethods, IClientHttp
     }
 
     /**
-     * 상점주가 인출금 신청을 닫는다.
+     * 상점주가 정산금 출금 신청을 확인하고 닫는다.
      * @param shopId
      * @param useRelay
      * @return {AsyncGenerator<OpenWithdrawalShopStepValue>}
@@ -578,9 +578,9 @@ export class ShopMethods extends ClientCore implements IShopMethods, IClientHttp
             };
 
             const res = await Network.post(await this.getEndpoint("/shop/closeWithdrawal"), param);
-            if (res?.code !== 200) throw new InternalServerError(res.message);
-            if (res?.data?.code && res.data.code !== 200)
-                throw new InternalServerError(res?.data?.error?.message ?? "");
+            if (res.code !== 200) {
+                throw new InternalServerError(res?.error?.message ?? "");
+            }
 
             contractTx = (await signer.provider.getTransaction(res.data.txHash)) as ContractTransaction;
 

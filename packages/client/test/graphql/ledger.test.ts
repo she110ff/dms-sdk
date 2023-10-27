@@ -132,6 +132,10 @@ describe("Integrated test of Ledger", () => {
                 }
             });
 
+            it("Wait", async () => {
+                await ContractUtils.delay(10000);
+            });
+
             it("Pay token", async () => {
                 const purchase: IPurchaseData = {
                     purchaseId: "P100000",
@@ -161,8 +165,6 @@ describe("Integrated test of Ledger", () => {
                 purchase.purchaseId = `P${ContractUtils.getTimeStamp()}`;
 
                 client.useSigner(new Wallet(users[purchase.userIndex].privateKey));
-
-                await ContractUtils.delay(2000);
 
                 for await (const step of client.ledger.payToken(
                     purchase.purchaseId,
@@ -226,8 +228,6 @@ describe("Integrated test of Ledger", () => {
                 purchase.purchaseId = `P${ContractUtils.getTimeStamp()}`;
 
                 client.useSigner(new Wallet(users[purchase.userIndex].privateKey));
-
-                await ContractUtils.delay(2000);
 
                 for await (const step of client.ledger.payPoint(
                     purchase.purchaseId,
