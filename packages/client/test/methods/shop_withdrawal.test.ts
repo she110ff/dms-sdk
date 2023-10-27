@@ -1,7 +1,13 @@
 import { Server } from "ganache";
 import { GanacheServer } from "../helper/GanacheServer";
-import * as deployContracts from "../helper/deployContracts";
-import { shopData, IShopData, IPurchaseData, IUserData } from "../helper/deployContracts";
+import {
+    ContractDeployer,
+    Deployment,
+    IShopData,
+    IPurchaseData,
+    IUserData,
+    shopData
+} from "../helper/ContractDeployer";
 import { contextParamsLocalChain } from "../helper/constants";
 import { Amount, Client, Context, ContractUtils, NormalSteps, WithdrawStatus } from "../../src";
 import { FakerRelayServer } from "../helper/FakerRelayServer";
@@ -10,7 +16,7 @@ import { BigNumber } from "@ethersproject/bignumber";
 describe("Shop Withdrawal", () => {
     describe("Use Relay", () => {
         let node: Server;
-        let deployment: deployContracts.Deployment;
+        let deployment: Deployment;
         let fakerRelayServer: FakerRelayServer;
         const [
             ,
@@ -43,17 +49,8 @@ describe("Shop Withdrawal", () => {
 
         beforeAll(async () => {
             node = await GanacheServer.start();
-            const provider = GanacheServer.createTestProvider();
-            GanacheServer.setTestProvider(provider);
 
-            deployment = await deployContracts.deployAll(provider);
-            contextParamsLocalChain.tokenAddress = deployment.token.address;
-            contextParamsLocalChain.phoneLinkCollectionAddress = deployment.phoneLinkCollection.address;
-            contextParamsLocalChain.validatorCollectionAddress = deployment.validatorCollection.address;
-            contextParamsLocalChain.currencyRateAddress = deployment.currencyRate.address;
-            contextParamsLocalChain.shopCollectionAddress = deployment.shopCollection.address;
-            contextParamsLocalChain.ledgerAddress = deployment.ledger.address;
-            contextParamsLocalChain.web3Providers = deployment.provider;
+            deployment = await ContractDeployer.deploy();
 
             GanacheServer.setTestWeb3Signer(user1);
 
@@ -389,7 +386,7 @@ describe("Shop Withdrawal", () => {
 
     describe("Not Use Relay", () => {
         let node: Server;
-        let deployment: deployContracts.Deployment;
+        let deployment: Deployment;
         let fakerRelayServer: FakerRelayServer;
         const [
             ,
@@ -422,17 +419,8 @@ describe("Shop Withdrawal", () => {
 
         beforeAll(async () => {
             node = await GanacheServer.start();
-            const provider = GanacheServer.createTestProvider();
-            GanacheServer.setTestProvider(provider);
 
-            deployment = await deployContracts.deployAll(provider);
-            contextParamsLocalChain.tokenAddress = deployment.token.address;
-            contextParamsLocalChain.phoneLinkCollectionAddress = deployment.phoneLinkCollection.address;
-            contextParamsLocalChain.validatorCollectionAddress = deployment.validatorCollection.address;
-            contextParamsLocalChain.currencyRateAddress = deployment.currencyRate.address;
-            contextParamsLocalChain.shopCollectionAddress = deployment.shopCollection.address;
-            contextParamsLocalChain.ledgerAddress = deployment.ledger.address;
-            contextParamsLocalChain.web3Providers = deployment.provider;
+            deployment = await ContractDeployer.deploy();
 
             GanacheServer.setTestWeb3Signer(user1);
 

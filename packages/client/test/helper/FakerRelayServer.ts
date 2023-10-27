@@ -25,7 +25,7 @@ import { Signer } from "@ethersproject/abstract-signer";
 
 import { ContractUtils } from "../../src";
 import { GanacheServer } from "./GanacheServer";
-import { Deployment } from "./deployContracts";
+import { Deployment } from "./ContractDeployer";
 import { PhoneLinkCollection, PhoneLinkCollection__factory } from "del-osx-lib";
 import { Ledger, Ledger__factory, ShopCollection, ShopCollection__factory } from "dms-osx-lib";
 
@@ -55,14 +55,14 @@ export class FakerRelayServer {
     /**
      * Constructor
      * @param port The bind port
-     * @param deploymentContract The deployment contracts
+     * @param deployment The deployment contracts
      */
-    constructor(port: number | string, deploymentContract: Deployment) {
+    constructor(port: number | string, deployment: Deployment) {
         if (typeof port === "string") this.port = parseInt(port, 10);
         else this.port = port;
 
         this.app = e();
-        this.deployment = deploymentContract;
+        this.deployment = deployment;
         this._accounts = GanacheServer.accounts();
     }
 

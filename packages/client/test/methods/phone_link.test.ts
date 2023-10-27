@@ -3,10 +3,10 @@ import { GanacheServer } from "../helper/GanacheServer";
 import { contextParamsLocalChain } from "../helper/constants";
 import { FakerValidator } from "../helper/FakerValidator";
 import { Client, Context, ContractUtils, PhoneLinkRegisterSteps } from "../../src";
-import * as deployContracts from "../helper/deployContracts";
+import { ContractDeployer, Deployment } from "../helper/ContractDeployer";
 
 describe("SDK Client", () => {
-    let deployment: deployContracts.Deployment;
+    let deployment: Deployment;
     const [, , , , , , , user1] = GanacheServer.accounts();
     let fakerValidator: FakerValidator;
 
@@ -15,17 +15,8 @@ describe("SDK Client", () => {
 
         beforeAll(async () => {
             server = await GanacheServer.start();
-            const provider = GanacheServer.createTestProvider();
-            GanacheServer.setTestProvider(provider);
 
-            deployment = await deployContracts.deployAll(provider);
-            contextParamsLocalChain.tokenAddress = deployment.token.address;
-            contextParamsLocalChain.phoneLinkCollectionAddress = deployment.phoneLinkCollection.address;
-            contextParamsLocalChain.validatorCollectionAddress = deployment.validatorCollection.address;
-            contextParamsLocalChain.currencyRateAddress = deployment.currencyRate.address;
-            contextParamsLocalChain.shopCollectionAddress = deployment.shopCollection.address;
-            contextParamsLocalChain.ledgerAddress = deployment.ledger.address;
-            contextParamsLocalChain.web3Providers = deployment.provider;
+            deployment = await ContractDeployer.deploy();
 
             GanacheServer.setTestWeb3Signer(user1);
 

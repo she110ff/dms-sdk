@@ -16,7 +16,7 @@ import { BigNumberish } from "@ethersproject/bignumber";
 import { NonceManager } from "@ethersproject/experimental";
 
 import { GanacheServer } from "./GanacheServer";
-import * as deployContracts from "../helper/deployContracts";
+import { Deployment } from "./ContractDeployer";
 
 export enum JobType {
     REGISTER,
@@ -40,14 +40,14 @@ export class FakerValidator {
     public static INTERVAL_SECONDS: number = 12;
     protected _app: express.Application;
     protected _server: http.Server | null = null;
-    protected _deployment: deployContracts.Deployment;
+    protected _deployment: Deployment;
     private readonly port: number;
     private readonly _accounts: Signer[];
     private readonly _worker: Worker;
 
     private _jobList: IJob[] = [];
 
-    constructor(port: number | string, deployment: deployContracts.Deployment) {
+    constructor(port: number | string, deployment: Deployment) {
         if (typeof port === "string") this.port = parseInt(port, 10);
         else this.port = port;
 
