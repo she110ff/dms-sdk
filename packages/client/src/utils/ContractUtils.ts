@@ -8,7 +8,6 @@
  *       MIT License. See LICENSE for details.
  */
 
-import * as crypto from "crypto";
 import { defaultAbiCoder } from "@ethersproject/abi";
 import { Signer } from "@ethersproject/abstract-signer";
 import { BigNumberish } from "@ethersproject/bignumber";
@@ -16,28 +15,9 @@ import { BytesLike } from "@ethersproject/bytes";
 import { arrayify } from "@ethersproject/bytes";
 import { keccak256 } from "@ethersproject/keccak256";
 import { verifyMessage } from "@ethersproject/wallet";
+import { randomBytes } from "@ethersproject/random";
 
 export class ContractUtils {
-    /**
-     * It generates hash values.
-     * @param data The source data
-     */
-    public static sha256(data: Buffer): Buffer {
-        return crypto
-            .createHash("sha256")
-            .update(data)
-            .digest();
-    }
-
-    public static sha256String(data: string): string {
-        return ContractUtils.BufferToString(
-            crypto
-                .createHash("sha256")
-                .update(Buffer.from(data.trim()))
-                .digest()
-        );
-    }
-
     /**
      * Convert hexadecimal strings into Buffer.
      * @param hex The hexadecimal string
@@ -83,7 +63,7 @@ export class ContractUtils {
     public static getRequestId(hash: BytesLike, address: string, nonce: BigNumberish): string {
         const encodedResult = defaultAbiCoder.encode(
             ["bytes32", "address", "uint256", "bytes32"],
-            [hash, address, nonce, crypto.randomBytes(32)]
+            [hash, address, nonce, randomBytes(32)]
         );
         return keccak256(encodedResult);
     }
@@ -244,7 +224,7 @@ export class ContractUtils {
     }
 
     public static getShopId(account: string): string {
-        const encodedResult = defaultAbiCoder.encode(["address", "bytes32"], [account, crypto.randomBytes(32)]);
+        const encodedResult = defaultAbiCoder.encode(["address", "bytes32"], [account, randomBytes(32)]);
         return keccak256(encodedResult);
     }
 

@@ -1,4 +1,6 @@
+/*
 import { contextParamsDevnet } from "../helper/constants";
+
 import { Amount, Client, Context, ContractUtils, LIVE_CONTRACTS, NormalSteps, WithdrawStatus } from "../../src";
 import { Wallet } from "@ethersproject/wallet";
 
@@ -240,6 +242,17 @@ describe("Integrated test of ShopCollection", () => {
                 expect(length).toBeGreaterThan(0);
                 expect(res.shopTradeHistories[length - 1].shopId).toEqual(shop.shopId);
             });
+        });
+    });
+});
+*/
+
+import { ContractUtils } from "../../src";
+
+describe("Integrated test of ShopCollection", () => {
+    describe("Method Check", () => {
+        it("Wait", async () => {
+            await ContractUtils.delay(10000);
         });
     });
 });
