@@ -1,38 +1,46 @@
-import { Server } from "ganache";
-import { GanacheServer } from "../helper/GanacheServer";
-import { contextParamsLocalChain } from "../helper/constants";
-import { FakerValidator } from "../helper/FakerValidator";
-import { Client, Context, ContractUtils, PhoneLinkRegisterSteps, PhoneLinkSubmitSteps } from "../../src";
-import { ContractDeployer, Deployment } from "../helper/ContractDeployer";
+import { contextParamsDevnet } from "../helper/constants";
+import {
+    Client,
+    Context,
+    ContractUtils,
+    LIVE_CONTRACTS,
+    PhoneLinkRegisterSteps,
+    PhoneLinkSubmitSteps
+} from "../../src";
+import { Wallet } from "@ethersproject/wallet";
+
+// @ts-ignore
+import fs from "fs";
+
+interface IUserData {
+    idx: number;
+    phone: string;
+    address: string;
+    privateKey: string;
+    loyaltyType: number;
+}
 
 describe("SDK Client", () => {
-    let deployment: Deployment;
-    const [, , , , , , , user1] = GanacheServer.accounts();
-    let fakerValidator: FakerValidator;
-
     describe("SDK Client", () => {
-        let server: Server;
-
-        beforeAll(async () => {
-            server = await GanacheServer.start();
-
-            deployment = await ContractDeployer.deploy();
-
-            GanacheServer.setTestWeb3Signer(user1);
-
-            fakerValidator = new FakerValidator(7080, deployment);
-            await fakerValidator.start();
-        });
-
-        afterAll(async () => {
-            await server.close();
-            await fakerValidator.stop();
-        });
-
         let client: Client;
+        const users: IUserData[] = JSON.parse(fs.readFileSync("test/helper/users.json", "utf8"));
+        let user = new Wallet(users[50].privateKey);
         beforeAll(async () => {
-            const ctx = new Context(contextParamsLocalChain);
+            const network = "bosagora_devnet";
+            contextParamsDevnet.tokenAddress = LIVE_CONTRACTS[network].TokenAddress;
+            contextParamsDevnet.phoneLinkCollectionAddress = LIVE_CONTRACTS[network].PhoneLinkCollectionAddress;
+            contextParamsDevnet.validatorCollectionAddress = LIVE_CONTRACTS[network].ValidatorCollectionAddress;
+            contextParamsDevnet.currencyRateAddress = LIVE_CONTRACTS[network].CurrencyRateAddress;
+            contextParamsDevnet.shopCollectionAddress = LIVE_CONTRACTS[network].ShopCollectionAddress;
+            contextParamsDevnet.ledgerAddress = LIVE_CONTRACTS[network].LedgerAddress;
+            contextParamsDevnet.signer = user;
+            const ctx = new Context(contextParamsDevnet);
             client = new Client(ctx);
+        });
+
+        it("Web3 Health Checking", async () => {
+            const isUp = await client.link.web3.isUp();
+            expect(isUp).toEqual(true);
         });
 
         it("Server Health Checking", async () => {
@@ -48,13 +56,13 @@ describe("SDK Client", () => {
                     case PhoneLinkRegisterSteps.SENDING:
                         expect(step.requestId).toMatch(/^0x[A-Fa-f0-9]{64}$/i);
                         expect(step.phone).toEqual(userPhone);
-                        expect(step.address).toEqual(await user1.getAddress());
+                        expect(step.address).toEqual(user.address);
                         requestId = step.requestId;
                         break;
                     case PhoneLinkRegisterSteps.REQUESTED:
                         expect(step.requestId).toMatch(/^0x[A-Fa-f0-9]{64}$/i);
                         expect(step.phone).toEqual(userPhone);
-                        expect(step.address).toEqual(await user1.getAddress());
+                        expect(step.address).toEqual(user.address);
                         break;
                     default:
                         throw new Error("Unexpected step: " + JSON.stringify(step, null, 2));
@@ -83,7 +91,7 @@ describe("SDK Client", () => {
 
         it("Check", async () => {
             const phoneHash = ContractUtils.getPhoneHash(userPhone);
-            const address = await user1.getAddress();
+            const address = user.address;
             await expect(await client.link.toAddress(phoneHash)).toEqual(address);
             await expect(await client.link.toPhoneNumber(address)).toEqual(phoneHash);
         });

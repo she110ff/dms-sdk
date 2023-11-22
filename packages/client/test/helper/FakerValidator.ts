@@ -247,7 +247,7 @@ export class FakerValidator {
             const requestId: string = String(req.body.requestId).trim();
             const code: string = String(req.body.code).trim();
 
-            if (code === "010203") {
+            if (code === "000102") {
                 this.addJob({
                     type: JobType.CONFIRM,
                     requestId: requestId

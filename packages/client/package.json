@@ -30,6 +30,7 @@
     "test:methods:phone_link": "TESTING=true tsdx test test/methods/phone_link.test.ts --verbose --runInBand",
     "test:graphql:ledger": "TESTING=true tsdx test test/graphql/ledger.test.ts --verbose --runInBand",
     "test:graphql:shop": "TESTING=true tsdx test test/graphql/shop.test.ts --verbose --runInBand",
+    "test:devnet:phone_link": "TESTING=true tsdx test test/devnet/phone_link.test.ts --verbose --runInBand",
     "lint": "tsdx lint --fix",
     "prepare": "tsdx build",
     "size": "size-limit",
