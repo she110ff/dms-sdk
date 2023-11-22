@@ -5,10 +5,10 @@ import { GraphQLClient } from "graphql-request";
 
 export { ContextParams } from "./interfaces/context";
 
-const supportedProtocols = ["https:"];
-if (typeof process !== "undefined" && process.env?.TESTING) {
-    supportedProtocols.push("http:");
-}
+const supportedProtocols = ["https:", "http:"];
+// if (typeof process !== "undefined" && process.env?.TESTING) {
+//     supportedProtocols.push("http:");
+// }
 
 // State
 const defaultState: ContextState = {
