@@ -20,6 +20,7 @@ import { Deployment } from "./ContractDeployer";
 
 export enum JobType {
     REGISTER,
+    CONFIRM,
     VOTE1,
     VOTE2,
     VOTE3,
@@ -97,6 +98,20 @@ export class FakerValidator {
                     .matches(/^(0x)[0-9a-f]{130}$/i)
             ],
             this.postRequest.bind(this)
+        );
+        this._app.post(
+            "/submit",
+            [
+                body("requestId")
+                    .exists()
+                    .trim()
+                    .matches(/^(0x)[0-9a-f]{64}$/i),
+                body("code")
+                    .exists()
+                    .trim()
+                    .matches(/^[0-9]+$/)
+            ],
+            this.postSubmit.bind(this)
         );
 
         // Listen on provided this.port on this.address.
@@ -217,6 +232,42 @@ export class FakerValidator {
         }
     }
 
+    private async postSubmit(req: express.Request, res: express.Response) {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.json(
+                this.makeResponseData(400, undefined, {
+                    message: "Failed to check the validity of parameters.",
+                    validation: errors.array()
+                })
+            );
+        }
+
+        try {
+            const requestId: string = String(req.body.requestId).trim();
+            const code: string = String(req.body.code).trim();
+
+            if (code === "010203") {
+                this.addJob({
+                    type: JobType.CONFIRM,
+                    requestId: requestId
+                });
+                return res.json(this.makeResponseData(200, "OK"));
+            } else {
+                return res.json(this.makeResponseData(440, null, { message: "The authentication code is different." }));
+            }
+        } catch (error) {
+            const message =
+                error instanceof Error && error.message !== undefined ? error.message : "Failed save request";
+            // console.error(message);
+            return res.json(
+                this.makeResponseData(500, undefined, {
+                    message
+                })
+            );
+        }
+    }
+
     private async addRequest(requestId: string, phoneHash: string, address: string, signature: string) {
         try {
             await this.getContract()
@@ -262,7 +313,8 @@ export class FakerValidator {
                             job.registerData.signature
                         );
                     }
-
+                    break;
+                case JobType.CONFIRM:
                     this.addJob({
                         type: JobType.VOTE1,
                         requestId: job.requestId

@@ -227,15 +227,12 @@ export type ValidatorInfoValue = {
 export enum PhoneLinkRequestStatus {
     INVALID,
     REQUESTED,
-    ACCEPTED,
-    REJECTED
+    ACCEPTED
 }
 
 export enum PhoneLinkRegisterSteps {
     SENDING = "sending",
     REQUESTED = "requested",
-    ACCEPTED = "accepted",
-    REJECTED = "rejected",
     TIMEOUT = "timeout"
 }
 
@@ -248,22 +245,27 @@ export type PhoneLinkRegisterStepValue =
           address: string;
       }
     | {
-          key: PhoneLinkRegisterSteps.ACCEPTED;
-          requestId: string;
-          phone: string;
-          address: string;
-      }
-    | {
-          key: PhoneLinkRegisterSteps.REJECTED;
-          requestId: string;
-          phone: string;
-          address: string;
-      }
-    | {
           key: PhoneLinkRegisterSteps.TIMEOUT;
           requestId: string;
           phone: string;
           address: string;
+      };
+
+export enum PhoneLinkSubmitSteps {
+    SENDING = "sending",
+    ACCEPTED = "accepted",
+    TIMEOUT = "timeout"
+}
+
+export type PhoneLinkSubmitStepValue =
+    | { key: PhoneLinkSubmitSteps.SENDING; requestId: string; code: string }
+    | {
+          key: PhoneLinkSubmitSteps.ACCEPTED;
+          requestId: string;
+      }
+    | {
+          key: PhoneLinkSubmitSteps.TIMEOUT;
+          requestId: string;
       };
 
 export enum SortDirection {

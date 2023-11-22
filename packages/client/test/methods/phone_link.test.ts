@@ -2,7 +2,7 @@ import { Server } from "ganache";
 import { GanacheServer } from "../helper/GanacheServer";
 import { contextParamsLocalChain } from "../helper/constants";
 import { FakerValidator } from "../helper/FakerValidator";
-import { Client, Context, ContractUtils, PhoneLinkRegisterSteps } from "../../src";
+import { Client, Context, ContractUtils, PhoneLinkRegisterSteps, PhoneLinkSubmitSteps } from "../../src";
 import { ContractDeployer, Deployment } from "../helper/ContractDeployer";
 
 describe("SDK Client", () => {
@@ -41,6 +41,7 @@ describe("SDK Client", () => {
         });
 
         const userPhone = "01012341000";
+        let requestId = "";
         it("register", async () => {
             for await (const step of client.link.register(userPhone)) {
                 switch (step.key) {
@@ -48,11 +49,27 @@ describe("SDK Client", () => {
                         expect(step.requestId).toMatch(/^0x[A-Fa-f0-9]{64}$/i);
                         expect(step.phone).toEqual(userPhone);
                         expect(step.address).toEqual(await user1.getAddress());
+                        requestId = step.requestId;
                         break;
                     case PhoneLinkRegisterSteps.REQUESTED:
                         expect(step.requestId).toMatch(/^0x[A-Fa-f0-9]{64}$/i);
                         expect(step.phone).toEqual(userPhone);
                         expect(step.address).toEqual(await user1.getAddress());
+                        break;
+                    default:
+                        throw new Error("Unexpected step: " + JSON.stringify(step, null, 2));
+                }
+            }
+        });
+
+        it("submit", async () => {
+            for await (const step of client.link.submit(requestId, "010203")) {
+                switch (step.key) {
+                    case PhoneLinkSubmitSteps.SENDING:
+                        expect(step.requestId).toMatch(/^0x[A-Fa-f0-9]{64}$/i);
+                        break;
+                    case PhoneLinkSubmitSteps.ACCEPTED:
+                        expect(step.requestId).toMatch(/^0x[A-Fa-f0-9]{64}$/i);
                         break;
                     default:
                         throw new Error("Unexpected step: " + JSON.stringify(step, null, 2));

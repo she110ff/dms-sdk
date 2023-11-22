@@ -1,8 +1,13 @@
-import { IClientHttpCore, SupportedNetworks, SupportedNetworksArray } from "../../client-common";
+import { ClientCore, Context, IClientHttpCore, SupportedNetworks, SupportedNetworksArray } from "../../client-common";
 import { PhoneLinkCollection__factory } from "del-osx-lib";
 import { NoProviderError, NoSignerError, UnsupportedNetworkError } from "dms-sdk-common";
-import { PhoneLinkRequestStatus, PhoneLinkRegisterSteps, PhoneLinkRegisterStepValue } from "../../interfaces";
-import { ClientCore, Context } from "../../client-common";
+import {
+    PhoneLinkRegisterSteps,
+    PhoneLinkRegisterStepValue,
+    PhoneLinkRequestStatus,
+    PhoneLinkSubmitSteps,
+    PhoneLinkSubmitStepValue
+} from "../../interfaces";
 import { ContractUtils } from "../../utils/ContractUtils";
 
 import { IPhoneLinkMethods } from "../../interface/IPhoneLink";
@@ -120,7 +125,7 @@ export class PhoneLinkMethods extends ClientCore implements IPhoneLinkMethods, I
             } else if (ContractUtils.getTimeStamp() - start > 60) {
                 done = true;
             } else {
-                await ContractUtils.delay(3000);
+                await ContractUtils.delay(2000);
             }
         }
 
@@ -133,10 +138,10 @@ export class PhoneLinkMethods extends ClientCore implements IPhoneLinkMethods, I
                 key = PhoneLinkRegisterSteps.REQUESTED;
                 break;
             case PhoneLinkRequestStatus.ACCEPTED:
-                key = PhoneLinkRegisterSteps.ACCEPTED;
+                key = PhoneLinkRegisterSteps.REQUESTED;
                 break;
             default:
-                key = PhoneLinkRegisterSteps.REJECTED;
+                key = PhoneLinkRegisterSteps.TIMEOUT;
                 break;
         }
 
@@ -145,6 +150,77 @@ export class PhoneLinkMethods extends ClientCore implements IPhoneLinkMethods, I
             requestId: res.data.requestId,
             phone,
             address
+        };
+    }
+
+    /**
+     * Submit authentication code
+     *
+     * @param requestId Request ID
+     * @param code Authentication code
+     * @return {*}  {AsyncGenerator<PhoneLinkSubmitStepValue>}
+     * @memberof ClientMethods
+     */
+    public async *submit(requestId: string, code: string): AsyncGenerator<PhoneLinkSubmitStepValue> {
+        const signer = this.web3.getConnectedSigner();
+        if (!signer) {
+            throw new NoSignerError();
+        } else if (!signer.provider) {
+            throw new NoProviderError();
+        }
+
+        const network = getNetwork((await signer.provider.getNetwork()).chainId);
+        const networkName = network.name as SupportedNetworks;
+        if (!SupportedNetworksArray.includes(networkName)) {
+            throw new UnsupportedNetworkError(networkName);
+        }
+
+        const param = { requestId, code };
+        const res = await Network.post(await this.getEndpoint("/submit"), param);
+
+        if (res.code !== 200) {
+            throw new InternalServerError(res?.error?.message ?? "");
+        }
+
+        yield {
+            key: PhoneLinkSubmitSteps.SENDING,
+            requestId,
+            code
+        };
+
+        const start = ContractUtils.getTimeStamp();
+        let done = false;
+        let status = PhoneLinkRequestStatus.INVALID;
+        while (!done) {
+            status = await this.getRegisterStatus(requestId);
+            if (status === PhoneLinkRequestStatus.ACCEPTED) {
+                done = true;
+            } else if (ContractUtils.getTimeStamp() - start > 60) {
+                done = true;
+            } else {
+                await ContractUtils.delay(2000);
+            }
+        }
+
+        let key: PhoneLinkSubmitSteps;
+        switch (status) {
+            case PhoneLinkRequestStatus.INVALID:
+                key = PhoneLinkSubmitSteps.TIMEOUT;
+                break;
+            case PhoneLinkRequestStatus.REQUESTED:
+                key = PhoneLinkSubmitSteps.TIMEOUT;
+                break;
+            case PhoneLinkRequestStatus.ACCEPTED:
+                key = PhoneLinkSubmitSteps.ACCEPTED;
+                break;
+            default:
+                key = PhoneLinkSubmitSteps.TIMEOUT;
+                break;
+        }
+
+        yield {
+            key,
+            requestId: requestId
         };
     }
 
