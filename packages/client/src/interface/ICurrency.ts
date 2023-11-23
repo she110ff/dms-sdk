@@ -9,7 +9,14 @@ export interface ICurrency {
 export interface ICurrencyMethods extends IClientCore {
     getRate: (currency: string) => Promise<BigNumber>;
     getMultiple: () => Promise<BigNumber>;
+    getTokenSymbol: () => Promise<string>;
 
-    toPoint: (amount: BigNumber, currency?: string) => Promise<BigNumber>;
-    toToken: (amount: BigNumber) => Promise<BigNumber>;
+    pointToToken: (amount: BigNumber) => Promise<BigNumber>;
+    tokenToPoint: (amount: BigNumber) => Promise<BigNumber>;
+
+    currencyToPoint: (amount: BigNumber, symbol: string) => Promise<BigNumber>;
+    pointToCurrency: (amount: BigNumber, symbol: string) => Promise<BigNumber>;
+
+    currencyToToken: (amount: BigNumber, symbol: string) => Promise<BigNumber>;
+    tokenToCurrency: (amount: BigNumber, symbol: string) => Promise<BigNumber>;
 }

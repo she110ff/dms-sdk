@@ -114,8 +114,11 @@ describe("Ledger", () => {
             const amount = Amount.make(purchase.amount / 10, 18);
 
             const feeRate = await client.ledger.getFeeRate();
-            const paidPoint = await client.currency.toPoint(amount.value, purchase.currency);
-            const feePoint = await client.currency.toPoint(amount.value.mul(feeRate).div(100), purchase.currency);
+            const paidPoint = await client.currency.currencyToPoint(amount.value, purchase.currency);
+            const feePoint = await client.currency.currencyToPoint(
+                amount.value.mul(feeRate).div(100),
+                purchase.currency
+            );
 
             for await (const step of client.ledger.payPoint(
                 purchase.purchaseId,
@@ -197,10 +200,13 @@ describe("Ledger", () => {
             const amount = Amount.make(purchase.amount, 18);
 
             const feeRate = await client.ledger.getFeeRate();
-            const paidPoint = await client.currency.toPoint(amount.value, purchase.currency);
-            const feePoint = await client.currency.toPoint(amount.value.mul(feeRate).div(100), purchase.currency);
-            const paidToken = await client.currency.toToken(paidPoint);
-            const feeToken = await client.currency.toToken(feePoint);
+            const paidPoint = await client.currency.currencyToPoint(amount.value, purchase.currency);
+            const feePoint = await client.currency.currencyToPoint(
+                amount.value.mul(feeRate).div(100),
+                purchase.currency
+            );
+            const paidToken = await client.currency.pointToToken(paidPoint);
+            const feeToken = await client.currency.pointToToken(feePoint);
 
             for await (const step of client.ledger.payToken(
                 purchase.purchaseId,
@@ -431,8 +437,11 @@ describe("Ledger", () => {
             const amount = Amount.make(purchase.amount / 10, 18);
 
             const feeRate = await client.ledger.getFeeRate();
-            const paidPoint = await client.currency.toPoint(amount.value, purchase.currency);
-            const feePoint = await client.currency.toPoint(amount.value.mul(feeRate).div(100), purchase.currency);
+            const paidPoint = await client.currency.currencyToPoint(amount.value, purchase.currency);
+            const feePoint = await client.currency.currencyToPoint(
+                amount.value.mul(feeRate).div(100),
+                purchase.currency
+            );
 
             for await (const step of client.ledger.payPoint(
                 purchase.purchaseId,
@@ -515,10 +524,13 @@ describe("Ledger", () => {
             const amount = Amount.make(purchase.amount, 18);
 
             const feeRate = await client.ledger.getFeeRate();
-            const paidPoint = await client.currency.toPoint(amount.value, purchase.currency);
-            const feePoint = await client.currency.toPoint(amount.value.mul(feeRate).div(100), purchase.currency);
-            const paidToken = await client.currency.toToken(paidPoint);
-            const feeToken = await client.currency.toToken(feePoint);
+            const paidPoint = await client.currency.currencyToPoint(amount.value, purchase.currency);
+            const feePoint = await client.currency.currencyToPoint(
+                amount.value.mul(feeRate).div(100),
+                purchase.currency
+            );
+            const paidToken = await client.currency.pointToToken(paidPoint);
+            const feeToken = await client.currency.pointToToken(feePoint);
 
             for await (const step of client.ledger.payToken(
                 purchase.purchaseId,

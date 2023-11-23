@@ -1,6 +1,6 @@
 {
   "name": "dms-sdk-client",
-  "version": "1.0.7",
+  "version": "1.0.9",
   "author": "BOSagora Foundation",
   "license": "MIT",
   "main": "dist/index.js",
@@ -24,6 +24,7 @@
     "build": "tsdx build",
     "test": "TESTING=true tsdx test --verbose --runInBand",
     "test:client": "TESTING=true tsdx test test/client.test.ts --verbose --runInBand",
+    "test:methods:currency": "TESTING=true tsdx test test/methods/currency.test.ts --verbose --runInBand",
     "test:methods:ledger": "TESTING=true tsdx test test/methods/ledger.test.ts --verbose --runInBand",
     "test:methods:shop": "TESTING=true tsdx test test/methods/shop.test.ts --verbose --runInBand",
     "test:methods:shop_withdrawal": "TESTING=true tsdx test test/methods/shop_withdrawal.test.ts --verbose --runInBand",

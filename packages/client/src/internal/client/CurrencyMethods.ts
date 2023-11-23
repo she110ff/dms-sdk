@@ -18,10 +18,10 @@ export class CurrencyMethods extends ClientCore implements ICurrencyMethods {
 
     /**
      * KRW 에 대한 환률정보를 제공한다
-     * @param currency 통화코드
+     * @param symbol 통화코드
      */
-    public async getRate(currency: string): Promise<BigNumber> {
-        if (currency === "krw") {
+    public async getRate(symbol: string): Promise<BigNumber> {
+        if (symbol === "krw") {
             return this.getMultiple();
         } else {
             const provider = this.web3.getProvider() as Provider;
@@ -34,16 +34,13 @@ export class CurrencyMethods extends ClientCore implements ICurrencyMethods {
             }
 
             const contract: CurrencyRate = CurrencyRate__factory.connect(this.web3.getCurrencyRateAddress(), provider);
-
-            return await contract.get(currency);
+            return await contract.get(symbol);
         }
     }
 
-    private _CurrencyMultiple: BigNumber = BigNumber.from(0);
+    private static _CurrencyMultiple: BigNumber = BigNumber.from(0);
     public async getMultiple(): Promise<BigNumber> {
-        if (!this._CurrencyMultiple.eq(BigNumber.from(0))) {
-            return this._CurrencyMultiple;
-        } else {
+        if (CurrencyMethods._CurrencyMultiple.eq(BigNumber.from(0))) {
             const provider = this.web3.getProvider() as Provider;
             if (!provider) throw new NoProviderError();
 
@@ -54,44 +51,14 @@ export class CurrencyMethods extends ClientCore implements ICurrencyMethods {
             }
 
             const contract: CurrencyRate = CurrencyRate__factory.connect(this.web3.getCurrencyRateAddress(), provider);
-
-            return await contract.MULTIPLE();
+            CurrencyMethods._CurrencyMultiple = await contract.MULTIPLE();
         }
+        return CurrencyMethods._CurrencyMultiple;
     }
 
-    /**
-     * 포인트를 토큰의 량으로 환산한다.
-     * @param amount 포인트 량
-     */
-    public async toToken(amount: BigNumber): Promise<BigNumber> {
-        const provider = this.web3.getProvider() as Provider;
-        if (!provider) throw new NoProviderError();
-
-        const network = getNetwork((await provider.getNetwork()).chainId);
-        const networkName = network.name as SupportedNetworks;
-        if (!SupportedNetworksArray.includes(networkName)) {
-            throw new UnsupportedNetworkError(networkName);
-        }
-
-        const tokenContract: Token = Token__factory.connect(this.web3.getTokenAddress(), provider);
-        const symbol = await tokenContract.symbol();
-        const currencyRateContract: CurrencyRate = CurrencyRate__factory.connect(
-            this.web3.getCurrencyRateAddress(),
-            provider
-        );
-        const rate = await currencyRateContract.get(symbol);
-        const multiple = await this.getMultiple();
-        return amount.mul(multiple).div(rate);
-    }
-
-    /**
-     * 법정화폐 또는 토큰을 포인트로 변경한다.
-     * 포인트는 KRW 로 되어 있다.
-     * @param amount  currency 가 존재하면 법정화폐의 량이고, 그렇지 않으면 토큰의 량이다.
-     * @param currency 이값이 존재하면 법정화폐로 처리한다. 그렇지 않은면 토큰으로 인식한다
-     */
-    public async toPoint(amount: BigNumber, currency?: string): Promise<BigNumber> {
-        if (currency === undefined) {
+    private static _TokenSymbol: string = "";
+    public async getTokenSymbol(): Promise<string> {
+        if (CurrencyMethods._TokenSymbol === "") {
             const provider = this.web3.getProvider() as Provider;
             if (!provider) throw new NoProviderError();
 
@@ -101,19 +68,71 @@ export class CurrencyMethods extends ClientCore implements ICurrencyMethods {
                 throw new UnsupportedNetworkError(networkName);
             }
 
-            const tokenContract: Token = Token__factory.connect(this.web3.getTokenAddress(), provider);
-            const symbol = await tokenContract.symbol();
-            const currencyRateContract: CurrencyRate = CurrencyRate__factory.connect(
-                this.web3.getCurrencyRateAddress(),
-                provider
-            );
-            const rate = await currencyRateContract.get(symbol);
-            const multiple = await this.getMultiple();
-            return amount.mul(rate).div(multiple);
-        } else {
-            const rate = await this.getRate(currency.toLowerCase());
-            const multiple = await this.getMultiple();
-            return amount.mul(rate).div(multiple);
+            const contract: Token = Token__factory.connect(this.web3.getTokenAddress(), provider);
+            CurrencyMethods._TokenSymbol = await contract.symbol();
         }
+        return CurrencyMethods._TokenSymbol;
+    }
+
+    /**
+     * 포인트를 토큰의 량으로 환산한다.
+     * @param amount 포인트 량
+     */
+    public async pointToToken(amount: BigNumber): Promise<BigNumber> {
+        const symbol = await this.getTokenSymbol();
+        const rate = await this.getRate(symbol);
+        const multiple = await this.getMultiple();
+        return amount.mul(multiple).div(rate);
+    }
+
+    /**
+     * 토큰을 포인트로 변경한다.
+     * @param amount  토큰 량
+     */
+    public async tokenToPoint(amount: BigNumber): Promise<BigNumber> {
+        const symbol = await this.getTokenSymbol();
+        const rate = await this.getRate(symbol);
+        const multiple = await this.getMultiple();
+        return amount.mul(rate).div(multiple);
+    }
+
+    /**
+     * 법정화폐 포인트 량으로 환산한다.
+     * @param amount 법정화폐 량
+     * @param symbol 통화 심벌
+     */
+    public async currencyToPoint(amount: BigNumber, symbol: string): Promise<BigNumber> {
+        const rate = await this.getRate(symbol.toLowerCase());
+        const multiple = await this.getMultiple();
+        return amount.mul(rate).div(multiple);
+    }
+
+    /**
+     * 포인트를 법정화폐 량으로 환산한다.
+     * @param amount 포인트 량
+     * @param symbol 통화 심벌
+     */
+    public async pointToCurrency(amount: BigNumber, symbol: string): Promise<BigNumber> {
+        const rate = await this.getRate(symbol.toLowerCase());
+        const multiple = await this.getMultiple();
+        return amount.mul(multiple).div(rate);
+    }
+
+    /**
+     * 법정화폐 토큰의 량으로 환산한다.
+     * @param amount 법정화폐 량
+     * @param symbol 통화 심벌
+     */
+    public async currencyToToken(amount: BigNumber, symbol: string): Promise<BigNumber> {
+        return await this.pointToToken(await this.currencyToPoint(amount, symbol));
+    }
+
+    /**
+     * 토큰을 법정화폐의 량으로 환산한다.
+     * @param amount 토큰 량
+     * @param symbol 통화 심벌
+     */
+    public async tokenToCurrency(amount: BigNumber, symbol: string): Promise<BigNumber> {
+        return await this.pointToCurrency(await this.tokenToPoint(amount), symbol);
     }
 }
