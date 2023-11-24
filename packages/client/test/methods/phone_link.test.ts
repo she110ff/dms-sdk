@@ -7,7 +7,7 @@ import { ContractDeployer, Deployment } from "../helper/ContractDeployer";
 
 describe("SDK Client", () => {
     let deployment: Deployment;
-    const [, , , , , , , user1] = GanacheServer.accounts();
+    const [, , , , , , , , , , , user1] = GanacheServer.accounts();
     let fakerValidator: FakerValidator;
 
     describe("SDK Client", () => {
@@ -20,6 +20,7 @@ describe("SDK Client", () => {
 
             GanacheServer.setTestWeb3Signer(user1);
 
+            console.log("Start Faker Validator");
             fakerValidator = new FakerValidator(7080, deployment);
             await fakerValidator.start();
         });
@@ -49,7 +50,7 @@ describe("SDK Client", () => {
                         expect(step.requestId).toMatch(/^0x[A-Fa-f0-9]{64}$/i);
                         expect(step.phone).toEqual(userPhone);
                         expect(step.address).toEqual(await user1.getAddress());
-                        requestId = step.requestId;
+                        requestId = step.requestId.toString();
                         break;
                     case PhoneLinkRegisterSteps.REQUESTED:
                         expect(step.requestId).toMatch(/^0x[A-Fa-f0-9]{64}$/i);

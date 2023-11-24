@@ -1,4 +1,4 @@
-import { GanacheServer } from "./GanacheServer";
+import { AccountIndex, GanacheServer } from "./GanacheServer";
 import { Signer } from "@ethersproject/abstract-signer";
 import { BigNumber } from "@ethersproject/bignumber";
 import { Contract, ContractFactory } from "@ethersproject/contracts";
@@ -14,11 +14,14 @@ import {
     CurrencyRate,
     CurrencyRate__factory,
     ValidatorCollection,
-    ValidatorCollection__factory
+    ValidatorCollection__factory,
+    CertifierCollection,
+    CertifierCollection__factory
 } from "dms-osx-lib";
 import { Amount, ContractUtils, LIVE_CONTRACTS } from "../../src";
 import { PhoneLinkCollection, PhoneLinkCollection__factory } from "del-osx-lib";
 import { contextParamsLocalChain } from "./constants";
+import { ContractShopStatus } from "./relay/Types";
 
 export interface Deployment {
     provider: JsonRpcProvider;
@@ -111,28 +114,22 @@ export const purchaseData: IPurchaseData[] = [
 
 export class ContractDeployer {
     public static createSampleData() {
-        const [
-            ,
-            ,
-            ,
-            ,
-            ,
-            ,
-            ,
-            user1,
-            user2,
-            user3,
-            user4,
-            user5,
-            shop1,
-            shop2,
-            shop3,
-            shop4,
-            shop5,
-            shop6
-        ] = GanacheServer.accounts();
-        const userWallets = [user1, user2, user3, user4, user5];
-        const shopWallets = [shop1, shop2, shop3, shop4, shop5, shop6];
+        const accounts = GanacheServer.accounts();
+        const userWallets = [
+            accounts[AccountIndex.USER1],
+            accounts[AccountIndex.USER2],
+            accounts[AccountIndex.USER3],
+            accounts[AccountIndex.USER4],
+            accounts[AccountIndex.USER5]
+        ];
+        const shopWallets = [
+            accounts[AccountIndex.SHOP1],
+            accounts[AccountIndex.SHOP2],
+            accounts[AccountIndex.SHOP3],
+            accounts[AccountIndex.SHOP4],
+            accounts[AccountIndex.SHOP5],
+            accounts[AccountIndex.SHOP6]
+        ];
         while (userData.length > 0) userData.pop();
         while (shopData.length > 0) shopData.pop();
 
@@ -216,47 +213,83 @@ export class ContractDeployer {
         GanacheServer.setTestProvider(provider);
 
         let accounts = GanacheServer.accounts();
-        const [deployer, foundation, settlement, fee, validator1, validator2, validator3] = accounts;
+        const [
+            deployer,
+            foundation,
+            settlement,
+            fee,
+            certifier,
+            certifier01,
+            certifier02,
+            certifier03,
+            validator1,
+            validator2,
+            validator3
+        ] = accounts;
         const validators = [validator1, validator2, validator3];
 
         try {
+            console.log("Start Deploy");
+
+            console.log("Deploy Token");
             const tokenContract = await ContractDeployer.deployToken(deployer, accounts);
 
+            console.log("Deploy ValidatorCollection");
             const validatorCollectionContract: ValidatorCollection = (await ContractDeployer.deployValidatorCollection(
                 deployer,
                 tokenContract,
                 validators
             )) as ValidatorCollection;
 
+            console.log("Deposit Validator's Amount");
             await ContractDeployer.depositValidators(tokenContract, validatorCollectionContract, validators);
             const linkCollectionContract: PhoneLinkCollection = await ContractDeployer.deployLinkCollection(
                 deployer,
                 validators
             );
 
+            console.log("Deploy CurrencyRate");
             const currencyRateContract: CurrencyRate = await ContractDeployer.deployCurrencyRate(
                 deployer,
                 validatorCollectionContract,
                 tokenContract,
                 validator1
             );
-            const shopCollectionContract: ShopCollection = await ContractDeployer.deployShopCollection(deployer);
+            console.log("Deploy CertifierCollection");
+            const certifierCollection = await ContractDeployer.deployCertifierCollection(deployer, certifier, [
+                certifier01,
+                certifier02,
+                certifier03
+            ]);
+
+            console.log("Deploy ShopCollection");
+            const shopCollectionContract: ShopCollection = await ContractDeployer.deployShopCollection(
+                deployer,
+                certifierCollection.address
+            );
+
+            console.log("Deploy Ledger");
             const ledgerContract: Ledger = await ContractDeployer.deployLedger(
                 deployer,
                 foundation.address,
                 settlement.address,
                 fee.address,
+                certifierCollection.address,
                 tokenContract,
                 validatorCollectionContract,
                 linkCollectionContract,
                 currencyRateContract,
                 shopCollectionContract
             );
+
+            console.log("Deposit Foundation Asset");
             await ContractDeployer.depositFoundationAsset(tokenContract, ledgerContract, deployer, foundation);
 
+            console.log("Create Sample Data");
             ContractDeployer.createSampleData();
 
-            await ContractDeployer.addShopData(shopCollectionContract);
+            console.log("Add Shop Data");
+            await ContractDeployer.addShopData(deployer, certifier, shopCollectionContract);
 
             LIVE_CONTRACTS.bosagora_devnet.PhoneLinkCollectionAddress = linkCollectionContract.address;
             LIVE_CONTRACTS.bosagora_devnet.TokenAddress = tokenContract.address;
@@ -272,6 +305,7 @@ export class ContractDeployer {
             contextParamsLocalChain.shopCollectionAddress = shopCollectionContract.address;
             contextParamsLocalChain.ledgerAddress = ledgerContract.address;
 
+            console.log("Complete Deploy");
             return {
                 provider: provider,
                 phoneLinkCollection: linkCollectionContract,
@@ -294,9 +328,10 @@ export class ContractDeployer {
         await tokenContract.deployed();
         await tokenContract.deployTransaction.wait();
 
-        for (const elem of accounts) {
-            await tokenContract.connect(deployer).transfer(await elem.getAddress(), depositAmount.value);
-        }
+        await tokenContract.connect(deployer).multiTransfer(
+            accounts.map((m) => m.address),
+            depositAmount.value
+        );
         return tokenContract;
     }
 
@@ -324,13 +359,8 @@ export class ContractDeployer {
         validators: Wallet[]
     ): Promise<void> {
         for (const elem of validators) {
-            const token = tokenContract.connect(elem);
-            const address = await elem.getAddress();
-            const tx1 = await token.approve(validatorContract.address, depositAmount.value);
-            await tx1.wait();
-            const tx2 = await validatorContract.connect(elem).deposit(depositAmount.value);
-            await tx2.wait();
-            await validatorContract.validatorOf(address);
+            await tokenContract.connect(elem).approve(validatorContract.address, depositAmount.value);
+            await validatorContract.connect(elem).deposit(depositAmount.value);
         }
     }
 
@@ -372,12 +402,28 @@ export class ContractDeployer {
         return currencyRateContract;
     }
 
-    private static async deployShopCollection(deployer: Signer): Promise<ShopCollection> {
+    private static async deployCertifierCollection(deployer: Wallet, certifier: Signer, relay: Signer[]) {
+        const factory = new ContractFactory(CertifierCollection__factory.abi, CertifierCollection__factory.bytecode);
+        const certifierCollection = (await factory
+            .connect(deployer)
+            .deploy(await certifier.getAddress())) as CertifierCollection;
+        await certifierCollection.deployed();
+        await certifierCollection.deployTransaction.wait();
+        for (const w of relay) {
+            const tx = await certifierCollection.connect(certifier).grantCertifier(await w.getAddress());
+            await tx.wait();
+        }
+        return certifierCollection;
+    }
+
+    private static async deployShopCollection(deployer: Signer, certifierAddress: string): Promise<ShopCollection> {
         const shopCollectionFactory = new ContractFactory(
             ShopCollection__factory.abi,
             ShopCollection__factory.bytecode
         );
-        const shopCollection = (await shopCollectionFactory.connect(deployer).deploy()) as ShopCollection;
+        const shopCollection = (await shopCollectionFactory
+            .connect(deployer)
+            .deploy(certifierAddress)) as ShopCollection;
         await shopCollection.deployed();
         await shopCollection.deployTransaction.wait();
         return shopCollection;
@@ -388,6 +434,7 @@ export class ContractDeployer {
         foundationAddress: string,
         settlementAddress: string,
         feeAddress: string,
+        certifierAddress: string,
         tokenContract: Contract,
         validatorContract: Contract,
         linkCollectionContract: Contract,
@@ -401,6 +448,7 @@ export class ContractDeployer {
                 foundationAddress,
                 settlementAddress,
                 feeAddress,
+                certifierAddress,
                 tokenContract.address,
                 validatorContract.address,
                 linkCollectionContract.address,
@@ -424,11 +472,68 @@ export class ContractDeployer {
         await ledgerContract.connect(foundation).deposit(foundationAmount.value);
     }
 
-    private static async addShopData(shopCollection: ShopCollection) {
-        for (const elem of shopData) {
-            await shopCollection
-                .connect(elem.wallet)
-                .addDirect(elem.shopId, elem.name, elem.provideWaitTime, elem.providePercent);
+    private static async addShopData(deployer: Signer, certifier: Signer, shopCollection: ShopCollection) {
+        console.log("Add Shop");
+        for (const shop of shopData) {
+            const nonce = await shopCollection.nonceOf(shop.wallet.address);
+            const signature = await ContractUtils.signShop(new Wallet(shop.wallet.privateKey), shop.shopId, nonce);
+            await (
+                await shopCollection.connect(deployer).add(shop.shopId, shop.name, shop.wallet.address, signature)
+            ).wait();
+        }
+
+        console.log("Update Shop");
+        for (const shop of shopData) {
+            const signature1 = ContractUtils.signShop(
+                new Wallet(shop.wallet.privateKey),
+                shop.shopId,
+                await shopCollection.nonceOf(shop.wallet.address)
+            );
+            const signature2 = ContractUtils.signShop(
+                certifier,
+                shop.shopId,
+                await shopCollection.nonceOf(await certifier.getAddress())
+            );
+            await (
+                await shopCollection
+                    .connect(deployer)
+                    .update(
+                        shop.shopId,
+                        shop.name,
+                        shop.provideWaitTime,
+                        shop.providePercent,
+                        shop.wallet.address,
+                        signature1,
+                        await certifier.getAddress(),
+                        signature2
+                    )
+            ).wait();
+        }
+
+        console.log("Change Status of Shop");
+        for (const shop of shopData) {
+            const signature1 = ContractUtils.signShop(
+                new Wallet(shop.wallet.privateKey),
+                shop.shopId,
+                await shopCollection.nonceOf(shop.wallet.address)
+            );
+            const signature2 = ContractUtils.signShop(
+                certifier,
+                shop.shopId,
+                await shopCollection.nonceOf(await certifier.getAddress())
+            );
+            await (
+                await shopCollection
+                    .connect(deployer)
+                    .changeStatus(
+                        shop.shopId,
+                        ContractShopStatus.ACTIVE,
+                        shop.wallet.address,
+                        signature1,
+                        await certifier.getAddress(),
+                        signature2
+                    )
+            ).wait();
         }
     }
 }

@@ -17,8 +17,6 @@ import {
     DepositSteps,
     DepositStepValue,
     NormalSteps,
-    PayPointStepValue,
-    PayTokenStepValue,
     QueryOption,
     LoyaltyType,
     SortByBlock,
@@ -27,12 +25,16 @@ import {
     UpdateAllowanceStepValue,
     WithdrawSteps,
     WithdrawStepValue,
-    SignatureZero
+    SignatureZero,
+    PaymentDetailData,
+    ApproveNewPaymentValue,
+    LoyaltyPaymentEvent,
+    ApproveCancelPaymentValue
 } from "../../interfaces";
 import {
     AmountMismatchError,
+    FailedApprovePayment,
     FailedDepositError,
-    FailedPayPointError,
     FailedPayTokenError,
     FailedWithdrawError,
     InsufficientBalanceError,
@@ -52,6 +54,7 @@ import { QueryPaidToken } from "../graphql-queries/user/paidToken";
 import { QueryPaidPoint } from "../graphql-queries/user/paidPoint";
 import { PhoneLinkCollection, PhoneLinkCollection__factory } from "del-osx-lib";
 import { AddressZero } from "@ethersproject/constants";
+import { BytesLike } from "@ethersproject/bytes";
 
 /**
  * 사용자의 포인트/토큰의 잔고와 제품구매를 하는 기능이 포함되어 있다.
@@ -186,6 +189,291 @@ export class LedgerMethods extends ClientCore implements ILedgerMethods, IClient
         const ledgerInstance: Ledger = Ledger__factory.connect(this.web3.getLedgerAddress(), provider);
 
         return await ledgerInstance.fee();
+    }
+
+    public async getPaymentDetail(paymentId: BytesLike): Promise<PaymentDetailData> {
+        const res = await Network.get(await this.getEndpoint("/v1/payment/item"), {
+            paymentId: paymentId.toString()
+        });
+        if (res.code !== 0 || res.data === undefined) {
+            throw new InternalServerError(res?.error?.message ?? "");
+        }
+
+        let detail: PaymentDetailData;
+
+        try {
+            detail = {
+                paymentId: res.data.paymentId,
+                purchaseId: res.data.purchaseId,
+                amount: BigNumber.from(res.data.amount),
+                currency: res.data.currency,
+                shopId: res.data.shopId,
+                account: res.data.account,
+                loyaltyType: res.data.loyaltyType,
+                paidPoint: BigNumber.from(res.data.paidPoint),
+                paidToken: BigNumber.from(res.data.paidToken),
+                paidValue: BigNumber.from(res.data.paidValue),
+                feePoint: BigNumber.from(res.data.feePoint),
+                feeToken: BigNumber.from(res.data.feeToken),
+                feeValue: BigNumber.from(res.data.feeValue),
+                totalPoint: BigNumber.from(res.data.totalPoint),
+                totalToken: BigNumber.from(res.data.totalToken),
+                totalValue: BigNumber.from(res.data.totalValue),
+                paymentStatus: res.data.paymentStatus
+            };
+        } catch (_) {
+            throw new InternalServerError("Error parsing receiving data");
+        }
+
+        return detail;
+    }
+
+    public async *approveNewPayment(
+        paymentId: BytesLike,
+        purchaseId: string,
+        amount: BigNumber,
+        currency: string,
+        shopId: BytesLike,
+        approval: boolean
+    ): AsyncGenerator<ApproveNewPaymentValue> {
+        const signer = this.web3.getConnectedSigner();
+        if (!signer) {
+            throw new NoSignerError();
+        } else if (!signer.provider) {
+            throw new NoProviderError();
+        }
+
+        const network = getNetwork((await signer.provider.getNetwork()).chainId);
+        const networkName = network.name as SupportedNetworks;
+        if (!SupportedNetworksArray.includes(networkName)) {
+            throw new UnsupportedNetworkError(networkName);
+        }
+
+        const ledgerContract: Ledger = Ledger__factory.connect(this.web3.getLedgerAddress(), signer);
+        const account: string = await signer.getAddress();
+        let contractTx: ContractTransaction;
+        const nonce = await ledgerContract.nonceOf(account);
+        const signature = await ContractUtils.signLoyaltyNewPayment(
+            signer,
+            paymentId,
+            purchaseId,
+            amount,
+            currency,
+            shopId,
+            nonce
+        );
+
+        const param = {
+            paymentId,
+            approval,
+            signature
+        };
+
+        yield {
+            key: NormalSteps.PREPARED,
+            paymentId,
+            purchaseId,
+            amount,
+            currency,
+            shopId,
+            approval,
+            account,
+            signature
+        };
+
+        const res = await Network.post(await this.getEndpoint("/v1/payment/new/approval"), param);
+        if (res.code !== 0 || res.data === undefined) {
+            throw new InternalServerError(res?.error?.message ?? "");
+        }
+        if (approval) {
+            contractTx = (await signer.provider.getTransaction(res.data.txHash)) as ContractTransaction;
+
+            yield {
+                key: NormalSteps.SENT,
+                paymentId,
+                purchaseId,
+                amount,
+                currency,
+                shopId,
+                approval,
+                account,
+                txHash: res.data.txHash
+            };
+
+            const event = await this.waitPaymentLoyalty(ledgerContract, contractTx);
+
+            if (event === undefined) throw new FailedApprovePayment();
+
+            yield {
+                key: NormalSteps.APPROVED,
+                paymentId: event.paymentId,
+                purchaseId: event.purchaseId,
+                amount: event.paidValue,
+                currency: event.currency,
+                shopId: event.shopId,
+                approval,
+                account: event.account,
+                loyaltyType: event.loyaltyType,
+                paidPoint: event.paidPoint,
+                paidToken: event.paidToken,
+                paidValue: event.paidValue,
+                feePoint: event.feePoint,
+                feeToken: event.feeToken,
+                feeValue: event.feeValue,
+                totalPoint: event.totalPoint,
+                totalToken: event.totalToken,
+                totalValue: event.totalValue,
+                balance: event.balance
+            };
+        } else {
+            yield {
+                key: NormalSteps.DENIED,
+                paymentId,
+                purchaseId,
+                amount,
+                currency,
+                shopId,
+                approval,
+                account
+            };
+        }
+    }
+
+    public async *approveCancelPayment(
+        paymentId: BytesLike,
+        purchaseId: string,
+        approval: boolean
+    ): AsyncGenerator<ApproveCancelPaymentValue> {
+        const signer = this.web3.getConnectedSigner();
+        if (!signer) {
+            throw new NoSignerError();
+        } else if (!signer.provider) {
+            throw new NoProviderError();
+        }
+
+        const network = getNetwork((await signer.provider.getNetwork()).chainId);
+        const networkName = network.name as SupportedNetworks;
+        if (!SupportedNetworksArray.includes(networkName)) {
+            throw new UnsupportedNetworkError(networkName);
+        }
+
+        const ledgerContract: Ledger = Ledger__factory.connect(this.web3.getLedgerAddress(), signer);
+        const account: string = await signer.getAddress();
+        let contractTx: ContractTransaction;
+        const nonce = await ledgerContract.nonceOf(account);
+        const signature = await ContractUtils.signLoyaltyCancelPayment(signer, paymentId, purchaseId, nonce);
+
+        const param = {
+            paymentId,
+            approval,
+            signature
+        };
+
+        yield {
+            key: NormalSteps.PREPARED,
+            paymentId,
+            purchaseId,
+            approval,
+            account,
+            signature
+        };
+
+        const res = await Network.post(await this.getEndpoint("/v1/payment/cancel/approval"), param);
+        if (res.code !== 0 || res.data === undefined) {
+            throw new InternalServerError(res?.error?.message ?? "");
+        }
+        if (approval) {
+            contractTx = (await signer.provider.getTransaction(res.data.txHash)) as ContractTransaction;
+
+            yield {
+                key: NormalSteps.SENT,
+                paymentId,
+                purchaseId,
+                approval,
+                account,
+                txHash: res.data.txHash
+            };
+
+            const event = await this.waitPaymentLoyalty(ledgerContract, contractTx);
+
+            if (event === undefined) throw new FailedApprovePayment();
+
+            yield {
+                key: NormalSteps.APPROVED,
+                paymentId: event.paymentId,
+                purchaseId: event.purchaseId,
+                approval,
+                account: event.account,
+                loyaltyType: event.loyaltyType,
+                paidPoint: event.paidPoint,
+                paidToken: event.paidToken,
+                paidValue: event.paidValue,
+                feePoint: event.feePoint,
+                feeToken: event.feeToken,
+                feeValue: event.feeValue,
+                totalPoint: event.totalPoint,
+                totalToken: event.totalToken,
+                totalValue: event.totalValue,
+                balance: event.balance
+            };
+        } else {
+            yield {
+                key: NormalSteps.DENIED,
+                paymentId,
+                purchaseId,
+                approval,
+                account
+            };
+        }
+    }
+
+    private async waitPaymentLoyalty(
+        contract: Ledger,
+        tx: ContractTransaction
+    ): Promise<LoyaltyPaymentEvent | undefined> {
+        const res: any = {};
+        const contractReceipt = await tx.wait();
+        const log = findLog(contractReceipt, contract.interface, "LoyaltyPaymentEvent");
+        if (log !== undefined) {
+            const parsedLog = contract.interface.parseLog(log);
+
+            res.paymentId = parsedLog.args.payment.paymentId;
+            res.purchaseId = parsedLog.args.payment.purchaseId;
+            res.amount = BigNumber.from(parsedLog.args.payment.paidValue);
+            res.currency = parsedLog.args.payment.currency;
+            res.shopId = parsedLog.args.payment.shopId;
+            res.account = parsedLog.args.payment.account;
+            res.timestamp = parsedLog.args.payment.timestamp;
+            res.loyaltyType = parsedLog.args.payment.loyaltyType;
+            res.paidPoint =
+                parsedLog.args.payment.loyaltyType === LoyaltyType.POINT
+                    ? BigNumber.from(parsedLog.args.payment.paidPoint)
+                    : BigNumber.from(0);
+            res.paidToken =
+                parsedLog.args.payment.loyaltyType === LoyaltyType.TOKEN
+                    ? BigNumber.from(parsedLog.args.payment.paidToken)
+                    : BigNumber.from(0);
+            res.paidValue = BigNumber.from(parsedLog.args.payment.paidValue);
+
+            res.feePoint =
+                parsedLog.args.payment.loyaltyType === LoyaltyType.POINT
+                    ? BigNumber.from(parsedLog.args.payment.feePoint)
+                    : BigNumber.from(0);
+            res.feeToken =
+                parsedLog.args.payment.loyaltyType === LoyaltyType.TOKEN
+                    ? BigNumber.from(parsedLog.args.payment.feeToken)
+                    : BigNumber.from(0);
+            res.feeValue = BigNumber.from(parsedLog.args.payment.feeValue);
+
+            res.status = BigNumber.from(parsedLog.args.payment.status);
+            res.balance = BigNumber.from(parsedLog.args.balance);
+
+            res.totalPoint = res.paidPoint.add(res.feePoint);
+            res.totalToken = res.paidToken.add(res.feeToken);
+            res.totalValue = res.paidValue.add(res.feeValue);
+
+            return res;
+        } else return undefined;
     }
 
     /**
@@ -336,228 +624,6 @@ export class LedgerMethods extends ClientCore implements ILedgerMethods, IClient
     }
 
     /**
-     * 포인트를 사용하여 상품을 구매한다.
-     * @param purchaseId - 거래 아이디
-     * @param amount - 거래금액
-     * @param currency - 통화코드
-     * @param shopId - 상점 아이디
-     * @param useRelay - 이값이 true 이면 릴레이 서버를 경유해서 전송합니다. 그렇지 않으면 직접 컨트랙트를 호출합니다.
-     * @return {AsyncGenerator<PayPointStepValue>}
-     */
-    public async *payPoint(
-        purchaseId: string,
-        amount: BigNumber,
-        currency: string,
-        shopId: string,
-        useRelay: boolean = true
-    ): AsyncGenerator<PayPointStepValue> {
-        const signer = this.web3.getConnectedSigner();
-        if (!signer) {
-            throw new NoSignerError();
-        } else if (!signer.provider) {
-            throw new NoProviderError();
-        }
-
-        const network = getNetwork((await signer.provider.getNetwork()).chainId);
-        const networkName = network.name as SupportedNetworks;
-        if (!SupportedNetworksArray.includes(networkName)) {
-            throw new UnsupportedNetworkError(networkName);
-        }
-
-        const ledgerContract: Ledger = Ledger__factory.connect(this.web3.getLedgerAddress(), signer);
-        const account: string = await signer.getAddress();
-        let contractTx: ContractTransaction;
-        if (useRelay) {
-            const nonce = await ledgerContract.nonceOf(account);
-            const signature = await ContractUtils.signPayment(signer, purchaseId, amount, currency, shopId, nonce);
-
-            const param = {
-                purchaseId,
-                amount: amount.toString(),
-                currency,
-                shopId,
-                account,
-                signature
-            };
-
-            yield {
-                key: NormalSteps.PREPARED,
-                purchaseId,
-                amount,
-                currency,
-                shopId,
-                account,
-                signature
-            };
-
-            const res = await Network.post(await this.getEndpoint("/ledger/payPoint"), param);
-            if (res.code !== 200) {
-                throw new InternalServerError(res?.error?.message ?? "");
-            }
-
-            contractTx = (await signer.provider.getTransaction(res.data.txHash)) as ContractTransaction;
-
-            yield { key: NormalSteps.SENT, txHash: res.data.txHash, purchaseId: param.purchaseId };
-        } else {
-            const param = {
-                purchaseId,
-                amount: amount.toString(),
-                currency,
-                shopId
-            };
-
-            yield {
-                key: NormalSteps.PREPARED,
-                purchaseId,
-                amount,
-                currency,
-                shopId,
-                account,
-                signature: SignatureZero
-            };
-
-            contractTx = await ledgerContract.payPointDirect(param);
-
-            yield { key: NormalSteps.SENT, txHash: contractTx.hash, purchaseId: param.purchaseId };
-        }
-
-        const txReceipt = await contractTx.wait();
-
-        const log = findLog(txReceipt, ledgerContract.interface, "PaidPoint");
-        if (!log) {
-            throw new FailedPayPointError();
-        }
-        const parsedLog = ledgerContract.interface.parseLog(log);
-        if (!amount.eq(parsedLog.args["paidValue"])) {
-            throw new AmountMismatchError(amount, parsedLog.args["paidValue"]);
-        }
-        yield {
-            key: NormalSteps.DONE,
-            purchaseId,
-            currency,
-            shopId,
-            paidPoint: parsedLog.args["paidPoint"],
-            paidValue: parsedLog.args["paidValue"],
-            feePoint: parsedLog.args["feePoint"],
-            feeValue: parsedLog.args["feeValue"],
-            balancePoint: parsedLog.args["balancePoint"]
-        };
-    }
-
-    /**
-     * 토큰을 사용하여 상품을 구매한다.
-     * @param purchaseId - 거래 아이디
-     * @param amount - 거래금액
-     * @param currency - 통화코드
-     * @param shopId - 상점 아이디
-     * @param useRelay - 이값이 true 이면 릴레이 서버를 경유해서 전송합니다. 그렇지 않으면 직접 컨트랙트를 호출합니다.
-     * @return {AsyncGenerator<PayTokenStepValue>}
-     */
-    public async *payToken(
-        purchaseId: string,
-        amount: BigNumber,
-        currency: string,
-        shopId: string,
-        useRelay: boolean = true
-    ): AsyncGenerator<PayTokenStepValue> {
-        const signer = this.web3.getConnectedSigner();
-        if (!signer) {
-            throw new NoSignerError();
-        } else if (!signer.provider) {
-            throw new NoProviderError();
-        }
-
-        const network = getNetwork((await signer.provider.getNetwork()).chainId);
-        const networkName = network.name as SupportedNetworks;
-        if (!SupportedNetworksArray.includes(networkName)) {
-            throw new UnsupportedNetworkError(networkName);
-        }
-
-        const ledgerContract: Ledger = Ledger__factory.connect(this.web3.getLedgerAddress(), signer);
-        const account: string = await signer.getAddress();
-        let contractTx: ContractTransaction;
-        if (useRelay) {
-            const nonce = await ledgerContract.nonceOf(account);
-            const signature = await ContractUtils.signPayment(signer, purchaseId, amount, currency, shopId, nonce);
-
-            const param = {
-                purchaseId,
-                amount: amount.toString(),
-                currency,
-                shopId,
-                account,
-                signature
-            };
-
-            yield {
-                key: NormalSteps.PREPARED,
-                purchaseId,
-                amount,
-                currency,
-                shopId,
-                account,
-                signature
-            };
-
-            const res = await Network.post(await this.getEndpoint("/ledger/payToken"), param);
-            if (res.code !== 200) {
-                throw new InternalServerError(res?.error?.message ?? "");
-            }
-
-            yield { key: NormalSteps.SENT, txHash: res.data.txHash, purchaseId: param.purchaseId };
-
-            contractTx = (await signer.provider.getTransaction(res.data.txHash)) as ContractTransaction;
-
-            yield { key: NormalSteps.SENT, txHash: res.data.txHash, purchaseId: param.purchaseId };
-        } else {
-            const param = {
-                purchaseId,
-                amount: amount.toString(),
-                currency,
-                shopId
-            };
-
-            yield {
-                key: NormalSteps.PREPARED,
-                purchaseId,
-                amount,
-                currency,
-                shopId,
-                account,
-                signature: SignatureZero
-            };
-
-            contractTx = await ledgerContract.payTokenDirect(param);
-
-            yield { key: NormalSteps.SENT, txHash: contractTx.hash, purchaseId: param.purchaseId };
-        }
-
-        const txReceipt = await contractTx.wait();
-
-        const log = findLog(txReceipt, ledgerContract.interface, "PaidToken");
-        if (!log) {
-            throw new FailedPayTokenError();
-        }
-
-        const parsedLog = ledgerContract.interface.parseLog(log);
-        if (!amount.eq(parsedLog.args["paidValue"])) {
-            throw new AmountMismatchError(amount, parsedLog.args["paidValue"]);
-        }
-
-        yield {
-            key: NormalSteps.DONE,
-            purchaseId,
-            currency,
-            shopId,
-            paidToken: parsedLog.args["paidToken"],
-            paidValue: parsedLog.args["paidValue"],
-            feeToken: parsedLog.args["feeToken"],
-            feeValue: parsedLog.args["feeValue"],
-            balanceToken: parsedLog.args["balanceToken"]
-        };
-    }
-
-    /**
      * 적립되는 로얄티의 종류를 변경한다.
      * @param useRelay - 이값이 true 이면 릴레이 서버를 경유해서 전송합니다. 그렇지 않으면 직접 컨트랙트를 호출합니다.
      * @return {AsyncGenerator<ChangeLoyaltyTypeStepValue>}
@@ -589,8 +655,8 @@ export class LedgerMethods extends ClientCore implements ILedgerMethods, IClient
                 account,
                 signature
             };
-            const res = await Network.post(await this.getEndpoint("/ledger/changeToLoyaltyToken"), param);
-            if (res.code !== 200) {
+            const res = await Network.post(await this.getEndpoint("/v1/ledger/changeToLoyaltyToken"), param);
+            if (res.code !== 0) {
                 throw new InternalServerError(res?.error?.message ?? "");
             }
 
@@ -693,8 +759,8 @@ export class LedgerMethods extends ClientCore implements ILedgerMethods, IClient
 
             yield { key: NormalSteps.PREPARED, phone, phoneHash, account, signature, balance };
 
-            const res = await Network.post(await this.getEndpoint("/ledger/changeToPayablePoint"), param);
-            if (res.code !== 200) {
+            const res = await Network.post(await this.getEndpoint("/v1/ledger/changeToPayablePoint"), param);
+            if (res.code !== 0) {
                 throw new InternalServerError(res?.error?.message ?? "");
             }
 

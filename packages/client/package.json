@@ -1,6 +1,6 @@
 {
   "name": "dms-sdk-client",
-  "version": "1.0.9",
+  "version": "1.0.10",
   "author": "BOSagora Foundation",
   "license": "MIT",
   "main": "dist/index.js",
@@ -88,7 +88,7 @@
     "@ethersproject/random": "^5.7.0",
     "@ethersproject/wallet": "^5.7.0",
     "del-osx-lib": "^1.1.2",
-    "dms-osx-lib": "^1.1.7",
+    "dms-osx-lib": "^1.1.12",
     "dms-sdk-common": "^1.0.3",
     "graphql": "^16.5.0",
     "graphql-request": "^4.3.0",

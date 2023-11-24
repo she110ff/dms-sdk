@@ -275,7 +275,7 @@ import { ContractUtils } from "../../src";
 describe("Integrated test of Ledger", () => {
     describe("Method Check", () => {
         it("Wait", async () => {
-            await ContractUtils.delay(10000);
+            await ContractUtils.delay(1000);
         });
     });
 });

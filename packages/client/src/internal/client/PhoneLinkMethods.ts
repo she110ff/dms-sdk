@@ -14,6 +14,7 @@ import { IPhoneLinkMethods } from "../../interface/IPhoneLink";
 import { Network } from "../../client-common/interfaces/network";
 
 import { getNetwork } from "@ethersproject/networks";
+import { BytesLike } from "@ethersproject/bytes";
 
 import { InternalServerError, NoValidator } from "../../utils/errors";
 
@@ -161,7 +162,7 @@ export class PhoneLinkMethods extends ClientCore implements IPhoneLinkMethods, I
      * @return {*}  {AsyncGenerator<PhoneLinkSubmitStepValue>}
      * @memberof ClientMethods
      */
-    public async *submit(requestId: string, code: string): AsyncGenerator<PhoneLinkSubmitStepValue> {
+    public async *submit(requestId: BytesLike, code: string): AsyncGenerator<PhoneLinkSubmitStepValue> {
         const signer = this.web3.getConnectedSigner();
         if (!signer) {
             throw new NoSignerError();
@@ -258,7 +259,7 @@ export class PhoneLinkMethods extends ClientCore implements IPhoneLinkMethods, I
         return await contract.toPhone(address);
     }
 
-    public async getRegisterStatus(id: string): Promise<PhoneLinkRequestStatus> {
+    public async getRegisterStatus(id: BytesLike): Promise<PhoneLinkRequestStatus> {
         const provider = this.web3.getProvider();
         if (!provider) {
             throw new NoProviderError();

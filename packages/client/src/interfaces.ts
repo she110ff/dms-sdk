@@ -1,5 +1,4 @@
-import { BigNumberish } from "@ethersproject/bignumber";
-import { BigNumber } from "@ethersproject/bignumber";
+import { BigNumber, BigNumberish } from "@ethersproject/bignumber";
 import { BytesLike } from "@ethersproject/bytes";
 
 export const SignatureZero =
@@ -8,53 +7,164 @@ export const SignatureZero =
 export enum NormalSteps {
     PREPARED = "prepare",
     SENT = "sent",
-    DONE = "done"
+    DONE = "done",
+    APPROVED = "approved",
+    DENIED = "denied"
 }
 
-export type PayPointStepValue =
-    | {
-          key: NormalSteps.PREPARED;
-          purchaseId: string;
-          amount: BigNumber;
-          currency: string;
-          shopId: string;
-          account: string;
-          signature: string;
-      }
-    | { key: NormalSteps.SENT; txHash: string; purchaseId: string }
-    | {
-          key: NormalSteps.DONE;
-          purchaseId: string;
-          currency: string;
-          shopId: string;
-          paidPoint: BigNumber;
-          paidValue: BigNumber;
-          feePoint: BigNumber;
-          feeValue: BigNumber;
-          balancePoint: BigNumber;
-      };
+export enum PaymentDetailTaskStatus {
+    NULL,
+    OPENED_NEW,
+    CONFIRMED_NEW,
+    DENIED_NEW,
+    REPLY_COMPLETED_NEW,
+    CLOSED_NEW,
+    FAILED_NEW,
+    OPENED_CANCEL,
+    CONFIRMED_CANCEL,
+    DENIED_CANCEL,
+    REPLY_COMPLETED_CANCEL,
+    CLOSED_CANCEL,
+    FAILED_CANCEL,
+    TIMEOUT
+}
 
-export type PayTokenStepValue =
+export interface PaymentDetailData {
+    paymentId: BytesLike;
+    purchaseId: string;
+    amount: BigNumber;
+    currency: string;
+    shopId: BytesLike;
+    account: string;
+    loyaltyType: LoyaltyType;
+    paidPoint: BigNumber;
+    paidToken: BigNumber;
+    paidValue: BigNumber;
+    feePoint: BigNumber;
+    feeToken: BigNumber;
+    feeValue: BigNumber;
+    totalPoint: BigNumber;
+    totalToken: BigNumber;
+    totalValue: BigNumber;
+    paymentStatus: PaymentDetailTaskStatus;
+}
+
+export enum ShopDetailTaskStatus {
+    NULL,
+    OPENED,
+    CONFIRMED,
+    DENIED,
+    COMPLETED,
+    TIMEOUT
+}
+
+export interface ShopDetailData {
+    taskId: BytesLike;
+    shopId: BytesLike;
+    name: string;
+    provideWaitTime: number;
+    providePercent: number;
+    account: string;
+    taskStatus: ShopDetailTaskStatus;
+    timestamp: number;
+}
+
+export type ApproveNewPaymentValue =
     | {
           key: NormalSteps.PREPARED;
+          paymentId: BytesLike;
           purchaseId: string;
           amount: BigNumber;
           currency: string;
-          shopId: string;
+          shopId: BytesLike;
+          approval: boolean;
           account: string;
-          signature: string;
+          signature: BytesLike;
       }
-    | { key: NormalSteps.SENT; txHash: string; purchaseId: string }
     | {
-          key: NormalSteps.DONE;
+          key: NormalSteps.SENT;
+          paymentId: BytesLike;
           purchaseId: string;
+          amount: BigNumber;
           currency: string;
-          shopId: string;
+          shopId: BytesLike;
+          approval: boolean;
+          account: string;
+          txHash: BytesLike;
+      }
+    | {
+          key: NormalSteps.APPROVED;
+          paymentId: BytesLike;
+          purchaseId: string;
+          amount: BigNumber;
+          currency: string;
+          shopId: BytesLike;
+          approval: boolean;
+          account: string;
+          loyaltyType: LoyaltyType;
+          paidPoint: BigNumber;
           paidToken: BigNumber;
           paidValue: BigNumber;
+          feePoint: BigNumber;
           feeToken: BigNumber;
           feeValue: BigNumber;
-          balanceToken: BigNumber;
+          totalPoint: BigNumber;
+          totalToken: BigNumber;
+          totalValue: BigNumber;
+          balance: BigNumber;
+      }
+    | {
+          key: NormalSteps.DENIED;
+          paymentId: BytesLike;
+          purchaseId: string;
+          amount: BigNumber;
+          currency: string;
+          shopId: BytesLike;
+          approval: boolean;
+          account: string;
+      };
+
+export type ApproveCancelPaymentValue =
+    | {
+          key: NormalSteps.PREPARED;
+          paymentId: BytesLike;
+          purchaseId: string;
+          approval: boolean;
+          account: string;
+          signature: BytesLike;
+      }
+    | {
+          key: NormalSteps.SENT;
+          paymentId: BytesLike;
+          purchaseId: string;
+          approval: boolean;
+          account: string;
+          txHash: BytesLike;
+      }
+    | {
+          key: NormalSteps.APPROVED;
+          paymentId: BytesLike;
+          purchaseId: string;
+          approval: boolean;
+          account: string;
+          loyaltyType: LoyaltyType;
+          paidPoint: BigNumber;
+          paidToken: BigNumber;
+          paidValue: BigNumber;
+          feePoint: BigNumber;
+          feeToken: BigNumber;
+          feeValue: BigNumber;
+          totalPoint: BigNumber;
+          totalToken: BigNumber;
+          totalValue: BigNumber;
+          balance: BigNumber;
+      }
+    | {
+          key: NormalSteps.DENIED;
+          paymentId: BytesLike;
+          purchaseId: string;
+          approval: boolean;
+          account: string;
       };
 
 export enum DepositSteps {
@@ -64,14 +174,15 @@ export enum DepositSteps {
     DEPOSITING = "depositing",
     DONE = "done"
 }
+
 export type UpdateAllowanceStepValue =
     | { key: DepositSteps.CHECKED_ALLOWANCE; allowance: BigNumber }
-    | { key: DepositSteps.UPDATING_ALLOWANCE; txHash: string }
+    | { key: DepositSteps.UPDATING_ALLOWANCE; txHash: BytesLike }
     | { key: DepositSteps.UPDATED_ALLOWANCE; allowance: BigNumber };
 
 export type DepositStepValue =
     | UpdateAllowanceStepValue
-    | { key: DepositSteps.DEPOSITING; txHash: string }
+    | { key: DepositSteps.DEPOSITING; txHash: BytesLike }
     | { key: DepositSteps.DONE; amount: BigNumber };
 
 export type UpdateAllowanceParams = {
@@ -86,21 +197,16 @@ export enum WithdrawSteps {
 }
 
 export type WithdrawStepValue =
-    | { key: WithdrawSteps.WITHDRAWING; txHash: string }
+    | { key: WithdrawSteps.WITHDRAWING; txHash: BytesLike }
     | { key: WithdrawSteps.DONE; amount: BigNumber };
-
-export enum LoyaltyType {
-    POINT,
-    TOKEN
-}
 
 export type ChangeLoyaltyTypeStepValue =
     | {
           key: NormalSteps.PREPARED;
           account: string;
-          signature: string;
+          signature: BytesLike;
       }
-    | { key: NormalSteps.SENT; txHash: string }
+    | { key: NormalSteps.SENT; txHash: BytesLike }
     | {
           key: NormalSteps.DONE;
           account: string;
@@ -113,12 +219,12 @@ export type ChangeToPayablePointStepValue =
     | {
           key: NormalSteps.PREPARED;
           phone: string;
-          phoneHash: string;
+          phoneHash: BytesLike;
           account: string;
-          signature: string;
+          signature: BytesLike;
           balance: BigNumberish;
       }
-    | { key: NormalSteps.SENT; txHash: string }
+    | { key: NormalSteps.SENT; txHash: BytesLike }
     | { key: NormalSteps.DONE };
 
 export type AddShopStepValue =
@@ -126,50 +232,58 @@ export type AddShopStepValue =
           key: NormalSteps.PREPARED;
           shopId: BytesLike;
           name: string;
-          provideWaitTime: BigNumberish;
-          providePercent: BigNumberish;
           account: string;
           signature: BytesLike;
       }
-    | { key: NormalSteps.SENT; txHash: BytesLike; shopId: BytesLike }
+    | {
+          key: NormalSteps.SENT;
+          shopId: BytesLike;
+          name: string;
+          account: string;
+          txHash: BytesLike;
+      }
     | {
           key: NormalSteps.DONE;
           shopId: BytesLike;
           name: string;
-          provideWaitTime: BigNumberish;
-          providePercent: BigNumberish;
           account: string;
       };
 
-export type UpdateShopStepValue =
+export type ApproveShopStepValue =
     | {
           key: NormalSteps.PREPARED;
+          taskId: BytesLike;
           shopId: BytesLike;
-          name: string;
-          provideWaitTime: BigNumberish;
-          providePercent: BigNumberish;
+          approval: boolean;
           account: string;
           signature: BytesLike;
       }
-    | { key: NormalSteps.SENT; txHash: BytesLike; shopId: BytesLike }
     | {
-          key: NormalSteps.DONE;
+          key: NormalSteps.SENT;
+          taskId: BytesLike;
           shopId: BytesLike;
-          name: string;
-          provideWaitTime: BigNumberish;
-          providePercent: BigNumberish;
+          approval: boolean;
+          account: string;
+          txHash: BytesLike;
+      }
+    | {
+          key: NormalSteps.APPROVED;
+          taskId: BytesLike;
+          shopId: BytesLike;
+          approval: boolean;
+          account: string;
+          name?: string;
+          provideWaitTime?: number;
+          providePercent?: number;
+          status?: ShopStatus;
+      }
+    | {
+          key: NormalSteps.DENIED;
+          taskId: BytesLike;
+          shopId: BytesLike;
+          approval: boolean;
           account: string;
       };
-
-export type RemoveShopStepValue =
-    | {
-          key: NormalSteps.PREPARED;
-          shopId: BytesLike;
-          account: string;
-          signature: BytesLike;
-      }
-    | { key: NormalSteps.SENT; txHash: BytesLike; shopId: BytesLike }
-    | { key: NormalSteps.DONE; shopId: BytesLike };
 
 export type OpenWithdrawalShopStepValue =
     | {
@@ -192,21 +306,62 @@ export type CloseWithdrawalShopStepValue =
     | { key: NormalSteps.SENT; txHash: BytesLike; shopId: BytesLike }
     | { key: NormalSteps.DONE; shopId: BytesLike; amount: BigNumberish; account: string };
 
-export enum ShopStatus {
-    INVALID,
-    ACTIVE
+export enum LoyaltyType {
+    POINT,
+    TOKEN
 }
 
-export enum WithdrawStatus {
+export interface LoyaltyPaymentEvent {
+    paymentId: BytesLike;
+    purchaseId: string;
+    currency: string;
+    shopId: BytesLike;
+    account: string;
+    timestamp: BigNumber;
+    loyaltyType: number;
+    paidPoint: BigNumber;
+    paidToken: BigNumber;
+    paidValue: BigNumber;
+    feePoint: BigNumber;
+    feeToken: BigNumber;
+    feeValue: BigNumber;
+    totalPoint: BigNumber;
+    totalToken: BigNumber;
+    totalValue: BigNumber;
+    status: number;
+    balance: BigNumber;
+}
+
+export interface ShopUpdateEvent {
+    shopId: BytesLike;
+    name: string;
+    provideWaitTime: number;
+    providePercent: number;
+    account: string;
+    status: ShopStatus;
+}
+
+export interface ShopStatusEvent {
+    shopId: BytesLike;
+    status: ShopStatus;
+}
+
+export enum ShopStatus {
+    INVALID,
+    ACTIVE,
+    INACTIVE
+}
+
+export enum ShopWithdrawStatus {
     CLOSE,
     OPEN
 }
 
 export type ShopData = {
-    shopId: string;
+    shopId: BytesLike;
     name: string;
-    provideWaitTime: BigNumber; // 제품구매 후 포인트 지급시간
-    providePercent: BigNumber; // 구매금액에 대한 포인트 지급량
+    provideWaitTime: number; // 제품구매 후 포인트 지급시간
+    providePercent: number; // 구매금액에 대한 포인트 지급량
     account: string; // 상점주의 지갑주소
     providedPoint: BigNumber; // 제공된 포인트 총량
     usedPoint: BigNumber; // 사용된 포인트 총량
@@ -214,7 +369,7 @@ export type ShopData = {
     withdrawnPoint: BigNumber; // 정산된 포인트 총량
     status: ShopStatus;
     withdrawAmount: BigNumber;
-    withdrawStatus: WithdrawStatus;
+    withdrawStatus: ShopWithdrawStatus;
 };
 
 export type ValidatorInfoValue = {
@@ -237,16 +392,16 @@ export enum PhoneLinkRegisterSteps {
 }
 
 export type PhoneLinkRegisterStepValue =
-    | { key: PhoneLinkRegisterSteps.SENDING; requestId: string; phone: string; address: string }
+    | { key: PhoneLinkRegisterSteps.SENDING; requestId: BytesLike; phone: string; address: string }
     | {
           key: PhoneLinkRegisterSteps.REQUESTED;
-          requestId: string;
+          requestId: BytesLike;
           phone: string;
           address: string;
       }
     | {
           key: PhoneLinkRegisterSteps.TIMEOUT;
-          requestId: string;
+          requestId: BytesLike;
           phone: string;
           address: string;
       };
@@ -258,14 +413,14 @@ export enum PhoneLinkSubmitSteps {
 }
 
 export type PhoneLinkSubmitStepValue =
-    | { key: PhoneLinkSubmitSteps.SENDING; requestId: string; code: string }
+    | { key: PhoneLinkSubmitSteps.SENDING; requestId: BytesLike; code: string }
     | {
           key: PhoneLinkSubmitSteps.ACCEPTED;
-          requestId: string;
+          requestId: BytesLike;
       }
     | {
           key: PhoneLinkSubmitSteps.TIMEOUT;
-          requestId: string;
+          requestId: BytesLike;
       };
 
 export enum SortDirection {
@@ -284,6 +439,7 @@ export enum SortByBlock {
     BLOCK_NUMBER = "blockNumber",
     BLOCK_TIMESTAMP = "blockTimestamp"
 }
+
 export enum SortBy {
     LAST_UPDATED = "lastUpdated",
     CREATED_AT = "createdAt"

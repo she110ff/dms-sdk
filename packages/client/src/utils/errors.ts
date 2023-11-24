@@ -170,3 +170,9 @@ export class NoValidator extends Error {
         super("Validators not found");
     }
 }
+
+export class FailedApprovePayment extends Error {
+    constructor() {
+        super("Failed to approve new payment ");
+    }
+}

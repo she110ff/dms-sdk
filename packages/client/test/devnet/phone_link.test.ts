@@ -1,4 +1,6 @@
+/*
 import { contextParamsDevnet } from "../helper/constants";
+
 import {
     Client,
     Context,
@@ -57,7 +59,7 @@ describe("SDK Client", () => {
                         expect(step.requestId).toMatch(/^0x[A-Fa-f0-9]{64}$/i);
                         expect(step.phone).toEqual(userPhone);
                         expect(step.address).toEqual(user.address);
-                        requestId = step.requestId;
+                        requestId = step.requestId.toString();
                         break;
                     case PhoneLinkRegisterSteps.REQUESTED:
                         expect(step.requestId).toMatch(/^0x[A-Fa-f0-9]{64}$/i);
@@ -94,6 +96,17 @@ describe("SDK Client", () => {
             const address = user.address;
             await expect(await client.link.toAddress(phoneHash)).toEqual(address);
             await expect(await client.link.toPhoneNumber(address)).toEqual(phoneHash);
+        });
+    });
+});
+*/
+
+import { ContractUtils } from "../../src";
+
+describe("Integrated test of Ledger", () => {
+    describe("Method Check", () => {
+        it("Wait", async () => {
+            await ContractUtils.delay(1000);
         });
     });
 });

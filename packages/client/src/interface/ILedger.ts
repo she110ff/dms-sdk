@@ -1,17 +1,19 @@
 import { IClientCore, IClientHttpCore } from "../client-common";
 import {
+    ApproveCancelPaymentValue,
+    ApproveNewPaymentValue,
     ChangeLoyaltyTypeStepValue,
+    ChangeToPayablePointStepValue,
     DepositStepValue,
-    PayPointStepValue,
-    PayTokenStepValue,
-    QueryOption,
     LoyaltyType,
+    PaymentDetailData,
+    QueryOption,
     UpdateAllowanceParams,
     UpdateAllowanceStepValue,
-    WithdrawStepValue,
-    ChangeToPayablePointStepValue
+    WithdrawStepValue
 } from "../interfaces";
 import { BigNumber } from "@ethersproject/bignumber";
+import { BytesLike } from "@ethersproject/bytes";
 
 export interface ILedger {
     ledger: ILedgerMethods;
@@ -25,21 +27,22 @@ export interface ILedgerMethods extends IClientCore, IClientHttpCore {
 
     getFeeRate: () => Promise<number>;
 
-    payPoint: (
-        purchaseId: string,
-        amount: BigNumber,
-        currency: string,
-        shopId: string,
-        useRelay?: boolean
-    ) => AsyncGenerator<PayPointStepValue>;
+    getPaymentDetail: (paymentId: BytesLike) => Promise<PaymentDetailData>;
 
-    payToken: (
+    approveNewPayment: (
+        paymentId: BytesLike,
         purchaseId: string,
         amount: BigNumber,
         currency: string,
-        shopId: string,
-        useRelay?: boolean
-    ) => AsyncGenerator<PayTokenStepValue>;
+        shopId: BytesLike,
+        approval: boolean
+    ) => AsyncGenerator<ApproveNewPaymentValue>;
+
+    approveCancelPayment: (
+        paymentId: BytesLike,
+        purchaseId: string,
+        approval: boolean
+    ) => AsyncGenerator<ApproveCancelPaymentValue>;
 
     deposit: (amount: BigNumber) => AsyncGenerator<DepositStepValue>;
     withdraw: (amount: BigNumber) => AsyncGenerator<WithdrawStepValue>;

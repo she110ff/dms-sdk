@@ -15,7 +15,7 @@ import { Signer } from "@ethersproject/abstract-signer";
 import { BigNumberish } from "@ethersproject/bignumber";
 import { NonceManager } from "@ethersproject/experimental";
 
-import { GanacheServer } from "./GanacheServer";
+import { AccountIndex, GanacheServer } from "./GanacheServer";
 import { Deployment } from "./ContractDeployer";
 
 export enum JobType {
@@ -59,15 +59,15 @@ export class FakerValidator {
     }
 
     private get validator1(): Signer {
-        return new NonceManager(this._accounts[4]);
+        return new NonceManager(this._accounts[AccountIndex.VALIDATOR1]);
     }
 
     private get validator2(): Signer {
-        return new NonceManager(this._accounts[5]);
+        return new NonceManager(this._accounts[AccountIndex.VALIDATOR2]);
     }
 
     private get validator3(): Signer {
-        return new NonceManager(this._accounts[6]);
+        return new NonceManager(this._accounts[AccountIndex.VALIDATOR3]);
     }
 
     public start(): Promise<void> {

@@ -228,50 +228,91 @@ export class ContractUtils {
         return keccak256(encodedResult);
     }
 
-    public static getShopMessage(
+    public static getShopMessage(shopId: BytesLike, account: string, nonce: BigNumberish): Uint8Array {
+        const encodedResult = defaultAbiCoder.encode(["bytes32", "address", "uint256"], [shopId, account, nonce]);
+        return arrayify(keccak256(encodedResult));
+    }
+
+    public static async signShop(signer: Signer, shopId: BytesLike, nonce: BigNumberish): Promise<string> {
+        const message = ContractUtils.getShopMessage(shopId, await signer.getAddress(), nonce);
+        return signer.signMessage(message);
+    }
+
+    public static verifyShop(shopId: BytesLike, nonce: BigNumberish, account: string, signature: BytesLike): boolean {
+        const message = ContractUtils.getShopMessage(shopId, account, nonce);
+        let res: string;
+        try {
+            res = verifyMessage(message, signature);
+        } catch (error) {
+            return false;
+        }
+        return res.toLowerCase() === account.toLowerCase();
+    }
+
+    public static getPaymentId(account: string, nonce: BigNumberish): string {
+        const encodedResult = defaultAbiCoder.encode(
+            ["address", "uint256", "bytes32"],
+            [account, nonce, randomBytes(32)]
+        );
+        return keccak256(encodedResult);
+    }
+
+    public static getLoyaltyNewPaymentMessage(
+        address: string,
+        paymentId: BytesLike,
+        purchaseId: string,
+        amount: BigNumberish,
+        currency: string,
         shopId: BytesLike,
-        name: string,
-        provideWaitTime: BigNumberish,
-        providePercent: BigNumberish,
-        account: string,
         nonce: BigNumberish
     ): Uint8Array {
         const encodedResult = defaultAbiCoder.encode(
-            ["bytes32", "string", "uint256", "uint256", "address", "uint256"],
-            [shopId, name, provideWaitTime, providePercent, account, nonce]
+            ["bytes32", "string", "uint256", "string", "bytes32", "address", "uint256"],
+            [paymentId, purchaseId, amount, currency, shopId, address, nonce]
         );
         return arrayify(keccak256(encodedResult));
     }
 
-    public static async signShop(
+    public static async signLoyaltyNewPayment(
         signer: Signer,
+        paymentId: BytesLike,
+        purchaseId: string,
+        amount: BigNumberish,
+        currency: string,
         shopId: BytesLike,
-        name: string,
-        provideWaitTime: BigNumberish,
-        providePercent: BigNumberish,
         nonce: BigNumberish
     ): Promise<string> {
-        const message = ContractUtils.getShopMessage(
-            shopId,
-            name,
-            provideWaitTime,
-            providePercent,
+        const message = ContractUtils.getLoyaltyNewPaymentMessage(
             await signer.getAddress(),
+            paymentId,
+            purchaseId,
+            amount,
+            currency,
+            shopId,
             nonce
         );
         return signer.signMessage(message);
     }
 
-    public static verifyShop(
+    public static verifyLoyaltyNewPayment(
+        paymentId: BytesLike,
+        purchaseId: string,
+        amount: BigNumberish,
+        currency: string,
         shopId: BytesLike,
-        name: string,
-        provideWaitTime: BigNumberish,
-        providePercent: BigNumberish,
         nonce: BigNumberish,
         account: string,
         signature: BytesLike
     ): boolean {
-        const message = ContractUtils.getShopMessage(shopId, name, provideWaitTime, providePercent, account, nonce);
+        const message = ContractUtils.getLoyaltyNewPaymentMessage(
+            account,
+            paymentId,
+            purchaseId,
+            amount,
+            currency,
+            shopId,
+            nonce
+        );
         let res: string;
         try {
             res = verifyMessage(message, signature);
@@ -281,18 +322,41 @@ export class ContractUtils {
         return res.toLowerCase() === account.toLowerCase();
     }
 
-    public static getShopIdMessage(shopId: BytesLike, account: string, nonce: BigNumberish): Uint8Array {
-        const encodedResult = defaultAbiCoder.encode(["bytes32", "address", "uint256"], [shopId, account, nonce]);
+    public static getLoyaltyCancelPaymentMessage(
+        address: string,
+        paymentId: BytesLike,
+        purchaseId: string,
+        nonce: BigNumberish
+    ): Uint8Array {
+        const encodedResult = defaultAbiCoder.encode(
+            ["bytes32", "string", "address", "uint256"],
+            [paymentId, purchaseId, address, nonce]
+        );
         return arrayify(keccak256(encodedResult));
     }
 
-    public static async signShopId(signer: Signer, shopId: BytesLike, nonce: BigNumberish): Promise<string> {
-        const message = ContractUtils.getShopIdMessage(shopId, await signer.getAddress(), nonce);
+    public static async signLoyaltyCancelPayment(
+        signer: Signer,
+        paymentId: BytesLike,
+        purchaseId: string,
+        nonce: BigNumberish
+    ): Promise<string> {
+        const message = ContractUtils.getLoyaltyCancelPaymentMessage(
+            await signer.getAddress(),
+            paymentId,
+            purchaseId,
+            nonce
+        );
         return signer.signMessage(message);
     }
-
-    public static verifyShopId(shopId: BytesLike, nonce: BigNumberish, account: string, signature: BytesLike): boolean {
-        const message = ContractUtils.getShopIdMessage(shopId, account, nonce);
+    public static verifyLoyaltyCancelPayment(
+        paymentId: BytesLike,
+        purchaseId: string,
+        nonce: BigNumberish,
+        account: string,
+        signature: BytesLike
+    ): boolean {
+        const message = ContractUtils.getLoyaltyCancelPaymentMessage(account, paymentId, purchaseId, nonce);
         let res: string;
         try {
             res = verifyMessage(message, signature);
@@ -300,6 +364,14 @@ export class ContractUtils {
             return false;
         }
         return res.toLowerCase() === account.toLowerCase();
+    }
+
+    public static getTaskId(shopId: BytesLike): string {
+        const encodedResult = defaultAbiCoder.encode(
+            ["bytes32", "uint256", "bytes32", "bytes32"],
+            [shopId, ContractUtils.getTimeStamp(), randomBytes(32), randomBytes(32)]
+        );
+        return keccak256(encodedResult);
     }
 }
 

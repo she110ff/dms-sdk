@@ -2,12 +2,12 @@ import { IClientCore, IClientHttpCore } from "../client-common";
 import { BigNumber, BigNumberish } from "@ethersproject/bignumber";
 import {
     AddShopStepValue,
-    UpdateShopStepValue,
-    RemoveShopStepValue,
+    ApproveShopStepValue,
     OpenWithdrawalShopStepValue,
     CloseWithdrawalShopStepValue,
     ShopData,
-    QueryOption
+    QueryOption,
+    ShopDetailData
 } from "../interfaces";
 import { BytesLike } from "@ethersproject/bytes";
 
@@ -17,21 +17,11 @@ export interface IShop {
 
 /** Defines the shape of the general purpose Client class */
 export interface IShopMethods extends IClientCore, IClientHttpCore {
-    add: (
-        shopId: BytesLike,
-        name: string,
-        provideWaitTime: BigNumberish,
-        providePercent: BigNumberish,
-        useRelay?: boolean
-    ) => AsyncGenerator<AddShopStepValue>;
-    update: (
-        shopId: BytesLike,
-        name: string,
-        provideWaitTime: BigNumberish,
-        providePercent: BigNumberish,
-        useRelay?: boolean
-    ) => AsyncGenerator<UpdateShopStepValue>;
-    remove: (shopId: BytesLike, useRelay?: boolean) => AsyncGenerator<RemoveShopStepValue>;
+    getTaskDetail: (taskId: BytesLike) => Promise<ShopDetailData>;
+    add: (shopId: BytesLike, name: string) => AsyncGenerator<AddShopStepValue>;
+    approveUpdate: (taskId: BytesLike, shopId: BytesLike, approval: boolean) => AsyncGenerator<ApproveShopStepValue>;
+    approveStatus: (taskId: BytesLike, shopId: BytesLike, approval: boolean) => AsyncGenerator<ApproveShopStepValue>;
+
     openWithdrawal: (
         shopId: BytesLike,
         amount: BigNumberish,

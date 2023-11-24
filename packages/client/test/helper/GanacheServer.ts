@@ -7,6 +7,31 @@ import { Wallet } from "@ethersproject/wallet";
 
 dotenv.config({ path: "env/.env" });
 
+export enum AccountIndex {
+    DEPLOYER,
+    FOUNDATION,
+    SETTLEMENT,
+    FEE,
+    CERTIFIER,
+    CERTIFIER01,
+    CERTIFIER02,
+    CERTIFIER03,
+    VALIDATOR1,
+    VALIDATOR2,
+    VALIDATOR3,
+    USER1,
+    USER2,
+    USER3,
+    USER4,
+    USER5,
+    SHOP1,
+    SHOP2,
+    SHOP3,
+    SHOP4,
+    SHOP5,
+    SHOP6
+}
+
 export class GanacheServer {
     public static instance: Server;
     public static initialAccounts: any[];
@@ -87,6 +112,54 @@ export class GanacheServer {
 
         // 4
         if (
+            process.env.CERTIFIER !== undefined &&
+            process.env.CERTIFIER.trim() !== "" &&
+            reg_bytes64.test(process.env.CERTIFIER)
+        ) {
+            accounts.push(process.env.CERTIFIER);
+        } else {
+            process.env.CERTIFIER = Wallet.createRandom().privateKey;
+            accounts.push(process.env.CERTIFIER);
+        }
+
+        // 5
+        if (
+            process.env.CERTIFIER01 !== undefined &&
+            process.env.CERTIFIER01.trim() !== "" &&
+            reg_bytes64.test(process.env.CERTIFIER01)
+        ) {
+            accounts.push(process.env.CERTIFIER01);
+        } else {
+            process.env.CERTIFIER01 = Wallet.createRandom().privateKey;
+            accounts.push(process.env.CERTIFIER01);
+        }
+
+        // 6
+        if (
+            process.env.CERTIFIER02 !== undefined &&
+            process.env.CERTIFIER02.trim() !== "" &&
+            reg_bytes64.test(process.env.CERTIFIER02)
+        ) {
+            accounts.push(process.env.CERTIFIER02);
+        } else {
+            process.env.CERTIFIER02 = Wallet.createRandom().privateKey;
+            accounts.push(process.env.CERTIFIER02);
+        }
+
+        // 7
+        if (
+            process.env.CERTIFIER03 !== undefined &&
+            process.env.CERTIFIER03.trim() !== "" &&
+            reg_bytes64.test(process.env.CERTIFIER03)
+        ) {
+            accounts.push(process.env.CERTIFIER03);
+        } else {
+            process.env.CERTIFIER03 = Wallet.createRandom().privateKey;
+            accounts.push(process.env.CERTIFIER03);
+        }
+
+        // 8
+        if (
             process.env.VALIDATOR1 !== undefined &&
             process.env.VALIDATOR1.trim() !== "" &&
             reg_bytes64.test(process.env.VALIDATOR1)
@@ -97,7 +170,7 @@ export class GanacheServer {
             accounts.push(process.env.VALIDATOR1);
         }
 
-        // 5
+        // 9
         if (
             process.env.VALIDATOR2 !== undefined &&
             process.env.VALIDATOR2.trim() !== "" &&
@@ -109,7 +182,7 @@ export class GanacheServer {
             accounts.push(process.env.VALIDATOR2);
         }
 
-        // 6
+        // 10
         if (
             process.env.VALIDATOR3 !== undefined &&
             process.env.VALIDATOR3.trim() !== "" &&
@@ -121,7 +194,7 @@ export class GanacheServer {
             accounts.push(process.env.VALIDATOR3);
         }
 
-        // 7
+        // 11
         if (process.env.USER1 !== undefined && process.env.USER1.trim() !== "" && reg_bytes64.test(process.env.USER1)) {
             accounts.push(process.env.USER1);
         } else {
@@ -129,7 +202,7 @@ export class GanacheServer {
             accounts.push(process.env.USER1);
         }
 
-        // 8
+        // 12
         if (process.env.USER2 !== undefined && process.env.USER2.trim() !== "" && reg_bytes64.test(process.env.USER2)) {
             accounts.push(process.env.USER2);
         } else {
@@ -137,7 +210,7 @@ export class GanacheServer {
             accounts.push(process.env.USER2);
         }
 
-        // 9
+        // 13
         if (process.env.USER3 !== undefined && process.env.USER3.trim() !== "" && reg_bytes64.test(process.env.USER3)) {
             accounts.push(process.env.USER3);
         } else {
@@ -145,7 +218,7 @@ export class GanacheServer {
             accounts.push(process.env.USER3);
         }
 
-        // 10
+        // 14
         if (process.env.USER4 !== undefined && process.env.USER4.trim() !== "" && reg_bytes64.test(process.env.USER4)) {
             accounts.push(process.env.USER4);
         } else {
@@ -153,7 +226,7 @@ export class GanacheServer {
             accounts.push(process.env.USER4);
         }
 
-        // 11
+        // 15
         if (process.env.USER5 !== undefined && process.env.USER5.trim() !== "" && reg_bytes64.test(process.env.USER5)) {
             accounts.push(process.env.USER5);
         } else {
@@ -161,7 +234,7 @@ export class GanacheServer {
             accounts.push(process.env.USER5);
         }
 
-        // 12
+        // 16
         if (process.env.SHOP1 !== undefined && process.env.SHOP1.trim() !== "" && reg_bytes64.test(process.env.SHOP1)) {
             accounts.push(process.env.SHOP1);
         } else {
@@ -169,7 +242,7 @@ export class GanacheServer {
             accounts.push(process.env.SHOP1);
         }
 
-        // 13
+        // 17
         if (process.env.SHOP2 !== undefined && process.env.SHOP2.trim() !== "" && reg_bytes64.test(process.env.SHOP2)) {
             accounts.push(process.env.SHOP2);
         } else {
@@ -177,7 +250,7 @@ export class GanacheServer {
             accounts.push(process.env.SHOP2);
         }
 
-        // 14
+        // 18
         if (process.env.SHOP3 !== undefined && process.env.SHOP3.trim() !== "" && reg_bytes64.test(process.env.SHOP3)) {
             accounts.push(process.env.SHOP3);
         } else {
@@ -185,7 +258,7 @@ export class GanacheServer {
             accounts.push(process.env.SHOP3);
         }
 
-        // 15
+        // 19
         if (process.env.SHOP4 !== undefined && process.env.SHOP4.trim() !== "" && reg_bytes64.test(process.env.SHOP4)) {
             accounts.push(process.env.SHOP4);
         } else {
@@ -193,7 +266,7 @@ export class GanacheServer {
             accounts.push(process.env.SHOP4);
         }
 
-        // 16
+        // 20
         if (process.env.SHOP5 !== undefined && process.env.SHOP5.trim() !== "" && reg_bytes64.test(process.env.SHOP5)) {
             accounts.push(process.env.SHOP5);
         } else {
@@ -201,7 +274,7 @@ export class GanacheServer {
             accounts.push(process.env.SHOP5);
         }
 
-        // 17
+        // 21
         if (process.env.SHOP6 !== undefined && process.env.SHOP6.trim() !== "" && reg_bytes64.test(process.env.SHOP6)) {
             accounts.push(process.env.SHOP6);
         } else {

@@ -16,14 +16,16 @@ import {
     NormalSteps,
     OpenWithdrawalShopStepValue,
     QueryOption,
-    RemoveShopStepValue,
     ShopData,
     SortByBlock,
     SortDirection,
-    UpdateShopStepValue,
-    SignatureZero
+    SignatureZero,
+    ShopDetailData,
+    ApproveShopStepValue,
+    ShopUpdateEvent,
+    ShopStatusEvent
 } from "../../interfaces";
-import { FailedAddShopError, InternalServerError, NoHttpModuleError } from "../../utils/errors";
+import { FailedAddShopError, FailedApprovePayment, InternalServerError, NoHttpModuleError } from "../../utils/errors";
 import { Network } from "../../client-common/interfaces/network";
 import { findLog } from "../../client-common/utils";
 
@@ -138,9 +140,9 @@ export class ShopMethods extends ClientCore implements IShopMethods, IClientHttp
         const shopInfo = await shopContract.shopOf(shopId);
         return {
             shopId: shopInfo.shopId,
-            name: shopInfo.shopId,
-            provideWaitTime: shopInfo.provideWaitTime,
-            providePercent: shopInfo.providePercent,
+            name: shopInfo.name,
+            provideWaitTime: BigNumber.from(shopInfo.provideWaitTime).toNumber(),
+            providePercent: BigNumber.from(shopInfo.providePercent).toNumber(),
             account: shopInfo.account,
             providedPoint: shopInfo.providedPoint,
             usedPoint: shopInfo.usedPoint,
@@ -149,297 +151,6 @@ export class ShopMethods extends ClientCore implements IShopMethods, IClientHttp
             status: shopInfo.status,
             withdrawAmount: shopInfo.withdrawData.amount,
             withdrawStatus: shopInfo.withdrawData.status
-        };
-    }
-
-    /**
-     * 상점의 정보를 추가한다.
-     * @param shopId
-     * @param name
-     * @param provideWaitTime
-     * @param providePercent
-     * @param useRelay
-     * @return {AsyncGenerator<AddShopStepValue>}
-     */
-    public async *add(
-        shopId: BytesLike,
-        name: string,
-        provideWaitTime: BigNumberish,
-        providePercent: BigNumberish,
-        useRelay: boolean = true
-    ): AsyncGenerator<AddShopStepValue> {
-        const signer = this.web3.getConnectedSigner();
-        if (!signer) {
-            throw new NoSignerError();
-        } else if (!signer.provider) {
-            throw new NoProviderError();
-        }
-
-        const network = getNetwork((await signer.provider.getNetwork()).chainId);
-        const networkName = network.name as SupportedNetworks;
-        if (!SupportedNetworksArray.includes(networkName)) {
-            throw new UnsupportedNetworkError(networkName);
-        }
-
-        const shopContract: ShopCollection = ShopCollection__factory.connect(
-            this.web3.getShopCollectionAddress(),
-            signer
-        );
-        let contractTx: ContractTransaction;
-        const account: string = await signer.getAddress();
-        if (useRelay) {
-            const nonce = await shopContract.nonceOf(account);
-            const signature = await ContractUtils.signShop(
-                signer,
-                shopId,
-                name,
-                provideWaitTime,
-                providePercent,
-                nonce
-            );
-
-            const param = {
-                shopId,
-                name,
-                provideWaitTime: provideWaitTime.toString(),
-                providePercent: providePercent.toString(),
-                account,
-                signature
-            };
-
-            yield {
-                key: NormalSteps.PREPARED,
-                shopId,
-                name,
-                provideWaitTime,
-                providePercent,
-                account,
-                signature
-            };
-
-            const res = await Network.post(await this.getEndpoint("/shop/add"), param);
-            if (res.code !== 200) {
-                throw new InternalServerError(res?.error?.message ?? "");
-            }
-
-            contractTx = (await signer.provider.getTransaction(res.data.txHash)) as ContractTransaction;
-
-            yield { key: NormalSteps.SENT, txHash: res.data.txHash, shopId };
-        } else {
-            yield {
-                key: NormalSteps.PREPARED,
-                shopId,
-                name,
-                provideWaitTime,
-                providePercent,
-                account: await signer.getAddress(),
-                signature: SignatureZero
-            };
-
-            contractTx = await shopContract.addDirect(shopId, name, provideWaitTime, providePercent);
-
-            yield { key: NormalSteps.SENT, txHash: contractTx.hash, shopId };
-        }
-        const txReceipt = await contractTx.wait();
-
-        const log = findLog(txReceipt, shopContract.interface, "AddedShop");
-        if (!log) {
-            throw new FailedAddShopError();
-        }
-        const parsedLog = shopContract.interface.parseLog(log);
-
-        yield {
-            key: NormalSteps.DONE,
-            shopId: parsedLog.args["shopId"],
-            name: parsedLog.args["name"],
-            provideWaitTime: parsedLog.args["provideWaitTime"],
-            providePercent: parsedLog.args["providePercent"],
-            account: parsedLog.args["account"]
-        };
-    }
-
-    /**
-     * 상점의 정보를 변경한다.
-     * @param shopId
-     * @param name
-     * @param provideWaitTime
-     * @param providePercent
-     * @param useRelay
-     * @return {AsyncGenerator<UpdateShopStepValue>}
-     */
-    public async *update(
-        shopId: BytesLike,
-        name: string,
-        provideWaitTime: BigNumberish,
-        providePercent: BigNumberish,
-        useRelay: boolean = true
-    ): AsyncGenerator<UpdateShopStepValue> {
-        const signer = this.web3.getConnectedSigner();
-        if (!signer) {
-            throw new NoSignerError();
-        } else if (!signer.provider) {
-            throw new NoProviderError();
-        }
-
-        const network = getNetwork((await signer.provider.getNetwork()).chainId);
-        const networkName = network.name as SupportedNetworks;
-        if (!SupportedNetworksArray.includes(networkName)) {
-            throw new UnsupportedNetworkError(networkName);
-        }
-
-        const shopContract: ShopCollection = ShopCollection__factory.connect(
-            this.web3.getShopCollectionAddress(),
-            signer
-        );
-        const account: string = await signer.getAddress();
-        let contractTx: ContractTransaction;
-        if (useRelay) {
-            const nonce = await shopContract.nonceOf(account);
-            const signature = await ContractUtils.signShop(
-                signer,
-                shopId,
-                name,
-                provideWaitTime,
-                providePercent,
-                nonce
-            );
-
-            const param = {
-                shopId,
-                name,
-                provideWaitTime: provideWaitTime.toString(),
-                providePercent: providePercent.toString(),
-                account,
-                signature
-            };
-
-            yield {
-                key: NormalSteps.PREPARED,
-                shopId,
-                name,
-                provideWaitTime,
-                providePercent,
-                account,
-                signature
-            };
-
-            const res = await Network.post(await this.getEndpoint("/shop/update"), param);
-            if (res.code !== 200) {
-                throw new InternalServerError(res?.error?.message ?? "");
-            }
-
-            contractTx = (await signer.provider.getTransaction(res.data.txHash)) as ContractTransaction;
-
-            yield { key: NormalSteps.SENT, txHash: res.data.txHash, shopId };
-        } else {
-            yield {
-                key: NormalSteps.PREPARED,
-                shopId,
-                name,
-                provideWaitTime,
-                providePercent,
-                account,
-                signature: SignatureZero
-            };
-
-            contractTx = await shopContract.updateDirect(shopId, name, provideWaitTime, providePercent);
-
-            yield { key: NormalSteps.SENT, txHash: contractTx.hash, shopId };
-        }
-
-        const txReceipt = await contractTx.wait();
-
-        const log = findLog(txReceipt, shopContract.interface, "UpdatedShop");
-        if (!log) {
-            throw new FailedAddShopError();
-        }
-        const parsedLog = shopContract.interface.parseLog(log);
-
-        yield {
-            key: NormalSteps.DONE,
-            shopId: parsedLog.args["shopId"],
-            name: parsedLog.args["name"],
-            provideWaitTime: parsedLog.args["provideWaitTime"],
-            providePercent: parsedLog.args["providePercent"],
-            account: parsedLog.args["account"]
-        };
-    }
-
-    /**
-     * 상점의 정보를 삭제한다.
-     * @param shopId
-     * @param useRelay
-     * @return {AsyncGenerator<RemoveShopStepValue>}
-     */
-    public async *remove(shopId: BytesLike, useRelay: boolean = true): AsyncGenerator<RemoveShopStepValue> {
-        const signer = this.web3.getConnectedSigner();
-        if (!signer) {
-            throw new NoSignerError();
-        } else if (!signer.provider) {
-            throw new NoProviderError();
-        }
-
-        const network = getNetwork((await signer.provider.getNetwork()).chainId);
-        const networkName = network.name as SupportedNetworks;
-        if (!SupportedNetworksArray.includes(networkName)) {
-            throw new UnsupportedNetworkError(networkName);
-        }
-
-        const shopContract: ShopCollection = ShopCollection__factory.connect(
-            this.web3.getShopCollectionAddress(),
-            signer
-        );
-        let contractTx: ContractTransaction;
-        const account: string = await signer.getAddress();
-        if (useRelay) {
-            const nonce = await shopContract.nonceOf(account);
-            const signature = await ContractUtils.signShopId(signer, shopId, nonce);
-
-            const param = {
-                shopId,
-                account,
-                signature
-            };
-
-            yield {
-                key: NormalSteps.PREPARED,
-                shopId,
-                account,
-                signature
-            };
-
-            const res = await Network.post(await this.getEndpoint("/shop/remove"), param);
-            if (res.code !== 200) {
-                throw new InternalServerError(res?.error?.message ?? "");
-            }
-
-            contractTx = (await signer.provider.getTransaction(res.data.txHash)) as ContractTransaction;
-
-            yield { key: NormalSteps.SENT, txHash: res.data.txHash, shopId };
-        } else {
-            yield {
-                key: NormalSteps.PREPARED,
-                shopId,
-                account,
-                signature: SignatureZero
-            };
-
-            contractTx = await shopContract.removeDirect(shopId);
-
-            yield { key: NormalSteps.SENT, txHash: contractTx.hash, shopId };
-        }
-
-        const txReceipt = await contractTx.wait();
-
-        const log = findLog(txReceipt, shopContract.interface, "RemovedShop");
-        if (!log) {
-            throw new FailedAddShopError();
-        }
-        const parsedLog = shopContract.interface.parseLog(log);
-
-        yield {
-            key: NormalSteps.DONE,
-            shopId: parsedLog.args["shopId"]
         };
     }
 
@@ -476,7 +187,7 @@ export class ShopMethods extends ClientCore implements IShopMethods, IClientHttp
         const account: string = await signer.getAddress();
         if (useRelay) {
             const nonce = await shopContract.nonceOf(account);
-            const signature = await ContractUtils.signShopId(signer, shopId, nonce);
+            const signature = await ContractUtils.signShop(signer, shopId, nonce);
 
             const param = {
                 shopId,
@@ -493,8 +204,8 @@ export class ShopMethods extends ClientCore implements IShopMethods, IClientHttp
                 signature
             };
 
-            const res = await Network.post(await this.getEndpoint("/shop/openWithdrawal"), param);
-            if (res.code !== 200) {
+            const res = await Network.post(await this.getEndpoint("/v1/shop/withdrawal/open"), param);
+            if (res.code !== 0) {
                 throw new InternalServerError(res?.error?.message ?? "");
             }
 
@@ -562,7 +273,7 @@ export class ShopMethods extends ClientCore implements IShopMethods, IClientHttp
         let contractTx: ContractTransaction;
         if (useRelay) {
             const nonce = await shopContract.nonceOf(account);
-            const signature = await ContractUtils.signShopId(signer, shopId, nonce);
+            const signature = await ContractUtils.signShop(signer, shopId, nonce);
 
             const param = {
                 shopId,
@@ -577,8 +288,8 @@ export class ShopMethods extends ClientCore implements IShopMethods, IClientHttp
                 signature
             };
 
-            const res = await Network.post(await this.getEndpoint("/shop/closeWithdrawal"), param);
-            if (res.code !== 200) {
+            const res = await Network.post(await this.getEndpoint("/v1/shop/withdrawal/close"), param);
+            if (res.code !== 0) {
                 throw new InternalServerError(res?.error?.message ?? "");
             }
 
@@ -737,5 +448,285 @@ export class ShopMethods extends ClientCore implements IShopMethods, IClientHttp
         const params = { where, limit, skip, direction: sortDirection, sortBy };
         const name = "shop trade history";
         return await this.graphql.request({ query, params, name });
+    }
+
+    public async getTaskDetail(taskId: BytesLike): Promise<ShopDetailData> {
+        const res = await Network.get(await this.getEndpoint("/v1/shop/task"), {
+            taskId: taskId.toString()
+        });
+        if (res.code !== 0 || res.data === undefined) {
+            throw new InternalServerError(res?.error?.message ?? "");
+        }
+
+        let detail: ShopDetailData;
+
+        try {
+            detail = {
+                taskId: res.data.taskId,
+                shopId: res.data.shopId,
+                name: res.data.name,
+                provideWaitTime: res.data.provideWaitTime,
+                providePercent: res.data.providePercent,
+                account: res.data.account,
+                taskStatus: res.taskStatus,
+                timestamp: res.timestamp
+            };
+        } catch (_) {
+            throw new InternalServerError("Error parsing receiving data");
+        }
+
+        return detail;
+    }
+
+    /**
+     * 상점의 정보를 추가한다.
+     * @param shopId
+     * @param name
+     * @return {AsyncGenerator<AddShopStepValue>}
+     */
+    public async *add(shopId: BytesLike, name: string): AsyncGenerator<AddShopStepValue> {
+        const signer = this.web3.getConnectedSigner();
+        if (!signer) {
+            throw new NoSignerError();
+        } else if (!signer.provider) {
+            throw new NoProviderError();
+        }
+
+        const network = getNetwork((await signer.provider.getNetwork()).chainId);
+        const networkName = network.name as SupportedNetworks;
+        if (!SupportedNetworksArray.includes(networkName)) {
+            throw new UnsupportedNetworkError(networkName);
+        }
+
+        const shopContract: ShopCollection = ShopCollection__factory.connect(
+            this.web3.getShopCollectionAddress(),
+            signer
+        );
+        let contractTx: ContractTransaction;
+        const account: string = await signer.getAddress();
+        const nonce = await shopContract.nonceOf(account);
+        const signature = await ContractUtils.signShop(signer, shopId, nonce);
+
+        const param = {
+            shopId,
+            name,
+            account,
+            signature
+        };
+
+        yield {
+            key: NormalSteps.PREPARED,
+            shopId,
+            name,
+            account,
+            signature
+        };
+
+        const res = await Network.post(await this.getEndpoint("/v1/shop/add"), param);
+        if (res.code !== 0) {
+            throw new InternalServerError(res?.error?.message ?? "");
+        }
+
+        contractTx = (await signer.provider.getTransaction(res.data.txHash)) as ContractTransaction;
+
+        yield { key: NormalSteps.SENT, shopId, name, account, txHash: res.data.txHash };
+        const txReceipt = await contractTx.wait();
+
+        const log = findLog(txReceipt, shopContract.interface, "AddedShop");
+        if (!log) {
+            throw new FailedAddShopError();
+        }
+        const parsedLog = shopContract.interface.parseLog(log);
+
+        yield {
+            key: NormalSteps.DONE,
+            shopId: parsedLog.args["shopId"],
+            name: parsedLog.args["name"],
+            account: parsedLog.args["account"]
+        };
+    }
+
+    public async *approveUpdate(
+        taskId: BytesLike,
+        shopId: BytesLike,
+        approval: boolean
+    ): AsyncGenerator<ApproveShopStepValue> {
+        const signer = this.web3.getConnectedSigner();
+        if (!signer) {
+            throw new NoSignerError();
+        } else if (!signer.provider) {
+            throw new NoProviderError();
+        }
+
+        const network = getNetwork((await signer.provider.getNetwork()).chainId);
+        const networkName = network.name as SupportedNetworks;
+        if (!SupportedNetworksArray.includes(networkName)) {
+            throw new UnsupportedNetworkError(networkName);
+        }
+
+        const shopContract: ShopCollection = ShopCollection__factory.connect(
+            this.web3.getShopCollectionAddress(),
+            signer
+        );
+        let contractTx: ContractTransaction;
+        const account: string = await signer.getAddress();
+        const nonce = await shopContract.nonceOf(account);
+        const signature = await ContractUtils.signShop(signer, shopId, nonce);
+
+        const param = {
+            taskId,
+            approval,
+            signature
+        };
+
+        yield {
+            key: NormalSteps.PREPARED,
+            taskId,
+            shopId,
+            approval,
+            account,
+            signature
+        };
+
+        const res = await Network.post(await this.getEndpoint("/v1/shop/update/approval"), param);
+        if (res.code !== 0) {
+            throw new InternalServerError(res?.error?.message ?? "");
+        }
+
+        if (approval) {
+            contractTx = (await signer.provider.getTransaction(res.data.txHash)) as ContractTransaction;
+
+            yield { key: NormalSteps.SENT, taskId, shopId, approval, account, txHash: res.data.txHash };
+            const event = await this.waitAndUpdateEvent(shopContract, contractTx);
+
+            if (event === undefined) throw new FailedApprovePayment();
+            yield {
+                key: NormalSteps.APPROVED,
+                taskId,
+                shopId: event.shopId,
+                approval,
+                account: event.account,
+                name: event.name,
+                provideWaitTime: BigNumber.from(event.provideWaitTime).toNumber(),
+                providePercent: BigNumber.from(event.providePercent).toNumber(),
+                status: event.status
+            };
+        } else {
+            yield {
+                key: NormalSteps.DENIED,
+                taskId,
+                shopId,
+                approval,
+                account
+            };
+        }
+    }
+
+    public async *approveStatus(
+        taskId: BytesLike,
+        shopId: BytesLike,
+        approval: boolean
+    ): AsyncGenerator<ApproveShopStepValue> {
+        const signer = this.web3.getConnectedSigner();
+        if (!signer) {
+            throw new NoSignerError();
+        } else if (!signer.provider) {
+            throw new NoProviderError();
+        }
+
+        const network = getNetwork((await signer.provider.getNetwork()).chainId);
+        const networkName = network.name as SupportedNetworks;
+        if (!SupportedNetworksArray.includes(networkName)) {
+            throw new UnsupportedNetworkError(networkName);
+        }
+
+        const shopContract: ShopCollection = ShopCollection__factory.connect(
+            this.web3.getShopCollectionAddress(),
+            signer
+        );
+        let contractTx: ContractTransaction;
+        const account: string = await signer.getAddress();
+        const nonce = await shopContract.nonceOf(account);
+        const signature = await ContractUtils.signShop(signer, shopId, nonce);
+
+        const param = {
+            taskId,
+            approval,
+            signature
+        };
+
+        yield {
+            key: NormalSteps.PREPARED,
+            taskId,
+            shopId,
+            approval,
+            account,
+            signature
+        };
+
+        const res = await Network.post(await this.getEndpoint("/v1/shop/status/approval"), param);
+        if (res.code !== 0) {
+            throw new InternalServerError(res?.error?.message ?? "");
+        }
+
+        if (approval) {
+            contractTx = (await signer.provider.getTransaction(res.data.txHash)) as ContractTransaction;
+
+            yield { key: NormalSteps.SENT, taskId, shopId, approval, account, txHash: res.data.txHash };
+            const event = await this.waitAndChangeStatusEvent(shopContract, contractTx);
+
+            if (event === undefined) throw new FailedApprovePayment();
+            yield {
+                key: NormalSteps.APPROVED,
+                taskId,
+                shopId: event.shopId,
+                approval,
+                account,
+                status: event.status
+            };
+        } else {
+            yield {
+                key: NormalSteps.DENIED,
+                taskId,
+                shopId,
+                approval,
+                account
+            };
+        }
+    }
+
+    private async waitAndUpdateEvent(
+        contract: ShopCollection,
+        tx: ContractTransaction
+    ): Promise<ShopUpdateEvent | undefined> {
+        const contractReceipt = await tx.wait();
+        const log = findLog(contractReceipt, contract.interface, "UpdatedShop");
+        if (log !== undefined) {
+            const parsedLog = contract.interface.parseLog(log);
+
+            return {
+                shopId: parsedLog.args.shopId,
+                name: parsedLog.args.name,
+                provideWaitTime: (parsedLog.args.provideWaitTime as BigNumber).toNumber(),
+                providePercent: (parsedLog.args.providePercent as BigNumber).toNumber(),
+                account: parsedLog.args.account,
+                status: parsedLog.args.status
+            };
+        } else return undefined;
+    }
+
+    private async waitAndChangeStatusEvent(
+        contract: ShopCollection,
+        tx: ContractTransaction
+    ): Promise<ShopStatusEvent | undefined> {
+        const contractReceipt = await tx.wait();
+        const log = findLog(contractReceipt, contract.interface, "ChangedShopStatus");
+        if (log !== undefined) {
+            const parsedLog = contract.interface.parseLog(log);
+            return {
+                shopId: parsedLog.args.shopId,
+                status: parsedLog.args.status
+            };
+        } else return undefined;
     }
 }

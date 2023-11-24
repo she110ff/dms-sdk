@@ -3148,10 +3148,10 @@ dir-glob@^3.0.1:
   dependencies:
     path-type "^4.0.0"
 
-dms-osx-lib@^1.1.7:
-  version "1.1.7"
-  resolved "https://registry.yarnpkg.com/dms-osx-lib/-/dms-osx-lib-1.1.7.tgz#30b5b4d3cc5f68393120e76083fe6193bd57ad16"
-  integrity sha512-F5BzEVPJ1DEZ4o17yDPPArlu3adAzl+whK6RwzYPpqrMrArWNd+Nj2spVRHUT/C84e3kVvLcA1CsgTQEE4Ps9g==
+dms-osx-lib@^1.1.12:
+  version "1.1.12"
+  resolved "https://registry.yarnpkg.com/dms-osx-lib/-/dms-osx-lib-1.1.12.tgz#9df6a903bcf3ade1f09801e88c4706e0d4a2c657"
+  integrity sha512-BD9qupJVDvCNJj2sd0ly/XFIvjlWNG0u5FUqoSlCyTonXEm4IHpt3JBqVDkXm+G7E0MOwe2hoAeSWzrI4E4rxA==
   dependencies:
     ethers "^5.7.0"
 
