@@ -3148,12 +3148,12 @@ dir-glob@^3.0.1:
   dependencies:
     path-type "^4.0.0"
 
-dms-osx-lib@^1.1.12:
-  version "1.1.12"
-  resolved "https://registry.yarnpkg.com/dms-osx-lib/-/dms-osx-lib-1.1.12.tgz#9df6a903bcf3ade1f09801e88c4706e0d4a2c657"
-  integrity sha512-BD9qupJVDvCNJj2sd0ly/XFIvjlWNG0u5FUqoSlCyTonXEm4IHpt3JBqVDkXm+G7E0MOwe2hoAeSWzrI4E4rxA==
+dms-osx-lib@^1.1.13:
+  version "1.1.13"
+  resolved "https://registry.yarnpkg.com/dms-osx-lib/-/dms-osx-lib-1.1.13.tgz#64d44d7619cb7c222bb7ac4566693c93698813b3"
+  integrity sha512-GqlmFIp17X/obk9uzRFiGmkxoRD21wVjuXiinbjB8BgLE1XUQ+2WbdlOH4UCA5gxqRP9dtlSdm+gvI8+ei66Sg==
   dependencies:
-    ethers "^5.7.0"
+    ethers "npm:boa-ethers2@^5.7.9"
 
 doctrine@^2.1.0:
   version "2.1.0"

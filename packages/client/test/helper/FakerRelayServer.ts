@@ -1453,13 +1453,6 @@ export class FakerRelayServer {
                 }
 
                 if (approval) {
-                    const certifier = this.signer;
-                    const signature2 = await ContractUtils.signShop(
-                        certifier,
-                        item.shopId,
-                        await contract.nonceOf(await certifier.getAddress())
-                    );
-
                     try {
                         const tx = await contract.update(
                             item.shopId,
@@ -1467,9 +1460,7 @@ export class FakerRelayServer {
                             item.provideWaitTime,
                             item.providePercent,
                             item.account,
-                            signature,
-                            await certifier.getAddress(),
-                            signature2
+                            signature
                         );
 
                         item.taskStatus = ShopTaskStatus.CONFIRMED;
@@ -1638,22 +1629,8 @@ export class FakerRelayServer {
 
                 if (approval) {
                     const contract = await this.shopContract;
-                    const certifier = this.signer;
-                    const signature2 = await ContractUtils.signShop(
-                        certifier,
-                        item.shopId,
-                        await contract.nonceOf(await certifier.getAddress())
-                    );
-
                     try {
-                        const tx = await contract.changeStatus(
-                            item.shopId,
-                            item.status,
-                            item.account,
-                            signature,
-                            await certifier.getAddress(),
-                            signature2
-                        );
+                        const tx = await contract.changeStatus(item.shopId, item.status, item.account, signature);
 
                         item.taskStatus = ShopTaskStatus.CONFIRMED;
                         await this._storage.updateTaskStatus(item.taskId, item.taskStatus);

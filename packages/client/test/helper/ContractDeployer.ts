@@ -489,23 +489,16 @@ export class ContractDeployer {
                 shop.shopId,
                 await shopCollection.nonceOf(shop.wallet.address)
             );
-            const signature2 = ContractUtils.signShop(
-                certifier,
-                shop.shopId,
-                await shopCollection.nonceOf(await certifier.getAddress())
-            );
             await (
                 await shopCollection
-                    .connect(deployer)
+                    .connect(certifier)
                     .update(
                         shop.shopId,
                         shop.name,
                         shop.provideWaitTime,
                         shop.providePercent,
                         shop.wallet.address,
-                        signature1,
-                        await certifier.getAddress(),
-                        signature2
+                        signature1
                     )
             ).wait();
         }
@@ -517,22 +510,10 @@ export class ContractDeployer {
                 shop.shopId,
                 await shopCollection.nonceOf(shop.wallet.address)
             );
-            const signature2 = ContractUtils.signShop(
-                certifier,
-                shop.shopId,
-                await shopCollection.nonceOf(await certifier.getAddress())
-            );
             await (
                 await shopCollection
-                    .connect(deployer)
-                    .changeStatus(
-                        shop.shopId,
-                        ContractShopStatus.ACTIVE,
-                        shop.wallet.address,
-                        signature1,
-                        await certifier.getAddress(),
-                        signature2
-                    )
+                    .connect(certifier)
+                    .changeStatus(shop.shopId, ContractShopStatus.ACTIVE, shop.wallet.address, signature1)
             ).wait();
         }
     }
