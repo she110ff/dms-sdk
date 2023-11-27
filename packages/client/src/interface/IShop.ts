@@ -31,9 +31,6 @@ export interface IShopMethods extends IClientCore, IClientHttpCore {
     getWithdrawableAmount: (shopId: BytesLike) => Promise<BigNumber>;
     getShopInfo: (shopId: BytesLike) => Promise<ShopData>;
 
-    getShopTradeHistory: (shopId: BytesLike, option?: QueryOption) => Promise<any>;
-    getShopProvidedTradeHistory: (shopId: BytesLike, option?: QueryOption) => Promise<any>;
-    getShopUsedTradeHistory: (shopId: BytesLike, option?: QueryOption) => Promise<any>;
-    getShopOpenWithdrawnTradeHistory: (shopId: BytesLike, option?: QueryOption) => Promise<any>;
-    getShopCloseWithdrawnTradeHistory: (shopId: BytesLike, option?: QueryOption) => Promise<any>;
+    getProvideAndUseTradeHistory: (shopId: BytesLike, option?: QueryOption) => Promise<any>;
+    getWithdrawTradeHistory: (shopId: BytesLike, option?: QueryOption) => Promise<any>;
 }

@@ -11,16 +11,18 @@ export const QueryUserTradeHistory = gql`
         userTradeHistories(where: $where, first: $limit, orderBy: $sortBy, orderDirection: $direction, skip: $skip) {
             id
             account
+            pageType
             action
-            assetFlow
+            cancel
+            loyaltyType
             amountPoint
             amountToken
-            value
+            amountValue
             balancePoint
             balanceToken
             purchaseId
+            paymentId
             shopId
-            account
             blockNumber
             blockTimestamp
             transactionHash

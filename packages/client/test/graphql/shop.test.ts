@@ -1,12 +1,25 @@
 /*
 import { contextParamsDevnet } from "../helper/constants";
 
-import { Amount, Client, Context, ContractUtils, LIVE_CONTRACTS, NormalSteps, WithdrawStatus } from "../../src";
+import {
+    Amount,
+    Client,
+    Context,
+    ContractUtils,
+    LIVE_CONTRACTS,
+    LoyaltyType,
+    NormalSteps,
+    ShopAction,
+    ShopWithdrawStatus
+} from "../../src";
 import { Wallet } from "@ethersproject/wallet";
 
 // @ts-ignore
 import fs from "fs";
 import { BigNumber } from "@ethersproject/bignumber";
+import { Network } from "../../src/client-common/interfaces/network";
+
+import * as assert from "assert";
 
 export interface IPurchaseData {
     purchaseId: string;
@@ -79,14 +92,6 @@ describe("Integrated test of ShopCollection", () => {
                 expect(isUp).toEqual(true);
             });
 
-            it("All History", async () => {
-                const shop = shops[0];
-                const res = await client.shop.getShopTradeHistory(shop.shopId);
-                const length = res.shopTradeHistories.length;
-                expect(length).toBeGreaterThan(0);
-                expect(res.shopTradeHistories[length - 1].shopId).toEqual(shop.shopId);
-            });
-
             it("Check Settlement", async () => {
                 withdrawalAmount = await client.shop.getWithdrawableAmount(shop.shopId);
             });
@@ -95,7 +100,7 @@ describe("Integrated test of ShopCollection", () => {
                 const purchase: IPurchaseData = {
                     purchaseId: "P100000",
                     timestamp: 1672844400,
-                    amount: 10000,
+                    amount: 100000,
                     currency: "krw",
                     shopIndex: 2,
                     userIndex: 0,
@@ -104,46 +109,95 @@ describe("Integrated test of ShopCollection", () => {
 
                 const multiple = BigNumber.from(1_000_000_000);
                 const price = BigNumber.from(150).mul(multiple);
-                const amount = Amount.make(purchase.amount * 10, 18).value;
-                const tokenAmount = amount.mul(multiple).div(price);
+                const paidPoint = Amount.make(purchase.amount, 18).value;
+                const paidToken = paidPoint.mul(multiple).div(price);
+                const feeToken = paidToken.mul(5).div(100);
+                const totalToken = paidToken.add(feeToken);
 
                 let userIndex = 0;
                 for (const user of users) {
+                    const loyaltyType = await client.ledger.getLoyaltyType(user.address);
+                    if (loyaltyType !== LoyaltyType.TOKEN) continue;
+
                     const balance = await client.ledger.getTokenBalance(user.address);
-                    if (balance.gt(tokenAmount)) {
+                    if (balance.gt(totalToken)) {
                         purchase.userIndex = userIndex;
                         purchase.purchaseId = `P${ContractUtils.getTimeStamp()}`;
 
-                        client.useSigner(new Wallet(users[purchase.userIndex].privateKey));
+                        const userWallet = new Wallet(user.privateKey);
+                        client.useSigner(userWallet);
 
-                        for await (const step of client.ledger.payToken(
-                            purchase.purchaseId,
-                            amount,
-                            purchase.currency,
-                            shops[purchase.shopIndex].shopId
-                        )) {
-                            switch (step.key) {
-                                case NormalSteps.PREPARED:
-                                    expect(step.purchaseId).toEqual(purchase.purchaseId);
-                                    expect(step.amount).toEqual(amount);
-                                    expect(step.currency).toEqual(purchase.currency.toLowerCase());
-                                    expect(step.shopId).toEqual(shops[purchase.shopIndex].shopId);
-                                    expect(step.account.toUpperCase()).toEqual(users[userIndex].address.toUpperCase());
-                                    expect(step.signature).toMatch(/^0x[A-Fa-f0-9]{130}$/i);
-                                    break;
-                                case NormalSteps.SENT:
-                                    expect(typeof step.txHash).toBe("string");
-                                    expect(step.txHash).toMatch(/^0x[A-Fa-f0-9]{64}$/i);
-                                    expect(step.purchaseId).toEqual(purchase.purchaseId);
-                                    break;
-                                case NormalSteps.DONE:
-                                    expect(step.purchaseId).toEqual(purchase.purchaseId);
-                                    expect(step.paidValue).toEqual(amount);
-                                    break;
-                                default:
-                                    throw new Error("Unexpected pay token step: " + JSON.stringify(step, null, 2));
+                        // Open New
+                        console.log("Pay token - Open New");
+                        let res = await Network.post(
+                            new URL(contextParamsDevnet.relayEndpoint + "v1/payment/new/open"),
+                            {
+                                accessKey: "0x2c93e943c0d7f6f1a42f53e116c52c40fe5c1b428506dc04b290f2a77580a342",
+                                purchaseId: purchase.purchaseId,
+                                amount: paidPoint.toString(),
+                                currency: purchase.currency.toLowerCase(),
+                                shopId: shops[purchase.shopIndex].shopId,
+                                account: user.address
                             }
-                        }
+                        );
+                        assert.deepStrictEqual(res.code, 0, res?.error?.message);
+                        assert.notDeepStrictEqual(res.data, undefined);
+
+                        const paymentId = res.data.paymentId;
+
+                        await ContractUtils.delay(3000);
+
+                        // Approve New
+                        console.log("Pay token - Approve New");
+
+                        // let detail = await client.ledger.getPaymentDetail(paymentId);
+                        // for await (const step of client.ledger.approveNewPayment(
+                        //     paymentId,
+                        //     detail.purchaseId,
+                        //     paidPoint,
+                        //     detail.currency.toLowerCase(),
+                        //     detail.shopId,
+                        //     true
+                        // )) {
+                        //     switch (step.key) {
+                        //         case NormalSteps.PREPARED:
+                        //             expect(step.paymentId).toEqual(paymentId);
+                        //             expect(step.purchaseId).toEqual(detail.purchaseId);
+                        //             expect(step.amount).toEqual(paidPoint);
+                        //             expect(step.currency).toEqual(detail.currency.toLowerCase());
+                        //             expect(step.shopId).toEqual(detail.shopId);
+                        //             expect(step.account).toEqual(user.address);
+                        //             expect(step.signature).toMatch(/^0x[A-Fa-f0-9]{130}$/i);
+                        //             break;
+                        //         case NormalSteps.SENT:
+                        //             expect(step.paymentId).toEqual(paymentId);
+                        //             expect(step.txHash).toMatch(/^0x[A-Fa-f0-9]{64}$/i);
+                        //             break;
+                        //         case NormalSteps.APPROVED:
+                        //             expect(step.paymentId).toEqual(paymentId);
+                        //             expect(step.purchaseId).toEqual(detail.purchaseId);
+                        //             expect(step.currency).toEqual(detail.currency.toLowerCase());
+                        //             expect(step.shopId).toEqual(detail.shopId);
+                        //             expect(step.paidToken).toEqual(paidToken);
+                        //             expect(step.paidValue).toEqual(paidPoint);
+                        //             break;
+                        //         default:
+                        //             throw new Error("Unexpected pay point step: " + JSON.stringify(step, null, 2));
+                        //     }
+                        // }
+
+                        await ContractUtils.delay(5000);
+
+                        // Close New
+                        console.log("Pay token - Close New");
+                        res = await Network.post(new URL(contextParamsDevnet.relayEndpoint + "v1/payment/new/close"), {
+                            accessKey: "0x2c93e943c0d7f6f1a42f53e116c52c40fe5c1b428506dc04b290f2a77580a342",
+                            confirm: true,
+                            paymentId
+                        });
+                        assert.deepStrictEqual(res.code, 0);
+
+                        await ContractUtils.delay(1000);
                     }
 
                     withdrawalAmount = await client.shop.getWithdrawableAmount(shop.shopId);
@@ -155,15 +209,8 @@ describe("Integrated test of ShopCollection", () => {
                 }
             });
 
-            it("Provided History", async () => {
-                const res = await client.shop.getShopProvidedTradeHistory(shop.shopId);
-                const length = res.shopTradeHistories.length;
-                expect(length).toBeGreaterThan(0);
-                expect(res.shopTradeHistories[length - 1].shopId).toEqual(shop.shopId);
-            });
-
-            it("Used History", async () => {
-                const res = await client.shop.getShopUsedTradeHistory(shop.shopId);
+            it("Get Provide & Use History", async () => {
+                const res = await client.shop.getProvideAndUseTradeHistory(shop.shopId);
                 const length = res.shopTradeHistories.length;
                 expect(length).toBeGreaterThan(0);
                 expect(res.shopTradeHistories[length - 1].shopId).toEqual(shop.shopId);
@@ -200,15 +247,20 @@ describe("Integrated test of ShopCollection", () => {
 
             it("Check Withdraw Status - Working", async () => {
                 const shopInfo = await client.shop.getShopInfo(shop.shopId);
-                expect(shopInfo.withdrawStatus).toEqual(WithdrawStatus.OPEN);
+                expect(shopInfo.withdrawStatus).toEqual(ShopWithdrawStatus.OPEN);
                 expect(shopInfo.withdrawAmount.toString()).toEqual(withdrawalAmount.toString());
             });
 
             it("OpenWithdrawal History", async () => {
-                const res = await client.shop.getShopOpenWithdrawnTradeHistory(shop.shopId);
+                const res = await client.shop.getWithdrawTradeHistory(shop.shopId);
                 const length = res.shopTradeHistories.length;
                 expect(length).toBeGreaterThan(0);
-                expect(res.shopTradeHistories[length - 1].shopId).toEqual(shop.shopId);
+                expect(res.shopTradeHistories[0].shopId).toEqual(shop.shopId);
+                expect(res.shopTradeHistories[0].action).toEqual(ShopAction.OPEN_WITHDRAWN);
+            });
+
+            it("Wait", async () => {
+                await ContractUtils.delay(2000);
             });
 
             it("Close Withdrawal", async () => {
@@ -236,20 +288,24 @@ describe("Integrated test of ShopCollection", () => {
                 }
             });
 
+            it("Wait", async () => {
+                await ContractUtils.delay(2000);
+            });
+
             it("CloseWithdrawal History", async () => {
-                const res = await client.shop.getShopCloseWithdrawnTradeHistory(shop.shopId);
+                const res = await client.shop.getWithdrawTradeHistory(shop.shopId);
                 const length = res.shopTradeHistories.length;
                 expect(length).toBeGreaterThan(0);
-                expect(res.shopTradeHistories[length - 1].shopId).toEqual(shop.shopId);
+                expect(res.shopTradeHistories[0].shopId).toEqual(shop.shopId);
+                expect(res.shopTradeHistories[0].action).toEqual(ShopAction.CLOSE_WITHDRAWN);
             });
         });
     });
 });
 */
-
 import { ContractUtils } from "../../src";
 
-describe("Integrated test of ShopCollection", () => {
+describe("Integrated test of Ledger", () => {
     describe("Method Check", () => {
         it("Wait", async () => {
             await ContractUtils.delay(1000);

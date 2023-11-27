@@ -444,3 +444,35 @@ export enum SortBy {
     LAST_UPDATED = "lastUpdated",
     CREATED_AT = "createdAt"
 }
+
+export enum LedgerPageType {
+    NONE = 0,
+    SAVE_USE = 1,
+    DEPOSIT_WITHDRAW = 2
+}
+
+export enum LedgerAction {
+    NONE = 0,
+    SAVED = 1,
+    USED = 2,
+    DEPOSITED = 11,
+    WITHDRAWN = 12,
+    CHANGED = 21,
+    SETTLEMENT = 31
+}
+
+export enum ShopPageType {
+    NONE = 0,
+    PROVIDE_USE = 1,
+    SETTLEMENT = 2,
+    WITHDRAW = 3
+}
+
+export enum ShopAction {
+    NONE = 0,
+    PROVIDED = 1,
+    USED = 2,
+    SETTLED = 3,
+    OPEN_WITHDRAWN = 11,
+    CLOSE_WITHDRAWN = 12
+}

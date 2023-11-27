@@ -23,7 +23,8 @@ import {
     ShopDetailData,
     ApproveShopStepValue,
     ShopUpdateEvent,
-    ShopStatusEvent
+    ShopStatusEvent,
+    ShopPageType
 } from "../../interfaces";
 import { FailedAddShopError, FailedApprovePayment, InternalServerError, NoHttpModuleError } from "../../utils/errors";
 import { Network } from "../../client-common/interfaces/network";
@@ -325,131 +326,6 @@ export class ShopMethods extends ClientCore implements IShopMethods, IClientHttp
         };
     }
 
-    /**
-     * 상점의 거래내역을 제공한다
-     * @param shopId
-     * @param limit
-     * @param skip
-     * @param sortDirection
-     * @param sortBy
-     * @return {Promise<any>}
-     */
-    public async getShopTradeHistory(
-        shopId: BytesLike,
-        { limit, skip, sortDirection, sortBy }: QueryOption = {
-            limit: 10,
-            skip: 0,
-            sortDirection: SortDirection.DESC,
-            sortBy: SortByBlock.BLOCK_NUMBER
-        }
-    ): Promise<any> {
-        const query = QueryShopTradeHistory;
-        const where = { shopId: shopId };
-        const params = { where, limit, skip, direction: sortDirection, sortBy };
-        const name = "user trade history";
-        return await this.graphql.request({ query, params, name });
-    }
-
-    /**
-     * 상점의 거래내역들 중 로얄티를 제공한 거래내역을 제공한다
-     * @param shopId
-     * @param limit
-     * @param skip
-     * @param sortDirection
-     * @param sortBy
-     * @return {Promise<any>}
-     */
-    public async getShopProvidedTradeHistory(
-        shopId: BytesLike,
-        { limit, skip, sortDirection, sortBy }: QueryOption = {
-            limit: 10,
-            skip: 0,
-            sortDirection: SortDirection.DESC,
-            sortBy: SortByBlock.BLOCK_NUMBER
-        }
-    ): Promise<any> {
-        const query = QueryShopTradeHistory;
-        const where = { shopId: shopId, action: "ProvidedPoint" };
-        const params = { where, limit, skip, direction: sortDirection, sortBy };
-        const name = "shop trade history";
-        return await this.graphql.request({ query, params, name });
-    }
-
-    /**
-     상점의 거래내역들 중 로얄티를 사용한 거래내역을 제공한다
-     * @param shopId
-     * @param limit
-     * @param skip
-     * @param sortDirection
-     * @param sortBy
-     * @return {Promise<any>}
-     */
-    public async getShopUsedTradeHistory(
-        shopId: BytesLike,
-        { limit, skip, sortDirection, sortBy }: QueryOption = {
-            limit: 10,
-            skip: 0,
-            sortDirection: SortDirection.DESC,
-            sortBy: SortByBlock.BLOCK_NUMBER
-        }
-    ): Promise<any> {
-        const query = QueryShopTradeHistory;
-        const where = { shopId: shopId, action: "UsedPoint" };
-        const params = { where, limit, skip, direction: sortDirection, sortBy };
-        const name = "shop trade history";
-        return await this.graphql.request({ query, params, name });
-    }
-
-    /**
-     상점의 거래내역들 중 정산금의 인출을 여는 거래내역을 제공한다
-     * @param shopId
-     * @param limit
-     * @param skip
-     * @param sortDirection
-     * @param sortBy
-     * @return {Promise<any>}
-     */
-    public async getShopOpenWithdrawnTradeHistory(
-        shopId: BytesLike,
-        { limit, skip, sortDirection, sortBy }: QueryOption = {
-            limit: 10,
-            skip: 0,
-            sortDirection: SortDirection.DESC,
-            sortBy: SortByBlock.BLOCK_NUMBER
-        }
-    ): Promise<any> {
-        const query = QueryShopTradeHistory;
-        const where = { shopId: shopId, action: "OpenWithdrawnPoint" };
-        const params = { where, limit, skip, direction: sortDirection, sortBy };
-        const name = "shop trade history";
-        return await this.graphql.request({ query, params, name });
-    }
-
-    /**
-     상점의 거래내역들 중 정산금의 인출을 닫는 거래내역을 제공한다
-     * @param shopId
-     * @param limit
-     * @param skip
-     * @param sortDirection
-     * @param sortBy
-     * @return {Promise<any>}
-     */
-    public async getShopCloseWithdrawnTradeHistory(
-        shopId: BytesLike,
-        { limit, skip, sortDirection, sortBy }: QueryOption = {
-            limit: 10,
-            skip: 0,
-            sortDirection: SortDirection.DESC,
-            sortBy: SortByBlock.BLOCK_NUMBER
-        }
-    ): Promise<any> {
-        const query = QueryShopTradeHistory;
-        const where = { shopId: shopId, action: "CloseWithdrawnPoint" };
-        const params = { where, limit, skip, direction: sortDirection, sortBy };
-        const name = "shop trade history";
-        return await this.graphql.request({ query, params, name });
-    }
-
     public async getTaskDetail(taskId: BytesLike): Promise<ShopDetailData> {
         const res = await Network.get(await this.getEndpoint("/v1/shop/task"), {
             taskId: taskId.toString()
@@ -728,5 +604,55 @@ export class ShopMethods extends ClientCore implements IShopMethods, IClientHttp
                 status: parsedLog.args.status
             };
         } else return undefined;
+    }
+
+    /**
+     * 상점의 로얄티 제공/사용 거래내역을 제공한다
+     * @param shopId
+     * @param limit
+     * @param skip
+     * @param sortDirection
+     * @param sortBy
+     * @return {Promise<any>}
+     */
+    public async getProvideAndUseTradeHistory(
+        shopId: BytesLike,
+        { limit, skip, sortDirection, sortBy }: QueryOption = {
+            limit: 10,
+            skip: 0,
+            sortDirection: SortDirection.DESC,
+            sortBy: SortByBlock.BLOCK_NUMBER
+        }
+    ): Promise<any> {
+        const query = QueryShopTradeHistory;
+        const where = { shopId: shopId, pageType: ShopPageType.PROVIDE_USE };
+        const params = { where, limit, skip, direction: sortDirection, sortBy };
+        const name = "shop trade history";
+        return await this.graphql.request({ query, params, name });
+    }
+
+    /**
+     상점의 거래내역들 중 정산금의 인출 거래내역을 제공한다
+     * @param shopId
+     * @param limit
+     * @param skip
+     * @param sortDirection
+     * @param sortBy
+     * @return {Promise<any>}
+     */
+    public async getWithdrawTradeHistory(
+        shopId: BytesLike,
+        { limit, skip, sortDirection, sortBy }: QueryOption = {
+            limit: 10,
+            skip: 0,
+            sortDirection: SortDirection.DESC,
+            sortBy: SortByBlock.BLOCK_NUMBER
+        }
+    ): Promise<any> {
+        const query = QueryShopTradeHistory;
+        const where = { shopId: shopId, pageType: ShopPageType.WITHDRAW };
+        const params = { where, limit, skip, direction: sortDirection, sortBy };
+        const name = "shop trade history";
+        return await this.graphql.request({ query, params, name });
     }
 }

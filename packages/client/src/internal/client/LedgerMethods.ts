@@ -29,7 +29,8 @@ import {
     PaymentDetailData,
     ApproveNewPaymentValue,
     LoyaltyPaymentEvent,
-    ApproveCancelPaymentValue
+    ApproveCancelPaymentValue,
+    LedgerPageType
 } from "../../interfaces";
 import {
     AmountMismatchError,
@@ -50,8 +51,6 @@ import { BigNumber } from "@ethersproject/bignumber";
 import { ContractTransaction } from "@ethersproject/contracts";
 import { getNetwork } from "@ethersproject/networks";
 import { QueryUserTradeHistory } from "../graphql-queries/user/history";
-import { QueryPaidToken } from "../graphql-queries/user/paidToken";
-import { QueryPaidPoint } from "../graphql-queries/user/paidPoint";
 import { PhoneLinkCollection, PhoneLinkCollection__factory } from "del-osx-lib";
 import { AddressZero } from "@ethersproject/constants";
 import { BytesLike } from "@ethersproject/bytes";
@@ -283,6 +282,8 @@ export class LedgerMethods extends ClientCore implements ILedgerMethods, IClient
 
         const res = await Network.post(await this.getEndpoint("/v1/payment/new/approval"), param);
         if (res.code !== 0 || res.data === undefined) {
+            console.log(res.code);
+            console.log(res?.error?.message ?? "");
             throw new InternalServerError(res?.error?.message ?? "");
         }
         if (approval) {
@@ -798,14 +799,14 @@ export class LedgerMethods extends ClientCore implements ILedgerMethods, IClient
     }
 
     /**
-     * 사용자의 거래내역을 제공한다.
+     * 사용자의 적립/사용 내역을 제공한다.
      * @param account 사용자의 지갑주소
      * @param limit
      * @param skip
      * @param sortDirection
      * @param sortBy
      */
-    public async getAllHistory(
+    public async getSaveAndUseHistory(
         account: string,
         { limit, skip, sortDirection, sortBy }: QueryOption = {
             limit: 10,
@@ -815,21 +816,21 @@ export class LedgerMethods extends ClientCore implements ILedgerMethods, IClient
         }
     ): Promise<any> {
         const query = QueryUserTradeHistory;
-        const where = { account: account };
+        const where = { account: account, pageType: LedgerPageType.SAVE_USE };
         const params = { where, limit, skip, direction: sortDirection, sortBy };
         const name = "user trade history";
         return await this.graphql.request({ query, params, name });
     }
 
     /**
-     * 사용자의 로열티 적립내역을 제공한다.
+     * 사용자의 충전/인출 내역을 제공한다.
      * @param account 사용자의 지갑주소
      * @param limit
      * @param skip
      * @param sortDirection
      * @param sortBy
      */
-    public async getSaveHistory(
+    public async getDepositAndWithdrawHistory(
         account: string,
         { limit, skip, sortDirection, sortBy }: QueryOption = {
             limit: 10,
@@ -839,107 +840,9 @@ export class LedgerMethods extends ClientCore implements ILedgerMethods, IClient
         }
     ): Promise<any> {
         const query = QueryUserTradeHistory;
-        const where = { account: account, assetFlow: "Save" };
+        const where = { account: account, pageType: LedgerPageType.DEPOSIT_WITHDRAW };
         const params = { where, limit, skip, direction: sortDirection, sortBy };
         const name = "user trade history";
-        return await this.graphql.request({ query, params, name });
-    }
-
-    /**
-     * 사용자의 로열티 사용내역을 제공한다.
-     * @param account 사용자의 지갑주소
-     * @param limit
-     * @param skip
-     * @param sortDirection
-     * @param sortBy
-     */
-    public async getUseHistory(
-        account: string,
-        { limit, skip, sortDirection, sortBy }: QueryOption = {
-            limit: 10,
-            skip: 0,
-            sortDirection: SortDirection.DESC,
-            sortBy: SortByBlock.BLOCK_NUMBER
-        }
-    ): Promise<any> {
-        const query = QueryUserTradeHistory;
-        const where = { account: account, assetFlow: "Use" };
-        const params = { where, limit, skip, direction: sortDirection, sortBy };
-        const name = "user trade history";
-        return await this.graphql.request({ query, params, name });
-    }
-
-    /**
-     * 사용자의 토큰 예치 내역을 제공한다.
-     * @param account 사용자의 지갑주소
-     * @param limit
-     * @param skip
-     * @param sortDirection
-     * @param sortBy
-     */
-    public async getDepositHistory(
-        account: string,
-        { limit, skip, sortDirection, sortBy }: QueryOption = {
-            limit: 10,
-            skip: 0,
-            sortDirection: SortDirection.DESC,
-            sortBy: SortByBlock.BLOCK_NUMBER
-        }
-    ): Promise<any> {
-        const query = QueryUserTradeHistory;
-        const where = { account: account, assetFlow: "Deposit" };
-        const params = { where, limit, skip, direction: sortDirection, sortBy };
-        const name = "user trade history";
-        return await this.graphql.request({ query, params, name });
-    }
-
-    /**
-     * 사용자의 토큰 인출 내역을 제공한다.
-     * @param account 사용자의 지갑주소
-     * @param limit
-     * @param skip
-     * @param sortDirection
-     * @param sortBy
-     */
-    public async getWithdrawHistory(
-        account: string,
-        { limit, skip, sortDirection, sortBy }: QueryOption = {
-            limit: 10,
-            skip: 0,
-            sortDirection: SortDirection.DESC,
-            sortBy: SortByBlock.BLOCK_NUMBER
-        }
-    ): Promise<any> {
-        const query = QueryUserTradeHistory;
-        const where = { account: account, assetFlow: "Withdraw" };
-        const params = { where, limit, skip, direction: sortDirection, sortBy };
-        const name = "user trade history";
-        return await this.graphql.request({ query, params, name });
-    }
-
-    /**
-     * 사용자의 토큰구매 결과를 제공한다.
-     * @param account 사용자의 지갑주소
-     * @param purchaseId 구매번호
-     */
-    public async getPaidToken(account: string, purchaseId: string): Promise<any> {
-        const query = QueryPaidToken;
-        const where = { account: account, purchaseId: purchaseId };
-        const params = { where };
-        const name = "paid token";
-        return await this.graphql.request({ query, params, name });
-    }
-
-    /**
-     * 사용자의 포인트구매 결과를 제공한다.
-     * @param account 사용자의 지갑주소
-     * @param purchaseId 구매번호
-     */
-    public async getPaidPoint(account: string, purchaseId: string): Promise<any> {
-        const query = QueryPaidPoint;
-        const where = { account: account, purchaseId: purchaseId };
-        const params = { where };
-        const name = "paid token";
         return await this.graphql.request({ query, params, name });
     }
 }

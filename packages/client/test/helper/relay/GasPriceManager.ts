@@ -1,5 +1,3 @@
-"use strict";
-
 import { BigNumber, ethers } from "ethers";
 
 export class GasPriceManager extends ethers.Signer {

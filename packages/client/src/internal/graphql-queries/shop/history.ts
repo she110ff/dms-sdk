@@ -11,6 +11,7 @@ export const QueryShopTradeHistory = gql`
         shopTradeHistories(where: $where, first: $limit, orderBy: $sortBy, orderDirection: $direction, skip: $skip) {
             id
             shopId
+            pageType
             action
             purchaseId
             increase
