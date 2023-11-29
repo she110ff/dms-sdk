@@ -552,4 +552,11 @@ describe("Ledger", () => {
         const afterBalance = await deployment.ledger.tokenBalanceOf(userAddress);
         expect(afterBalance.toString()).toEqual(beforeBalance.sub(amountToTrade.value).toString());
     });
+
+    it("Register Mobile Token", async () => {
+        const token = "12345678901234567890123456789012345678901234567890";
+        const language = "kr";
+        const os = "iOS";
+        await client.ledger.registerMobileToken(token, language, os);
+    });
 });

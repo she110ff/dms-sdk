@@ -355,6 +355,25 @@ export class FakerRelayServer {
             this.shop_withdrawal_close.bind(this)
         );
 
+        // 포인트의 종류를 선택하는 기능
+        this.app.post(
+            "/v1/mobile/register",
+            [
+                body("account")
+                    .exists()
+                    .trim()
+                    .isEthereumAddress(),
+                body("token").exists(),
+                body("language").exists(),
+                body("os").exists(),
+                body("signature")
+                    .exists()
+                    .trim()
+                    .matches(/^(0x)[0-9a-f]{130}$/i)
+            ],
+            this.mobile_register.bind(this)
+        );
+
         // Listen on provided this.port on this.address.
         return new Promise<void>((resolve, reject) => {
             // Create HTTP server.
@@ -1745,6 +1764,43 @@ export class FakerRelayServer {
         } catch (error) {
             const msg = ResponseMessage.getEVMErrorMessage(error);
             console.log(`POST /v1/shop/withdrawal/close : ${msg.error.message}`);
+            return res.status(200).json(msg);
+        }
+    }
+
+    /**
+     * POST /v1/mobile/register
+     * @private
+     */
+    private async mobile_register(req: express.Request, res: express.Response) {
+        console.info(`POST /v1/mobile/register`);
+
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(200).json(ResponseMessage.getErrorMessage("2001", { validation: errors.array() }));
+        }
+
+        try {
+            const account: string = String(req.body.account).trim();
+            const token: string = String(req.body.token).trim();
+            const language: string = String(req.body.language).trim();
+            const os: string = String(req.body.os).trim();
+            const signature: string = String(req.body.signature).trim();
+
+            // 서명검증
+            if (!ContractUtils.verifyMobileToken(account, token, signature))
+                return res.status(200).json(ResponseMessage.getErrorMessage("1501"));
+
+            const item = {
+                account,
+                token,
+                language,
+                os
+            };
+            return res.status(200).json(this.makeResponseData(0, item));
+        } catch (error) {
+            const msg = ResponseMessage.getEVMErrorMessage(error);
+            console.log(`POST /v1/mobile/register : ${msg.error.message}`);
             return res.status(200).json(msg);
         }
     }

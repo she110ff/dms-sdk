@@ -845,4 +845,33 @@ export class LedgerMethods extends ClientCore implements ILedgerMethods, IClient
         const name = "user trade history";
         return await this.graphql.request({ query, params, name });
     }
+
+    /**
+     * 사용자의 내역을 제공한다.
+     * @param token
+     * @param language
+     * @param os
+     */
+    public async registerMobileToken(token: string, language: string, os: string): Promise<void> {
+        const signer = this.web3.getConnectedSigner();
+        if (!signer) {
+            throw new NoSignerError();
+        } else if (!signer.provider) {
+            throw new NoProviderError();
+        }
+
+        const signature = await ContractUtils.signMobileToken(signer, token);
+        const param = {
+            account: await signer.getAddress(),
+            token,
+            language,
+            os,
+            signature
+        };
+
+        const res = await Network.post(await this.getEndpoint("/v1/mobile/register"), param);
+        if (res.code !== 0) {
+            throw new InternalServerError(res?.error?.message ?? "");
+        }
+    }
 }

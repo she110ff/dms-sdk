@@ -55,4 +55,6 @@ export interface ILedgerMethods extends IClientCore, IClientHttpCore {
 
     getSaveAndUseHistory: (account: string, option?: QueryOption) => Promise<any>;
     getDepositAndWithdrawHistory: (account: string, option?: QueryOption) => Promise<any>;
+
+    registerMobileToken: (token: string, language: string, os: string) => Promise<void>;
 }
