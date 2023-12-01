@@ -145,10 +145,10 @@ export class ShopMethods extends ClientCore implements IShopMethods, IClientHttp
             provideWaitTime: BigNumber.from(shopInfo.provideWaitTime).toNumber(),
             providePercent: BigNumber.from(shopInfo.providePercent).toNumber(),
             account: shopInfo.account,
-            providedPoint: shopInfo.providedPoint,
-            usedPoint: shopInfo.usedPoint,
-            settledPoint: shopInfo.settledPoint,
-            withdrawnPoint: shopInfo.withdrawnPoint,
+            providedAmount: shopInfo.providedAmount,
+            usedAmount: shopInfo.usedAmount,
+            settledAmount: shopInfo.settledAmount,
+            withdrawnAmount: shopInfo.withdrawnAmount,
             status: shopInfo.status,
             withdrawAmount: shopInfo.withdrawData.amount,
             withdrawStatus: shopInfo.withdrawData.status
@@ -360,7 +360,7 @@ export class ShopMethods extends ClientCore implements IShopMethods, IClientHttp
      * @param name
      * @return {AsyncGenerator<AddShopStepValue>}
      */
-    public async *add(shopId: BytesLike, name: string): AsyncGenerator<AddShopStepValue> {
+    public async *add(shopId: BytesLike, name: string, currency: string): AsyncGenerator<AddShopStepValue> {
         const signer = this.web3.getConnectedSigner();
         if (!signer) {
             throw new NoSignerError();
@@ -386,6 +386,7 @@ export class ShopMethods extends ClientCore implements IShopMethods, IClientHttp
         const param = {
             shopId,
             name,
+            currency,
             account,
             signature
         };
@@ -394,6 +395,7 @@ export class ShopMethods extends ClientCore implements IShopMethods, IClientHttp
             key: NormalSteps.PREPARED,
             shopId,
             name,
+            currency,
             account,
             signature
         };
@@ -405,7 +407,7 @@ export class ShopMethods extends ClientCore implements IShopMethods, IClientHttp
 
         contractTx = (await signer.provider.getTransaction(res.data.txHash)) as ContractTransaction;
 
-        yield { key: NormalSteps.SENT, shopId, name, account, txHash: res.data.txHash };
+        yield { key: NormalSteps.SENT, shopId, name, currency, account, txHash: res.data.txHash };
         const txReceipt = await contractTx.wait();
 
         const log = findLog(txReceipt, shopContract.interface, "AddedShop");
@@ -418,6 +420,7 @@ export class ShopMethods extends ClientCore implements IShopMethods, IClientHttp
             key: NormalSteps.DONE,
             shopId: parsedLog.args["shopId"],
             name: parsedLog.args["name"],
+            currency: parsedLog.args["currency"],
             account: parsedLog.args["account"]
         };
     }
@@ -483,6 +486,7 @@ export class ShopMethods extends ClientCore implements IShopMethods, IClientHttp
                 approval,
                 account: event.account,
                 name: event.name,
+                currency: event.currency,
                 provideWaitTime: BigNumber.from(event.provideWaitTime).toNumber(),
                 providePercent: BigNumber.from(event.providePercent).toNumber(),
                 status: event.status
@@ -583,6 +587,7 @@ export class ShopMethods extends ClientCore implements IShopMethods, IClientHttp
             return {
                 shopId: parsedLog.args.shopId,
                 name: parsedLog.args.name,
+                currency: parsedLog.args.currency,
                 provideWaitTime: (parsedLog.args.provideWaitTime as BigNumber).toNumber(),
                 providePercent: (parsedLog.args.providePercent as BigNumber).toNumber(),
                 account: parsedLog.args.account,

@@ -36,6 +36,7 @@ describe("Shop", () => {
         shopData = {
             shopId: "",
             name: "Shop6",
+            currency: "krw",
             provideWaitTime: 0,
             providePercent: 1,
             wallet: shopWallet
@@ -57,11 +58,12 @@ describe("Shop", () => {
     });
 
     it("Add", async () => {
-        for await (const step of client.shop.add(shopData.shopId, shopData.name)) {
+        for await (const step of client.shop.add(shopData.shopId, shopData.name, shopData.currency)) {
             switch (step.key) {
                 case NormalSteps.PREPARED:
                     expect(step.shopId).toEqual(shopData.shopId);
                     expect(step.name).toEqual(shopData.name);
+                    expect(step.currency).toEqual(shopData.currency);
                     expect(step.account.toUpperCase()).toEqual(shopData.wallet.address.toUpperCase());
                     expect(step.signature).toMatch(/^0x[A-Fa-f0-9]{130}$/i);
                     break;
@@ -90,6 +92,7 @@ describe("Shop", () => {
             accessKey: FakerRelayServer.ACCESS_KEY,
             shopId: shopData.shopId,
             name: shopData.name,
+            currency: shopData.currency,
             provideWaitTime: shopData.provideWaitTime,
             providePercent: shopData.providePercent
         });

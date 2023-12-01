@@ -242,6 +242,7 @@ export class FakerRelayServer {
                     .exists()
                     .matches(/^(0x)[0-9a-f]{64}$/i),
                 body("name").exists(),
+                body("currency").exists(),
                 body("account")
                     .exists()
                     .trim()
@@ -263,6 +264,7 @@ export class FakerRelayServer {
                     .trim()
                     .matches(/^(0x)[0-9a-f]{64}$/i),
                 body("name").exists(),
+                body("currency").exists(),
                 body("provideWaitTime")
                     .exists()
                     .custom(Utils.isAmount),
@@ -1307,6 +1309,7 @@ export class FakerRelayServer {
         try {
             const shopId: string = String(req.body.shopId).trim();
             const name: string = String(req.body.name).trim();
+            const currency: string = String(req.body.currency).trim();
             const account: string = String(req.body.account).trim();
             const signature: string = String(req.body.signature).trim(); // 서명
 
@@ -1314,7 +1317,7 @@ export class FakerRelayServer {
             if (!ContractUtils.verifyShop(shopId, await contract.nonceOf(account), account, signature))
                 return res.status(200).json(ResponseMessage.getErrorMessage("1501"));
 
-            const tx = await contract.add(shopId, name, account, signature);
+            const tx = await contract.add(shopId, name, currency, account, signature);
 
             console.info(`TxHash(/v1/shop/add): ${tx.hash}`);
             return res.status(200).json(this.makeResponseData(0, { txHash: tx.hash }));
@@ -1349,6 +1352,7 @@ export class FakerRelayServer {
                     type: item.type,
                     shopId: item.shopId,
                     name: item.name,
+                    currency: item.currency,
                     provideWaitTime: item.provideWaitTime,
                     providePercent: item.providePercent,
                     status: item.status,
@@ -1385,6 +1389,7 @@ export class FakerRelayServer {
 
             const shopId: string = String(req.body.shopId).trim();
             const name: string = String(req.body.name).trim();
+            const currency: string = String(req.body.currency).trim();
             const provideWaitTime: number = Number(String(req.body.provideWaitTime).trim());
             const providePercent: number = Number(String(req.body.providePercent).trim());
 
@@ -1397,6 +1402,7 @@ export class FakerRelayServer {
                     type: TaskResultType.UPDATE,
                     shopId,
                     name,
+                    currency,
                     provideWaitTime,
                     providePercent,
                     status: shopInfo.status,
@@ -1411,6 +1417,7 @@ export class FakerRelayServer {
                         taskId: item.taskId,
                         shopId: item.shopId,
                         name: item.name,
+                        currency: item.currency,
                         provideWaitTime: item.provideWaitTime,
                         providePercent: item.providePercent,
                         taskStatus: item.taskStatus,
@@ -1476,6 +1483,7 @@ export class FakerRelayServer {
                         const tx = await contract.update(
                             item.shopId,
                             item.name,
+                            item.currency,
                             item.provideWaitTime,
                             item.providePercent,
                             item.account,
@@ -1488,6 +1496,7 @@ export class FakerRelayServer {
                         const event = await this.waitAndUpdateEvent(contract, tx);
                         if (event !== undefined) {
                             item.name = event.name;
+                            item.currency = event.currency;
                             item.providePercent = event.providePercent;
                             item.provideWaitTime = event.provideWaitTime;
                             item.status = event.status;
@@ -1499,6 +1508,7 @@ export class FakerRelayServer {
                                     taskId: item.taskId,
                                     shopId: item.shopId,
                                     name: item.name,
+                                    currency: item.currency,
                                     provideWaitTime: item.provideWaitTime,
                                     providePercent: item.providePercent,
                                     taskStatus: item.taskStatus,
@@ -1568,6 +1578,7 @@ export class FakerRelayServer {
                     type: TaskResultType.STATUS,
                     shopId,
                     name: shopInfo.name,
+                    currency: shopInfo.currency,
                     provideWaitTime: shopInfo.provideWaitTime.toNumber(),
                     providePercent: shopInfo.providePercent.toNumber(),
                     status,
@@ -1884,6 +1895,7 @@ export class FakerRelayServer {
             return {
                 shopId: parsedLog.args.shopId,
                 name: parsedLog.args.name,
+                currency: parsedLog.args.currency,
                 provideWaitTime: (parsedLog.args.provideWaitTime as BigNumber).toNumber(),
                 providePercent: (parsedLog.args.providePercent as BigNumber).toNumber(),
                 account: parsedLog.args.account,

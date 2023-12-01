@@ -49,6 +49,7 @@ export interface IPurchaseData {
 export interface IShopData {
     shopId: string;
     name: string;
+    currency: string;
     provideWaitTime: number;
     providePercent: number;
     wallet: Wallet;
@@ -168,6 +169,7 @@ export class ContractDeployer {
                 {
                     shopId: "",
                     name: "Shop1",
+                    currency: "krw",
                     provideWaitTime: 0,
                     providePercent: 1,
                     wallet: shopWallets[0]
@@ -175,6 +177,7 @@ export class ContractDeployer {
                 {
                     shopId: "",
                     name: "Shop2",
+                    currency: "krw",
                     provideWaitTime: 0,
                     providePercent: 1,
                     wallet: shopWallets[1]
@@ -182,6 +185,7 @@ export class ContractDeployer {
                 {
                     shopId: "",
                     name: "Shop3",
+                    currency: "krw",
                     provideWaitTime: 0,
                     providePercent: 1,
                     wallet: shopWallets[2]
@@ -189,6 +193,7 @@ export class ContractDeployer {
                 {
                     shopId: "",
                     name: "Shop4",
+                    currency: "krw",
                     provideWaitTime: 0,
                     providePercent: 1,
                     wallet: shopWallets[3]
@@ -196,6 +201,7 @@ export class ContractDeployer {
                 {
                     shopId: "",
                     name: "Shop5",
+                    currency: "krw",
                     provideWaitTime: 0,
                     providePercent: 1,
                     wallet: shopWallets[4]
@@ -265,7 +271,8 @@ export class ContractDeployer {
             console.log("Deploy ShopCollection");
             const shopCollectionContract: ShopCollection = await ContractDeployer.deployShopCollection(
                 deployer,
-                certifierCollection.address
+                certifierCollection.address,
+                currencyRateContract.address
             );
 
             console.log("Deploy Ledger");
@@ -387,7 +394,7 @@ export class ContractDeployer {
         const currencyRateFactory = new ContractFactory(CurrencyRate__factory.abi, CurrencyRate__factory.bytecode);
         const currencyRateContract = (await currencyRateFactory
             .connect(deployer)
-            .deploy(validatorContract.address)) as CurrencyRate;
+            .deploy(validatorContract.address, await tokenContract.symbol())) as CurrencyRate;
         await currencyRateContract.deployed();
         await currencyRateContract.deployTransaction.wait();
 
@@ -416,14 +423,18 @@ export class ContractDeployer {
         return certifierCollection;
     }
 
-    private static async deployShopCollection(deployer: Signer, certifierAddress: string): Promise<ShopCollection> {
+    private static async deployShopCollection(
+        deployer: Signer,
+        certifierAddress: string,
+        currencyRateAddress: string
+    ): Promise<ShopCollection> {
         const shopCollectionFactory = new ContractFactory(
             ShopCollection__factory.abi,
             ShopCollection__factory.bytecode
         );
         const shopCollection = (await shopCollectionFactory
             .connect(deployer)
-            .deploy(certifierAddress)) as ShopCollection;
+            .deploy(certifierAddress, currencyRateAddress)) as ShopCollection;
         await shopCollection.deployed();
         await shopCollection.deployTransaction.wait();
         return shopCollection;
@@ -478,7 +489,9 @@ export class ContractDeployer {
             const nonce = await shopCollection.nonceOf(shop.wallet.address);
             const signature = await ContractUtils.signShop(new Wallet(shop.wallet.privateKey), shop.shopId, nonce);
             await (
-                await shopCollection.connect(deployer).add(shop.shopId, shop.name, shop.wallet.address, signature)
+                await shopCollection
+                    .connect(deployer)
+                    .add(shop.shopId, shop.name, shop.currency, shop.wallet.address, signature)
             ).wait();
         }
 
@@ -495,6 +508,7 @@ export class ContractDeployer {
                     .update(
                         shop.shopId,
                         shop.name,
+                        shop.currency,
                         shop.provideWaitTime,
                         shop.providePercent,
                         shop.wallet.address,

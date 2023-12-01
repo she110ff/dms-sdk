@@ -18,7 +18,7 @@ export interface IShop {
 /** Defines the shape of the general purpose Client class */
 export interface IShopMethods extends IClientCore, IClientHttpCore {
     getTaskDetail: (taskId: BytesLike) => Promise<ShopDetailData>;
-    add: (shopId: BytesLike, name: string) => AsyncGenerator<AddShopStepValue>;
+    add: (shopId: BytesLike, name: string, currency: string) => AsyncGenerator<AddShopStepValue>;
     approveUpdate: (taskId: BytesLike, shopId: BytesLike, approval: boolean) => AsyncGenerator<ApproveShopStepValue>;
     approveStatus: (taskId: BytesLike, shopId: BytesLike, approval: boolean) => AsyncGenerator<ApproveShopStepValue>;
 

@@ -232,6 +232,7 @@ export type AddShopStepValue =
           key: NormalSteps.PREPARED;
           shopId: BytesLike;
           name: string;
+          currency: string;
           account: string;
           signature: BytesLike;
       }
@@ -239,6 +240,7 @@ export type AddShopStepValue =
           key: NormalSteps.SENT;
           shopId: BytesLike;
           name: string;
+          currency: string;
           account: string;
           txHash: BytesLike;
       }
@@ -246,6 +248,7 @@ export type AddShopStepValue =
           key: NormalSteps.DONE;
           shopId: BytesLike;
           name: string;
+          currency: string;
           account: string;
       };
 
@@ -273,6 +276,7 @@ export type ApproveShopStepValue =
           approval: boolean;
           account: string;
           name?: string;
+          currency?: string;
           provideWaitTime?: number;
           providePercent?: number;
           status?: ShopStatus;
@@ -335,6 +339,7 @@ export interface LoyaltyPaymentEvent {
 export interface ShopUpdateEvent {
     shopId: BytesLike;
     name: string;
+    currency: string;
     provideWaitTime: number;
     providePercent: number;
     account: string;
@@ -363,10 +368,10 @@ export type ShopData = {
     provideWaitTime: number; // 제품구매 후 포인트 지급시간
     providePercent: number; // 구매금액에 대한 포인트 지급량
     account: string; // 상점주의 지갑주소
-    providedPoint: BigNumber; // 제공된 포인트 총량
-    usedPoint: BigNumber; // 사용된 포인트 총량
-    settledPoint: BigNumber; // 정산된 포인트 총량
-    withdrawnPoint: BigNumber; // 정산된 포인트 총량
+    providedAmount: BigNumber; // 제공된 포인트 총량
+    usedAmount: BigNumber; // 사용된 포인트 총량
+    settledAmount: BigNumber; // 정산된 포인트 총량
+    withdrawnAmount: BigNumber; // 정산된 포인트 총량
     status: ShopStatus;
     withdrawAmount: BigNumber;
     withdrawStatus: ShopWithdrawStatus;

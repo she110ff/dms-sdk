@@ -179,7 +179,7 @@ describe("Shop Withdrawal", () => {
 
     it("Check shop data", async () => {
         const shopInfo1 = await client.shop.getShopInfo(shopData[0].shopId);
-        expect(shopInfo1.providedPoint.toString()).toEqual(
+        expect(shopInfo1.providedAmount.toString()).toEqual(
             Amount.make(10000 * 3, 18)
                 .value.mul(shopData[0].providePercent)
                 .div(100)
@@ -187,21 +187,21 @@ describe("Shop Withdrawal", () => {
         );
 
         const shopInfo2 = await client.shop.getShopInfo(shopData[1].shopId);
-        expect(shopInfo2.providedPoint.toString()).toEqual(
+        expect(shopInfo2.providedAmount.toString()).toEqual(
             Amount.make(10000 * 1, 18)
                 .value.mul(shopData[1].providePercent)
                 .div(100)
                 .toString()
         );
         const shopInfo3 = await client.shop.getShopInfo(shopData[2].shopId);
-        expect(shopInfo3.providedPoint.toString()).toEqual(
+        expect(shopInfo3.providedAmount.toString()).toEqual(
             Amount.make(10000 * 1, 18)
                 .value.mul(shopData[2].providePercent)
                 .div(100)
                 .toString()
         );
         const shopInfo4 = await client.shop.getShopInfo(shopData[3].shopId);
-        expect(shopInfo4.providedPoint.toString()).toEqual(
+        expect(shopInfo4.providedAmount.toString()).toEqual(
             Amount.make(10000 * 1, 18)
                 .value.mul(shopData[3].providePercent)
                 .div(100)

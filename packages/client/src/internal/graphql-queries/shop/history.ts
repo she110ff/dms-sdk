@@ -15,10 +15,10 @@ export const QueryShopTradeHistory = gql`
             action
             purchaseId
             increase
-            providedPoint
-            usedPoint
-            settledPoint
-            withdrawnPoint
+            providedAmount
+            usedAmount
+            settledAmount
+            withdrawnAmount
             blockNumber
             blockTimestamp
             transactionHash
