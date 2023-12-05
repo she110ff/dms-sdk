@@ -1,6 +1,6 @@
 {
   "name": "dms-sdk-client",
-  "version": "1.0.13",
+  "version": "1.0.14",
   "author": "BOSagora Foundation",
   "license": "MIT",
   "main": "dist/index.js",
