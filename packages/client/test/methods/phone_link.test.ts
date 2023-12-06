@@ -21,7 +21,7 @@ describe("SDK Client", () => {
             GanacheServer.setTestWeb3Signer(user1);
 
             console.log("Start Faker Validator");
-            fakerValidator = new FakerValidator(7080, deployment);
+            fakerValidator = new FakerValidator(6080, deployment);
             await fakerValidator.start();
         });
 

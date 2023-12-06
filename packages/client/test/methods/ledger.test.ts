@@ -52,7 +52,7 @@ describe("Ledger", () => {
 
         GanacheServer.setTestWeb3Signer(userWallets[0]);
 
-        fakerRelayServer = new FakerRelayServer(7070, deployment);
+        fakerRelayServer = new FakerRelayServer(6070, deployment);
         await fakerRelayServer.start();
     });
 
@@ -186,7 +186,7 @@ describe("Ledger", () => {
         const feePoint = await client.currency.currencyToPoint(amount.value.mul(feeRate).div(100), purchase.currency);
 
         // Open New
-        let res = await Network.post(new URL("http://localhost:7070/v1/payment/new/open"), {
+        let res = await Network.post(new URL("http://localhost:6070/v1/payment/new/open"), {
             accessKey: FakerRelayServer.ACCESS_KEY,
             purchaseId: purchase.purchaseId,
             amount: amount.toString(),
@@ -244,7 +244,7 @@ describe("Ledger", () => {
         await ContractUtils.delay(3000);
 
         // Close New
-        res = await Network.post(new URL("http://localhost:7070/v1/payment/new/close"), {
+        res = await Network.post(new URL("http://localhost:6070/v1/payment/new/close"), {
             accessKey: FakerRelayServer.ACCESS_KEY,
             confirm: true,
             paymentId
@@ -259,7 +259,7 @@ describe("Ledger", () => {
         );
 
         // Open Cancel
-        res = await Network.post(new URL("http://localhost:7070/v1/payment/cancel/open"), {
+        res = await Network.post(new URL("http://localhost:6070/v1/payment/cancel/open"), {
             accessKey: FakerRelayServer.ACCESS_KEY,
             paymentId
         });
@@ -300,7 +300,7 @@ describe("Ledger", () => {
         await ContractUtils.delay(1000);
 
         // Close Cancel
-        res = await Network.post(new URL("http://localhost:7070/v1/payment/cancel/close"), {
+        res = await Network.post(new URL("http://localhost:6070/v1/payment/cancel/close"), {
             accessKey: FakerRelayServer.ACCESS_KEY,
             confirm: true,
             paymentId
@@ -364,7 +364,7 @@ describe("Ledger", () => {
         const feeToken = await client.currency.pointToToken(feePoint);
 
         // Open New
-        let res = await Network.post(new URL("http://localhost:7070/v1/payment/new/open"), {
+        let res = await Network.post(new URL("http://localhost:6070/v1/payment/new/open"), {
             accessKey: FakerRelayServer.ACCESS_KEY,
             purchaseId: purchase.purchaseId,
             amount: amount.toString(),
@@ -422,7 +422,7 @@ describe("Ledger", () => {
         await ContractUtils.delay(3000);
 
         // Close New
-        res = await Network.post(new URL("http://localhost:7070/v1/payment/new/close"), {
+        res = await Network.post(new URL("http://localhost:6070/v1/payment/new/close"), {
             accessKey: FakerRelayServer.ACCESS_KEY,
             confirm: true,
             paymentId
@@ -437,7 +437,7 @@ describe("Ledger", () => {
         );
 
         // Open Cancel
-        res = await Network.post(new URL("http://localhost:7070/v1/payment/cancel/open"), {
+        res = await Network.post(new URL("http://localhost:6070/v1/payment/cancel/open"), {
             accessKey: FakerRelayServer.ACCESS_KEY,
             paymentId
         });
@@ -480,7 +480,7 @@ describe("Ledger", () => {
         await ContractUtils.delay(1000);
 
         // Close Cancel
-        res = await Network.post(new URL("http://localhost:7070/v1/payment/cancel/close"), {
+        res = await Network.post(new URL("http://localhost:6070/v1/payment/cancel/close"), {
             accessKey: FakerRelayServer.ACCESS_KEY,
             confirm: true,
             paymentId

@@ -1,6 +1,6 @@
 {
   "name": "dms-sdk-client",
-  "version": "1.0.14",
+  "version": "1.0.15",
   "author": "BOSagora Foundation",
   "license": "MIT",
   "main": "dist/index.js",
@@ -32,6 +32,7 @@
     "test:graphql:ledger": "TESTING=true tsdx test test/graphql/ledger.test.ts --verbose --runInBand",
     "test:graphql:shop": "TESTING=true tsdx test test/graphql/shop.test.ts --verbose --runInBand",
     "test:devnet:phone_link": "TESTING=true tsdx test test/devnet/phone_link.test.ts --verbose --runInBand",
+    "test:devnet:ledger": "TESTING=true tsdx test test/devnet/ledger.test.ts --verbose --runInBand",
     "lint": "tsdx lint --fix",
     "prepare": "tsdx build",
     "size": "size-limit",

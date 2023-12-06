@@ -58,7 +58,7 @@ export const contextParamsLocalChain: ContextParams = {
     network: 24680,
     signer: new Wallet(TEST_WALLET),
     web3Providers: ["http://localhost:7545"],
-    relayEndpoint: "http://localhost:7070",
+    relayEndpoint: "http://localhost:6070",
     graphqlNodes: grapqhlEndpoints.working
 };
 

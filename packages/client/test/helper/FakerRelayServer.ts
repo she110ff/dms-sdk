@@ -755,8 +755,45 @@ export class FakerRelayServer {
                         );
                     } else if (
                         item.paymentStatus === LoyaltyPaymentTaskStatus.OPENED_NEW ||
-                        item.paymentStatus === LoyaltyPaymentTaskStatus.CONFIRMED_NEW ||
-                        item.paymentStatus === LoyaltyPaymentTaskStatus.REPLY_COMPLETED_NEW ||
+                        item.paymentStatus === LoyaltyPaymentTaskStatus.APPROVED_NEW_FAILED_TX ||
+                        item.paymentStatus === LoyaltyPaymentTaskStatus.APPROVED_NEW_SENT_TX ||
+                        item.paymentStatus === LoyaltyPaymentTaskStatus.APPROVED_NEW_CONFIRMED_TX ||
+                        item.paymentStatus === LoyaltyPaymentTaskStatus.APPROVED_NEW_REVERTED_TX
+                    ) {
+                        const timeout = FakerRelayServer.PAYMENT_TIMEOUT_SECONDS - 5;
+                        if (ContractUtils.getTimeStamp() - item.openNewTimestamp > timeout) {
+                            item.paymentStatus = LoyaltyPaymentTaskStatus.FAILED_NEW;
+                            item.closeNewTimestamp = ContractUtils.getTimeStamp();
+                            await this._storage.updatePayment(item);
+                            return res.status(200).json(
+                                this.makeResponseData(0, {
+                                    paymentId: item.paymentId,
+                                    purchaseId: item.purchaseId,
+                                    amount: item.amount.toString(),
+                                    currency: item.currency,
+                                    shopId: item.shopId,
+                                    account: item.account,
+                                    loyaltyType: item.loyaltyType,
+                                    paidPoint: item.paidPoint.toString(),
+                                    paidToken: item.paidToken.toString(),
+                                    paidValue: item.paidValue.toString(),
+                                    feePoint: item.feePoint.toString(),
+                                    feeToken: item.feeToken.toString(),
+                                    feeValue: item.feeValue.toString(),
+                                    totalPoint: item.totalPoint.toString(),
+                                    totalToken: item.totalToken.toString(),
+                                    totalValue: item.totalValue.toString(),
+                                    paymentStatus: item.paymentStatus,
+                                    openNewTimestamp: item.openNewTimestamp,
+                                    closeNewTimestamp: item.closeNewTimestamp,
+                                    openCancelTimestamp: item.openCancelTimestamp,
+                                    closeCancelTimestamp: item.closeCancelTimestamp
+                                })
+                            );
+                        } else {
+                            return res.status(200).json(ResponseMessage.getErrorMessage("2030"));
+                        }
+                    } else if (
                         item.paymentStatus === LoyaltyPaymentTaskStatus.CLOSED_NEW ||
                         item.paymentStatus === LoyaltyPaymentTaskStatus.FAILED_NEW
                     ) {
@@ -1144,8 +1181,45 @@ export class FakerRelayServer {
                         );
                     } else if (
                         item.paymentStatus === LoyaltyPaymentTaskStatus.OPENED_CANCEL ||
-                        item.paymentStatus === LoyaltyPaymentTaskStatus.CONFIRMED_CANCEL ||
-                        item.paymentStatus === LoyaltyPaymentTaskStatus.REPLY_COMPLETED_CANCEL ||
+                        item.paymentStatus === LoyaltyPaymentTaskStatus.APPROVED_CANCEL_FAILED_TX ||
+                        item.paymentStatus === LoyaltyPaymentTaskStatus.APPROVED_CANCEL_SENT_TX ||
+                        item.paymentStatus === LoyaltyPaymentTaskStatus.APPROVED_CANCEL_CONFIRMED_TX ||
+                        item.paymentStatus === LoyaltyPaymentTaskStatus.APPROVED_CANCEL_REVERTED_TX
+                    ) {
+                        const timeout = FakerRelayServer.PAYMENT_TIMEOUT_SECONDS - 5;
+                        if (ContractUtils.getTimeStamp() - item.openCancelTimestamp > timeout) {
+                            item.paymentStatus = LoyaltyPaymentTaskStatus.FAILED_CANCEL;
+                            item.closeCancelTimestamp = ContractUtils.getTimeStamp();
+                            await this._storage.updatePayment(item);
+                            return res.status(200).json(
+                                this.makeResponseData(0, {
+                                    paymentId: item.paymentId,
+                                    purchaseId: item.purchaseId,
+                                    amount: item.amount.toString(),
+                                    currency: item.currency,
+                                    shopId: item.shopId,
+                                    account: item.account,
+                                    loyaltyType: item.loyaltyType,
+                                    paidPoint: item.paidPoint.toString(),
+                                    paidToken: item.paidToken.toString(),
+                                    paidValue: item.paidValue.toString(),
+                                    feePoint: item.feePoint.toString(),
+                                    feeToken: item.feeToken.toString(),
+                                    feeValue: item.feeValue.toString(),
+                                    totalPoint: item.totalPoint.toString(),
+                                    totalToken: item.totalToken.toString(),
+                                    totalValue: item.totalValue.toString(),
+                                    paymentStatus: item.paymentStatus,
+                                    openNewTimestamp: item.openNewTimestamp,
+                                    closeNewTimestamp: item.closeNewTimestamp,
+                                    openCancelTimestamp: item.openCancelTimestamp,
+                                    closeCancelTimestamp: item.closeCancelTimestamp
+                                })
+                            );
+                        } else {
+                            return res.status(200).json(ResponseMessage.getErrorMessage("2030"));
+                        }
+                    } else if (
                         item.paymentStatus === LoyaltyPaymentTaskStatus.CLOSED_CANCEL ||
                         item.paymentStatus === LoyaltyPaymentTaskStatus.FAILED_CANCEL
                     ) {

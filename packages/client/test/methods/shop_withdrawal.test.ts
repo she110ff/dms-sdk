@@ -54,7 +54,7 @@ describe("Shop Withdrawal", () => {
 
         GanacheServer.setTestWeb3Signer(userWallets[0]);
 
-        fakerRelayServer = new FakerRelayServer(7070, deployment);
+        fakerRelayServer = new FakerRelayServer(6070, deployment);
         await fakerRelayServer.start();
     });
 
@@ -230,7 +230,7 @@ describe("Shop Withdrawal", () => {
         client.useSigner(userWallets[purchase.userIndex]);
 
         // Open New
-        let res = await Network.post(new URL("http://localhost:7070/v1/payment/new/open"), {
+        let res = await Network.post(new URL("http://localhost:6070/v1/payment/new/open"), {
             accessKey: FakerRelayServer.ACCESS_KEY,
             purchaseId: purchase.purchaseId,
             amount: purchaseAmount.toString(),
@@ -284,7 +284,7 @@ describe("Shop Withdrawal", () => {
         await ContractUtils.delay(3000);
 
         // Close New
-        res = await Network.post(new URL("http://localhost:7070/v1/payment/new/close"), {
+        res = await Network.post(new URL("http://localhost:6070/v1/payment/new/close"), {
             accessKey: FakerRelayServer.ACCESS_KEY,
             confirm: true,
             paymentId
@@ -340,7 +340,7 @@ describe("Shop Withdrawal", () => {
         client.useSigner(userWallets[purchase.userIndex]);
 
         // Open New
-        let res = await Network.post(new URL("http://localhost:7070/v1/payment/new/open"), {
+        let res = await Network.post(new URL("http://localhost:6070/v1/payment/new/open"), {
             accessKey: FakerRelayServer.ACCESS_KEY,
             purchaseId: purchase.purchaseId,
             amount: purchaseAmount.toString(),
@@ -394,7 +394,7 @@ describe("Shop Withdrawal", () => {
         await ContractUtils.delay(3000);
 
         // Close New
-        res = await Network.post(new URL("http://localhost:7070/v1/payment/new/close"), {
+        res = await Network.post(new URL("http://localhost:6070/v1/payment/new/close"), {
             accessKey: FakerRelayServer.ACCESS_KEY,
             confirm: true,
             paymentId

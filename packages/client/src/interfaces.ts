@@ -14,19 +14,25 @@ export enum NormalSteps {
 
 export enum PaymentDetailTaskStatus {
     NULL,
-    OPENED_NEW,
-    CONFIRMED_NEW,
-    DENIED_NEW,
-    REPLY_COMPLETED_NEW,
-    CLOSED_NEW,
-    FAILED_NEW,
-    OPENED_CANCEL,
-    CONFIRMED_CANCEL,
-    DENIED_CANCEL,
-    REPLY_COMPLETED_CANCEL,
-    CLOSED_CANCEL,
-    FAILED_CANCEL,
-    TIMEOUT
+    OPENED_NEW = 11,
+    APPROVED_NEW_FAILED_TX = 12,
+    APPROVED_NEW_SENT_TX = 13,
+    APPROVED_NEW_REVERTED_TX = 14,
+    APPROVED_NEW_CONFIRMED_TX = 15,
+    DENIED_NEW = 16,
+    REPLY_COMPLETED_NEW = 17,
+    CLOSED_NEW = 18,
+    FAILED_NEW = 19,
+    OPENED_CANCEL = 51,
+    APPROVED_CANCEL_FAILED_TX = 52,
+    APPROVED_CANCEL_SENT_TX = 53,
+    APPROVED_CANCEL_REVERTED_TX = 54,
+    APPROVED_CANCEL_CONFIRMED_TX = 55,
+    DENIED_CANCEL = 56,
+    REPLY_COMPLETED_CANCEL = 57,
+    CLOSED_CANCEL = 58,
+    FAILED_CANCEL = 59,
+    TIMEOUT = 90
 }
 
 export interface PaymentDetailData {
@@ -111,7 +117,6 @@ export type ApproveNewPaymentValue =
           totalPoint: BigNumber;
           totalToken: BigNumber;
           totalValue: BigNumber;
-          balance: BigNumber;
       }
     | {
           key: NormalSteps.DENIED;
@@ -157,7 +162,6 @@ export type ApproveCancelPaymentValue =
           totalPoint: BigNumber;
           totalToken: BigNumber;
           totalValue: BigNumber;
-          balance: BigNumber;
       }
     | {
           key: NormalSteps.DENIED;
@@ -332,8 +336,6 @@ export interface LoyaltyPaymentEvent {
     totalPoint: BigNumber;
     totalToken: BigNumber;
     totalValue: BigNumber;
-    status: number;
-    balance: BigNumber;
 }
 
 export interface ShopUpdateEvent {

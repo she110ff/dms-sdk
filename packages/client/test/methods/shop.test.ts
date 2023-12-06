@@ -19,7 +19,7 @@ describe("Shop", () => {
 
         deployment = await ContractDeployer.deploy();
 
-        fakerRelayServer = new FakerRelayServer(7070, deployment);
+        fakerRelayServer = new FakerRelayServer(6070, deployment);
         await fakerRelayServer.start();
     });
 
@@ -88,7 +88,7 @@ describe("Shop", () => {
         shopData.providePercent = 3;
 
         // Open New
-        let res = await Network.post(new URL("http://localhost:7070/v1/shop/update/create"), {
+        let res = await Network.post(new URL("http://localhost:6070/v1/shop/update/create"), {
             accessKey: FakerRelayServer.ACCESS_KEY,
             shopId: shopData.shopId,
             name: shopData.name,
@@ -142,7 +142,7 @@ describe("Shop", () => {
         assert.deepStrictEqual(info1.status, ShopStatus.INACTIVE);
 
         // Open New
-        let res = await Network.post(new URL("http://localhost:7070/v1/shop/status/create"), {
+        let res = await Network.post(new URL("http://localhost:6070/v1/shop/status/create"), {
             accessKey: FakerRelayServer.ACCESS_KEY,
             shopId: shopData.shopId,
             status: ShopStatus.ACTIVE

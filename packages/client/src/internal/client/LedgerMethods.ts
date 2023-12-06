@@ -30,7 +30,8 @@ import {
     ApproveNewPaymentValue,
     LoyaltyPaymentEvent,
     ApproveCancelPaymentValue,
-    LedgerPageType
+    LedgerPageType,
+    PaymentDetailTaskStatus
 } from "../../interfaces";
 import {
     AmountMismatchError,
@@ -250,7 +251,6 @@ export class LedgerMethods extends ClientCore implements ILedgerMethods, IClient
 
         const ledgerContract: Ledger = Ledger__factory.connect(this.web3.getLedgerAddress(), signer);
         const account: string = await signer.getAddress();
-        let contractTx: ContractTransaction;
         const nonce = await ledgerContract.nonceOf(account);
         const signature = await ContractUtils.signLoyaltyNewPayment(
             signer,
@@ -287,8 +287,6 @@ export class LedgerMethods extends ClientCore implements ILedgerMethods, IClient
             throw new InternalServerError(res?.error?.message ?? "");
         }
         if (approval) {
-            contractTx = (await signer.provider.getTransaction(res.data.txHash)) as ContractTransaction;
-
             yield {
                 key: NormalSteps.SENT,
                 paymentId,
@@ -301,8 +299,16 @@ export class LedgerMethods extends ClientCore implements ILedgerMethods, IClient
                 txHash: res.data.txHash
             };
 
-            const event = await this.waitPaymentLoyalty(ledgerContract, contractTx);
-
+            let event: LoyaltyPaymentEvent | undefined = undefined;
+            event = await this.waitPaymentLoyalty(
+                ledgerContract,
+                (await signer.provider.getTransaction(res.data.txHash)) as ContractTransaction
+            );
+            if (event === undefined)
+                event = await this.waitPaymentLoyaltyFromDetail(
+                    paymentId,
+                    PaymentDetailTaskStatus.APPROVED_NEW_SENT_TX
+                );
             if (event === undefined) throw new FailedApprovePayment();
 
             yield {
@@ -323,8 +329,7 @@ export class LedgerMethods extends ClientCore implements ILedgerMethods, IClient
                 feeValue: event.feeValue,
                 totalPoint: event.totalPoint,
                 totalToken: event.totalToken,
-                totalValue: event.totalValue,
-                balance: event.balance
+                totalValue: event.totalValue
             };
         } else {
             yield {
@@ -338,6 +343,28 @@ export class LedgerMethods extends ClientCore implements ILedgerMethods, IClient
                 account
             };
         }
+    }
+
+    private convertDetailToEvent(detail: PaymentDetailData): LoyaltyPaymentEvent {
+        return {
+            paymentId: detail.paymentId,
+            purchaseId: detail.purchaseId,
+            currency: detail.currency,
+            shopId: detail.shopId,
+            account: detail.account,
+            timestamp: BigNumber.from(ContractUtils.getTimeStamp()),
+            loyaltyType: detail.loyaltyType,
+            paidPoint: detail.loyaltyType === LoyaltyType.POINT ? BigNumber.from(detail.paidPoint) : BigNumber.from(0),
+            paidToken: detail.loyaltyType === LoyaltyType.TOKEN ? BigNumber.from(detail.paidToken) : BigNumber.from(0),
+            paidValue: BigNumber.from(detail.paidValue),
+
+            feePoint: detail.loyaltyType === LoyaltyType.POINT ? BigNumber.from(detail.feePoint) : BigNumber.from(0),
+            feeToken: detail.loyaltyType === LoyaltyType.TOKEN ? BigNumber.from(detail.feeToken) : BigNumber.from(0),
+            feeValue: BigNumber.from(detail.feeValue),
+            totalPoint: detail.paidPoint.add(detail.feePoint),
+            totalToken: detail.paidToken.add(detail.feeToken),
+            totalValue: detail.paidValue.add(detail.feeValue)
+        };
     }
 
     public async *approveCancelPayment(
@@ -360,7 +387,6 @@ export class LedgerMethods extends ClientCore implements ILedgerMethods, IClient
 
         const ledgerContract: Ledger = Ledger__factory.connect(this.web3.getLedgerAddress(), signer);
         const account: string = await signer.getAddress();
-        let contractTx: ContractTransaction;
         const nonce = await ledgerContract.nonceOf(account);
         const signature = await ContractUtils.signLoyaltyCancelPayment(signer, paymentId, purchaseId, nonce);
 
@@ -384,8 +410,6 @@ export class LedgerMethods extends ClientCore implements ILedgerMethods, IClient
             throw new InternalServerError(res?.error?.message ?? "");
         }
         if (approval) {
-            contractTx = (await signer.provider.getTransaction(res.data.txHash)) as ContractTransaction;
-
             yield {
                 key: NormalSteps.SENT,
                 paymentId,
@@ -395,8 +419,16 @@ export class LedgerMethods extends ClientCore implements ILedgerMethods, IClient
                 txHash: res.data.txHash
             };
 
-            const event = await this.waitPaymentLoyalty(ledgerContract, contractTx);
-
+            let event: LoyaltyPaymentEvent | undefined = undefined;
+            event = await this.waitPaymentLoyalty(
+                ledgerContract,
+                (await signer.provider.getTransaction(res.data.txHash)) as ContractTransaction
+            );
+            if (event === undefined)
+                event = await this.waitPaymentLoyaltyFromDetail(
+                    paymentId,
+                    PaymentDetailTaskStatus.APPROVED_CANCEL_SENT_TX
+                );
             if (event === undefined) throw new FailedApprovePayment();
 
             yield {
@@ -414,8 +446,7 @@ export class LedgerMethods extends ClientCore implements ILedgerMethods, IClient
                 feeValue: event.feeValue,
                 totalPoint: event.totalPoint,
                 totalToken: event.totalToken,
-                totalValue: event.totalValue,
-                balance: event.balance
+                totalValue: event.totalValue
             };
         } else {
             yield {
@@ -466,15 +497,31 @@ export class LedgerMethods extends ClientCore implements ILedgerMethods, IClient
                     : BigNumber.from(0);
             res.feeValue = BigNumber.from(parsedLog.args.payment.feeValue);
 
-            res.status = BigNumber.from(parsedLog.args.payment.status);
-            res.balance = BigNumber.from(parsedLog.args.balance);
-
             res.totalPoint = res.paidPoint.add(res.feePoint);
             res.totalToken = res.paidToken.add(res.feeToken);
             res.totalValue = res.paidValue.add(res.feeValue);
 
             return res;
         } else return undefined;
+    }
+
+    private async waitPaymentLoyaltyFromDetail(
+        paymentId: BytesLike,
+        status: PaymentDetailTaskStatus
+    ): Promise<LoyaltyPaymentEvent | undefined> {
+        let event: LoyaltyPaymentEvent | undefined = undefined;
+        const startTm = ContractUtils.getTimeStamp();
+        while (true) {
+            const detail = await this.getPaymentDetail(paymentId);
+            if (detail.paymentStatus > status) {
+                event = this.convertDetailToEvent(detail);
+                break;
+            }
+            if (ContractUtils.getTimeStamp() - startTm > 10) break;
+            await ContractUtils.delay(1000);
+        }
+
+        return event;
     }
 
     /**
