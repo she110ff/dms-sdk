@@ -13,11 +13,11 @@ export enum NormalSteps {
 }
 
 export enum PaymentDetailTaskStatus {
-    NULL,
+    NULL = 0,
     OPENED_NEW = 11,
     APPROVED_NEW_FAILED_TX = 12,
-    APPROVED_NEW_SENT_TX = 13,
-    APPROVED_NEW_REVERTED_TX = 14,
+    APPROVED_NEW_REVERTED_TX = 13,
+    APPROVED_NEW_SENT_TX = 14,
     APPROVED_NEW_CONFIRMED_TX = 15,
     DENIED_NEW = 16,
     REPLY_COMPLETED_NEW = 17,
@@ -25,14 +25,13 @@ export enum PaymentDetailTaskStatus {
     FAILED_NEW = 19,
     OPENED_CANCEL = 51,
     APPROVED_CANCEL_FAILED_TX = 52,
-    APPROVED_CANCEL_SENT_TX = 53,
-    APPROVED_CANCEL_REVERTED_TX = 54,
+    APPROVED_CANCEL_REVERTED_TX = 53,
+    APPROVED_CANCEL_SENT_TX = 54,
     APPROVED_CANCEL_CONFIRMED_TX = 55,
     DENIED_CANCEL = 56,
     REPLY_COMPLETED_CANCEL = 57,
     CLOSED_CANCEL = 58,
-    FAILED_CANCEL = 59,
-    TIMEOUT = 90
+    FAILED_CANCEL = 59
 }
 
 export interface PaymentDetailData {
@@ -56,12 +55,14 @@ export interface PaymentDetailData {
 }
 
 export enum ShopDetailTaskStatus {
-    NULL,
-    OPENED,
-    CONFIRMED,
-    DENIED,
-    COMPLETED,
-    TIMEOUT
+    NULL = 0,
+    OPENED = 11,
+    FAILED_TX = 12,
+    REVERTED_TX = 13,
+    SENT_TX = 14,
+    DENIED = 15,
+    COMPLETED = 16,
+    TIMEOUT = 70
 }
 
 export interface ShopDetailData {

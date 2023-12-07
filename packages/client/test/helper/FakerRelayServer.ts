@@ -604,8 +604,6 @@ export class FakerRelayServer {
                 }
 
                 if (ContractUtils.getTimeStamp() - item.openNewTimestamp > FakerRelayServer.PAYMENT_TIMEOUT_SECONDS) {
-                    item.paymentStatus = LoyaltyPaymentTaskStatus.TIMEOUT;
-                    await this._storage.updatePaymentStatus(item.paymentId, item.paymentStatus);
                     const data = ResponseMessage.getErrorMessage("7000");
                     return res.status(200).json(data);
                 }
@@ -1037,8 +1035,6 @@ export class FakerRelayServer {
                     ContractUtils.getTimeStamp() - item.openCancelTimestamp >
                     FakerRelayServer.PAYMENT_TIMEOUT_SECONDS
                 ) {
-                    item.paymentStatus = LoyaltyPaymentTaskStatus.TIMEOUT;
-                    await this._storage.updatePaymentStatus(item.paymentId, item.paymentStatus);
                     const msg = ResponseMessage.getErrorMessage("7000");
                     return res.status(200).json(msg);
                 }
@@ -1564,7 +1560,7 @@ export class FakerRelayServer {
                             signature
                         );
 
-                        item.taskStatus = ShopTaskStatus.CONFIRMED;
+                        item.taskStatus = ShopTaskStatus.SENT_TX;
                         await this._storage.updateTaskStatus(item.taskId, item.taskStatus);
 
                         const event = await this.waitAndUpdateEvent(contract, tx);
@@ -1736,7 +1732,7 @@ export class FakerRelayServer {
                     try {
                         const tx = await contract.changeStatus(item.shopId, item.status, item.account, signature);
 
-                        item.taskStatus = ShopTaskStatus.CONFIRMED;
+                        item.taskStatus = ShopTaskStatus.SENT_TX;
                         await this._storage.updateTaskStatus(item.taskId, item.taskStatus);
 
                         const event = await this.waitAndChangeStatusEvent(contract, tx);

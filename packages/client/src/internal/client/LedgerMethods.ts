@@ -304,11 +304,7 @@ export class LedgerMethods extends ClientCore implements ILedgerMethods, IClient
                 ledgerContract,
                 (await signer.provider.getTransaction(res.data.txHash)) as ContractTransaction
             );
-            if (event === undefined)
-                event = await this.waitPaymentLoyaltyFromDetail(
-                    paymentId,
-                    PaymentDetailTaskStatus.APPROVED_NEW_SENT_TX
-                );
+            if (event === undefined) event = await this.waitNewPaymentLoyaltyFromDetail(paymentId);
             if (event === undefined) throw new FailedApprovePayment();
 
             yield {
@@ -424,11 +420,7 @@ export class LedgerMethods extends ClientCore implements ILedgerMethods, IClient
                 ledgerContract,
                 (await signer.provider.getTransaction(res.data.txHash)) as ContractTransaction
             );
-            if (event === undefined)
-                event = await this.waitPaymentLoyaltyFromDetail(
-                    paymentId,
-                    PaymentDetailTaskStatus.APPROVED_CANCEL_SENT_TX
-                );
+            if (event === undefined) event = await this.waitCancelPaymentLoyaltyFromDetail(paymentId);
             if (event === undefined) throw new FailedApprovePayment();
 
             yield {
@@ -505,23 +497,50 @@ export class LedgerMethods extends ClientCore implements ILedgerMethods, IClient
         } else return undefined;
     }
 
-    private async waitPaymentLoyaltyFromDetail(
-        paymentId: BytesLike,
-        status: PaymentDetailTaskStatus
-    ): Promise<LoyaltyPaymentEvent | undefined> {
-        let event: LoyaltyPaymentEvent | undefined = undefined;
+    private async waitNewPaymentLoyaltyFromDetail(paymentId: BytesLike): Promise<LoyaltyPaymentEvent | undefined> {
         const startTm = ContractUtils.getTimeStamp();
         while (true) {
             const detail = await this.getPaymentDetail(paymentId);
-            if (detail.paymentStatus > status) {
-                event = this.convertDetailToEvent(detail);
-                break;
+            if (
+                detail.paymentStatus === PaymentDetailTaskStatus.APPROVED_NEW_CONFIRMED_TX ||
+                detail.paymentStatus === PaymentDetailTaskStatus.REPLY_COMPLETED_NEW ||
+                detail.paymentStatus === PaymentDetailTaskStatus.CLOSED_NEW
+            ) {
+                return this.convertDetailToEvent(detail);
+            } else if (
+                detail.paymentStatus === PaymentDetailTaskStatus.APPROVED_NEW_FAILED_TX ||
+                detail.paymentStatus === PaymentDetailTaskStatus.APPROVED_NEW_REVERTED_TX
+            ) {
+                return undefined;
             }
             if (ContractUtils.getTimeStamp() - startTm > 10) break;
             await ContractUtils.delay(1000);
         }
 
-        return event;
+        return undefined;
+    }
+
+    private async waitCancelPaymentLoyaltyFromDetail(paymentId: BytesLike): Promise<LoyaltyPaymentEvent | undefined> {
+        const startTm = ContractUtils.getTimeStamp();
+        while (true) {
+            const detail = await this.getPaymentDetail(paymentId);
+            if (
+                detail.paymentStatus === PaymentDetailTaskStatus.APPROVED_CANCEL_CONFIRMED_TX ||
+                detail.paymentStatus === PaymentDetailTaskStatus.REPLY_COMPLETED_CANCEL ||
+                detail.paymentStatus === PaymentDetailTaskStatus.CLOSED_CANCEL
+            ) {
+                return this.convertDetailToEvent(detail);
+            } else if (
+                detail.paymentStatus === PaymentDetailTaskStatus.APPROVED_CANCEL_FAILED_TX ||
+                detail.paymentStatus === PaymentDetailTaskStatus.APPROVED_CANCEL_REVERTED_TX
+            ) {
+                return undefined;
+            }
+            if (ContractUtils.getTimeStamp() - startTm > 10) break;
+            await ContractUtils.delay(1000);
+        }
+
+        return undefined;
     }
 
     /**
