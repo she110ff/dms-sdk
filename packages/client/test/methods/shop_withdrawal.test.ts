@@ -69,7 +69,6 @@ describe("Shop Withdrawal", () => {
             shopId: "",
             name: "Shop1",
             currency: "krw",
-            provideWaitTime: 0,
             providePercent: 1,
             wallet: shopWallets[0]
         },
@@ -77,7 +76,6 @@ describe("Shop Withdrawal", () => {
             shopId: "",
             name: "Shop2",
             currency: "krw",
-            provideWaitTime: 0,
             providePercent: 1,
             wallet: shopWallets[1]
         },
@@ -85,7 +83,6 @@ describe("Shop Withdrawal", () => {
             shopId: "",
             name: "Shop3",
             currency: "krw",
-            provideWaitTime: 0,
             providePercent: 1,
             wallet: shopWallets[2]
         },
@@ -93,7 +90,6 @@ describe("Shop Withdrawal", () => {
             shopId: "",
             name: "Shop4",
             currency: "krw",
-            provideWaitTime: 0,
             providePercent: 1,
             wallet: shopWallets[3]
         },
@@ -101,7 +97,6 @@ describe("Shop Withdrawal", () => {
             shopId: "",
             name: "Shop5",
             currency: "krw",
-            provideWaitTime: 0,
             providePercent: 1,
             wallet: shopWallets[4]
         }

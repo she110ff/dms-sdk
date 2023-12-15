@@ -82,7 +82,6 @@ describe("Ledger", () => {
             shopId: "",
             name: "Shop1",
             currency: "krw",
-            provideWaitTime: 0,
             providePercent: 1,
             wallet: shopWallets[0]
         },
@@ -90,7 +89,6 @@ describe("Ledger", () => {
             shopId: "",
             name: "Shop2",
             currency: "krw",
-            provideWaitTime: 0,
             providePercent: 1,
             wallet: shopWallets[1]
         },
@@ -98,7 +96,6 @@ describe("Ledger", () => {
             shopId: "",
             name: "Shop3",
             currency: "krw",
-            provideWaitTime: 0,
             providePercent: 1,
             wallet: shopWallets[2]
         },
@@ -106,7 +103,6 @@ describe("Ledger", () => {
             shopId: "",
             name: "Shop4",
             currency: "krw",
-            provideWaitTime: 0,
             providePercent: 1,
             wallet: shopWallets[3]
         },
@@ -114,7 +110,6 @@ describe("Ledger", () => {
             shopId: "",
             name: "Shop5",
             currency: "krw",
-            provideWaitTime: 0,
             providePercent: 1,
             wallet: shopWallets[4]
         }

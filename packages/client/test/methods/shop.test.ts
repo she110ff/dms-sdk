@@ -9,7 +9,6 @@ export interface IShopData {
     shopId: string;
     name: string;
     currency: string;
-    provideWaitTime: number;
     providePercent: number;
     wallet: Wallet;
 }
@@ -27,7 +26,6 @@ describe("Shop", () => {
             shopId: "",
             name: "Shop6",
             currency: "krw",
-            provideWaitTime: 0,
             providePercent: 1,
             wallet: shopWallet
         };
@@ -72,7 +70,6 @@ describe("Shop", () => {
 
     it("Update", async () => {
         shopData.name = "New Name";
-        shopData.provideWaitTime = 86400 * 12;
         shopData.providePercent = 3;
 
         // Open New
@@ -81,7 +78,6 @@ describe("Shop", () => {
             shopId: shopData.shopId,
             name: shopData.name,
             currency: shopData.currency,
-            provideWaitTime: shopData.provideWaitTime,
             providePercent: shopData.providePercent
         });
         assert.deepStrictEqual(res.code, 0);
@@ -114,7 +110,6 @@ describe("Shop", () => {
                     expect(step.shopId).toEqual(detail.shopId);
                     expect(step.account).toEqual(shopWallet.address);
                     expect(step.name).toEqual(shopData.name);
-                    expect(step.provideWaitTime).toEqual(shopData.provideWaitTime);
                     expect(step.providePercent).toEqual(shopData.providePercent);
                     break;
                 default:

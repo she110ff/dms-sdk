@@ -437,15 +437,7 @@ export class NodeInfo {
             await (
                 await contracts.shop
                     .connect(sender)
-                    .update(
-                        shop.shopId,
-                        shop.name,
-                        shop.currency,
-                        shop.provideWaitTime,
-                        shop.providePercent,
-                        shop.wallet.address,
-                        signature1
-                    )
+                    .update(shop.shopId, shop.name, shop.currency, shop.providePercent, shop.wallet.address, signature1)
             ).wait();
         }
 
