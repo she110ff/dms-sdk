@@ -68,7 +68,7 @@ export class PhoneLinkMethods extends ClientCore implements IPhoneLinkMethods, I
             throw new UnsupportedNetworkError(networkName);
         }
 
-        const contract = PhoneLinkCollection__factory.connect(this.web3.getLinkCollectionAddress(), provider);
+        const contract = PhoneLinkCollection__factory.connect(this.web3.getLinkAddress(), provider);
         const validators = await contract.getValidators();
         if (validators.length === 0) {
             throw new NoValidator();
@@ -98,7 +98,7 @@ export class PhoneLinkMethods extends ClientCore implements IPhoneLinkMethods, I
             throw new UnsupportedNetworkError(networkName);
         }
 
-        const contract = PhoneLinkCollection__factory.connect(this.web3.getLinkCollectionAddress(), signer);
+        const contract = PhoneLinkCollection__factory.connect(this.web3.getLinkAddress(), signer);
         const address = await signer.getAddress();
         const nonce = await contract.nonceOf(address);
         const signature = await ContractUtils.signRequestPhone(signer, phone, nonce);
@@ -237,7 +237,7 @@ export class PhoneLinkMethods extends ClientCore implements IPhoneLinkMethods, I
             throw new UnsupportedNetworkError(networkName);
         }
 
-        const contract = PhoneLinkCollection__factory.connect(this.web3.getLinkCollectionAddress(), provider);
+        const contract = PhoneLinkCollection__factory.connect(this.web3.getLinkAddress(), provider);
 
         return await contract.toAddress(phone);
     }
@@ -254,7 +254,7 @@ export class PhoneLinkMethods extends ClientCore implements IPhoneLinkMethods, I
             throw new UnsupportedNetworkError(networkName);
         }
 
-        const contract = PhoneLinkCollection__factory.connect(this.web3.getLinkCollectionAddress(), provider);
+        const contract = PhoneLinkCollection__factory.connect(this.web3.getLinkAddress(), provider);
 
         return await contract.toPhone(address);
     }
@@ -271,7 +271,7 @@ export class PhoneLinkMethods extends ClientCore implements IPhoneLinkMethods, I
             throw new UnsupportedNetworkError(networkName);
         }
 
-        const contract = PhoneLinkCollection__factory.connect(this.web3.getLinkCollectionAddress(), provider);
+        const contract = PhoneLinkCollection__factory.connect(this.web3.getLinkAddress(), provider);
         const res = await contract.getRequestItem(id);
         return res.status;
     }

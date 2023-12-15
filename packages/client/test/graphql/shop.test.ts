@@ -1,12 +1,8 @@
-/*
-import { contextParamsDevnet } from "../helper/constants";
-
 import {
     Amount,
     Client,
     Context,
     ContractUtils,
-    LIVE_CONTRACTS,
     LoyaltyType,
     NormalSteps,
     ShopAction,
@@ -20,6 +16,7 @@ import { BigNumber } from "@ethersproject/bignumber";
 import { Network } from "../../src/client-common/interfaces/network";
 
 import * as assert from "assert";
+import { NodeInfo } from "../helper/NodeInfo";
 
 export interface IPurchaseData {
     purchaseId: string;
@@ -48,27 +45,20 @@ export interface IShopData {
     privateKey: string;
 }
 
-describe("Integrated test of ShopCollection", () => {
+describe("Integrated test of Shop", () => {
+    const contextParams = NodeInfo.getContextParams();
     let shop: IShopData;
     let shopIndex: number;
     let withdrawalAmount: BigNumber;
     describe("Method Check", () => {
         let client: Client;
-        const users: IUserData[] = JSON.parse(fs.readFileSync("test/helper/users.json", "utf8"));
+        const users: IUserData[] = JSON.parse(fs.readFileSync("test/helper/users_mobile.json", "utf8"));
         const shops: IShopData[] = JSON.parse(fs.readFileSync("test/helper/shops.json", "utf8"));
         shopIndex = 2;
         shop = shops[shopIndex];
         beforeAll(async () => {
-            contextParamsDevnet.tokenAddress = LIVE_CONTRACTS["bosagora_devnet"].TokenAddress;
-            contextParamsDevnet.phoneLinkCollectionAddress =
-                LIVE_CONTRACTS["bosagora_devnet"].PhoneLinkCollectionAddress;
-            contextParamsDevnet.validatorCollectionAddress =
-                LIVE_CONTRACTS["bosagora_devnet"].ValidatorCollectionAddress;
-            contextParamsDevnet.currencyRateAddress = LIVE_CONTRACTS["bosagora_devnet"].CurrencyRateAddress;
-            contextParamsDevnet.shopCollectionAddress = LIVE_CONTRACTS["bosagora_devnet"].ShopCollectionAddress;
-            contextParamsDevnet.ledgerAddress = LIVE_CONTRACTS["bosagora_devnet"].LedgerAddress;
-            contextParamsDevnet.signer = new Wallet(shops[shopIndex].privateKey);
-            const ctx = new Context(contextParamsDevnet);
+            contextParams.signer = new Wallet(shops[shopIndex].privateKey);
+            const ctx = new Context(contextParams);
             client = new Client(ctx);
         });
 
@@ -129,17 +119,14 @@ describe("Integrated test of ShopCollection", () => {
 
                         // Open New
                         console.log("Pay token - Open New");
-                        let res = await Network.post(
-                            new URL(contextParamsDevnet.relayEndpoint + "v1/payment/new/open"),
-                            {
-                                accessKey: "0x2c93e943c0d7f6f1a42f53e116c52c40fe5c1b428506dc04b290f2a77580a342",
-                                purchaseId: purchase.purchaseId,
-                                amount: paidPoint.toString(),
-                                currency: purchase.currency.toLowerCase(),
-                                shopId: shops[purchase.shopIndex].shopId,
-                                account: user.address
-                            }
-                        );
+                        let res = await Network.post(new URL(contextParams.relayEndpoint + "v1/payment/new/open"), {
+                            accessKey: NodeInfo.RELAY_ACCESS_KEY,
+                            purchaseId: purchase.purchaseId,
+                            amount: paidPoint.toString(),
+                            currency: purchase.currency.toLowerCase(),
+                            shopId: shops[purchase.shopIndex].shopId,
+                            account: user.address
+                        });
                         assert.deepStrictEqual(res.code, 0, res?.error?.message);
                         assert.notDeepStrictEqual(res.data, undefined);
 
@@ -150,48 +137,48 @@ describe("Integrated test of ShopCollection", () => {
                         // Approve New
                         console.log("Pay token - Approve New");
 
-                        // let detail = await client.ledger.getPaymentDetail(paymentId);
-                        // for await (const step of client.ledger.approveNewPayment(
-                        //     paymentId,
-                        //     detail.purchaseId,
-                        //     paidPoint,
-                        //     detail.currency.toLowerCase(),
-                        //     detail.shopId,
-                        //     true
-                        // )) {
-                        //     switch (step.key) {
-                        //         case NormalSteps.PREPARED:
-                        //             expect(step.paymentId).toEqual(paymentId);
-                        //             expect(step.purchaseId).toEqual(detail.purchaseId);
-                        //             expect(step.amount).toEqual(paidPoint);
-                        //             expect(step.currency).toEqual(detail.currency.toLowerCase());
-                        //             expect(step.shopId).toEqual(detail.shopId);
-                        //             expect(step.account).toEqual(user.address);
-                        //             expect(step.signature).toMatch(/^0x[A-Fa-f0-9]{130}$/i);
-                        //             break;
-                        //         case NormalSteps.SENT:
-                        //             expect(step.paymentId).toEqual(paymentId);
-                        //             expect(step.txHash).toMatch(/^0x[A-Fa-f0-9]{64}$/i);
-                        //             break;
-                        //         case NormalSteps.APPROVED:
-                        //             expect(step.paymentId).toEqual(paymentId);
-                        //             expect(step.purchaseId).toEqual(detail.purchaseId);
-                        //             expect(step.currency).toEqual(detail.currency.toLowerCase());
-                        //             expect(step.shopId).toEqual(detail.shopId);
-                        //             expect(step.paidToken).toEqual(paidToken);
-                        //             expect(step.paidValue).toEqual(paidPoint);
-                        //             break;
-                        //         default:
-                        //             throw new Error("Unexpected pay point step: " + JSON.stringify(step, null, 2));
-                        //     }
-                        // }
+                        let detail = await client.ledger.getPaymentDetail(paymentId);
+                        for await (const step of client.ledger.approveNewPayment(
+                            paymentId,
+                            detail.purchaseId,
+                            paidPoint,
+                            detail.currency.toLowerCase(),
+                            detail.shopId,
+                            true
+                        )) {
+                            switch (step.key) {
+                                case NormalSteps.PREPARED:
+                                    expect(step.paymentId).toEqual(paymentId);
+                                    expect(step.purchaseId).toEqual(detail.purchaseId);
+                                    expect(step.amount).toEqual(paidPoint);
+                                    expect(step.currency).toEqual(detail.currency.toLowerCase());
+                                    expect(step.shopId).toEqual(detail.shopId);
+                                    expect(step.account).toEqual(user.address);
+                                    expect(step.signature).toMatch(/^0x[A-Fa-f0-9]{130}$/i);
+                                    break;
+                                case NormalSteps.SENT:
+                                    expect(step.paymentId).toEqual(paymentId);
+                                    expect(step.txHash).toMatch(/^0x[A-Fa-f0-9]{64}$/i);
+                                    break;
+                                case NormalSteps.APPROVED:
+                                    expect(step.paymentId).toEqual(paymentId);
+                                    expect(step.purchaseId).toEqual(detail.purchaseId);
+                                    expect(step.currency).toEqual(detail.currency.toLowerCase());
+                                    expect(step.shopId).toEqual(detail.shopId);
+                                    expect(step.paidToken).toEqual(paidToken);
+                                    expect(step.paidValue).toEqual(paidPoint);
+                                    break;
+                                default:
+                                    throw new Error("Unexpected pay point step: " + JSON.stringify(step, null, 2));
+                            }
+                        }
 
                         await ContractUtils.delay(5000);
 
                         // Close New
                         console.log("Pay token - Close New");
-                        res = await Network.post(new URL(contextParamsDevnet.relayEndpoint + "v1/payment/new/close"), {
-                            accessKey: "0x2c93e943c0d7f6f1a42f53e116c52c40fe5c1b428506dc04b290f2a77580a342",
+                        res = await Network.post(new URL(contextParams.relayEndpoint + "v1/payment/new/close"), {
+                            accessKey: NodeInfo.RELAY_ACCESS_KEY,
                             confirm: true,
                             paymentId
                         });
@@ -218,6 +205,7 @@ describe("Integrated test of ShopCollection", () => {
 
             it("Check Settlement", async () => {
                 withdrawalAmount = await client.shop.getWithdrawableAmount(shop.shopId);
+                console.log("withdrawalAmount: ", withdrawalAmount.toString());
             });
 
             it("Open Withdrawal", async () => {
@@ -226,15 +214,18 @@ describe("Integrated test of ShopCollection", () => {
                 for await (const step of client.shop.openWithdrawal(shop.shopId, withdrawalAmount)) {
                     switch (step.key) {
                         case NormalSteps.PREPARED:
+                            console.log("Open Withdrawal", "NormalSteps.PREPARED");
                             expect(step.shopId).toEqual(shop.shopId);
                             expect(step.account.toUpperCase()).toEqual(shop.address.toUpperCase());
                             expect(step.signature).toMatch(/^0x[A-Fa-f0-9]{130}$/i);
                             break;
                         case NormalSteps.SENT:
+                            console.log("Open Withdrawal", "NormalSteps.SENT");
                             expect(step.shopId).toEqual(shop.shopId);
                             expect(step.txHash).toMatch(/^0x[A-Fa-f0-9]{64}$/i);
                             break;
                         case NormalSteps.DONE:
+                            console.log("Open Withdrawal", "NormalSteps.DONE");
                             expect(step.shopId).toEqual(shop.shopId);
                             expect(step.amount.toString()).toEqual(withdrawalAmount.toString());
                             expect(step.account.toUpperCase()).toEqual(shop.address.toUpperCase());
@@ -249,6 +240,10 @@ describe("Integrated test of ShopCollection", () => {
                 const shopInfo = await client.shop.getShopInfo(shop.shopId);
                 expect(shopInfo.withdrawStatus).toEqual(ShopWithdrawStatus.OPEN);
                 expect(shopInfo.withdrawAmount.toString()).toEqual(withdrawalAmount.toString());
+            });
+
+            it("Wait", async () => {
+                await ContractUtils.delay(5000);
             });
 
             it("OpenWithdrawal History", async () => {
@@ -299,16 +294,6 @@ describe("Integrated test of ShopCollection", () => {
                 expect(res.shopTradeHistories[0].shopId).toEqual(shop.shopId);
                 expect(res.shopTradeHistories[0].action).toEqual(ShopAction.CLOSE_WITHDRAWN);
             });
-        });
-    });
-});
-*/
-import { ContractUtils } from "../../src";
-
-describe("Integrated test of Ledger", () => {
-    describe("Method Check", () => {
-        it("Wait", async () => {
-            await ContractUtils.delay(1000);
         });
     });
 });

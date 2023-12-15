@@ -51,7 +51,7 @@ export class CurrencyMethods extends ClientCore implements ICurrencyMethods {
             }
 
             const contract: CurrencyRate = CurrencyRate__factory.connect(this.web3.getCurrencyRateAddress(), provider);
-            CurrencyMethods._CurrencyMultiple = await contract.MULTIPLE();
+            CurrencyMethods._CurrencyMultiple = await contract.multiple();
         }
         return CurrencyMethods._CurrencyMultiple;
     }

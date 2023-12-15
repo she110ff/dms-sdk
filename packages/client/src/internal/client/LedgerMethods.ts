@@ -7,7 +7,16 @@ import {
     SupportedNetworksArray
 } from "../../client-common";
 import { ILedgerMethods } from "../../interface/ILedger";
-import { Ledger, Ledger__factory, Token, Token__factory } from "dms-osx-lib";
+import {
+    Ledger,
+    Ledger__factory,
+    LoyaltyConsumer,
+    LoyaltyConsumer__factory,
+    LoyaltyExchanger,
+    LoyaltyExchanger__factory,
+    Token,
+    Token__factory
+} from "dms-osx-lib";
 import { Provider } from "@ethersproject/providers";
 import { NoProviderError, NoSignerError, UnsupportedNetworkError, UpdateAllowanceError } from "dms-sdk-common";
 import { ContractUtils } from "../../utils/ContractUtils";
@@ -25,7 +34,6 @@ import {
     UpdateAllowanceStepValue,
     WithdrawSteps,
     WithdrawStepValue,
-    SignatureZero,
     PaymentDetailData,
     ApproveNewPaymentValue,
     LoyaltyPaymentEvent,
@@ -55,6 +63,7 @@ import { QueryUserTradeHistory } from "../graphql-queries/user/history";
 import { PhoneLinkCollection, PhoneLinkCollection__factory } from "del-osx-lib";
 import { AddressZero } from "@ethersproject/constants";
 import { BytesLike } from "@ethersproject/bytes";
+import { NonceManager } from "@ethersproject/experimental";
 
 /**
  * 사용자의 포인트/토큰의 잔고와 제품구매를 하는 기능이 포함되어 있다.
@@ -188,7 +197,7 @@ export class LedgerMethods extends ClientCore implements ILedgerMethods, IClient
 
         const ledgerInstance: Ledger = Ledger__factory.connect(this.web3.getLedgerAddress(), provider);
 
-        return await ledgerInstance.fee();
+        return await ledgerInstance.getFee();
     }
 
     public async getPaymentDetail(paymentId: BytesLike): Promise<PaymentDetailData> {
@@ -299,9 +308,14 @@ export class LedgerMethods extends ClientCore implements ILedgerMethods, IClient
                 txHash: res.data.txHash
             };
 
+            const consumerContract: LoyaltyConsumer = LoyaltyConsumer__factory.connect(
+                this.web3.getLoyaltyConsumerAddress(),
+                signer
+            );
+
             let event: LoyaltyPaymentEvent | undefined = undefined;
             event = await this.waitPaymentLoyalty(
-                ledgerContract,
+                consumerContract,
                 (await signer.provider.getTransaction(res.data.txHash)) as ContractTransaction
             );
             if (event === undefined) event = await this.waitNewPaymentLoyaltyFromDetail(paymentId);
@@ -415,9 +429,14 @@ export class LedgerMethods extends ClientCore implements ILedgerMethods, IClient
                 txHash: res.data.txHash
             };
 
+            const consumerContract: LoyaltyConsumer = LoyaltyConsumer__factory.connect(
+                this.web3.getLoyaltyConsumerAddress(),
+                signer
+            );
+
             let event: LoyaltyPaymentEvent | undefined = undefined;
             event = await this.waitPaymentLoyalty(
-                ledgerContract,
+                consumerContract,
                 (await signer.provider.getTransaction(res.data.txHash)) as ContractTransaction
             );
             if (event === undefined) event = await this.waitCancelPaymentLoyaltyFromDetail(paymentId);
@@ -452,7 +471,7 @@ export class LedgerMethods extends ClientCore implements ILedgerMethods, IClient
     }
 
     private async waitPaymentLoyalty(
-        contract: Ledger,
+        contract: LoyaltyConsumer,
         tx: ContractTransaction
     ): Promise<LoyaltyPaymentEvent | undefined> {
         const res: any = {};
@@ -576,7 +595,8 @@ export class LedgerMethods extends ClientCore implements ILedgerMethods, IClient
             tokenAddress: this.web3.getTokenAddress()
         });
 
-        const depositTx = await ledgerContract.connect(signer).deposit(amount);
+        const nonceSigner = new NonceManager(signer);
+        const depositTx = await ledgerContract.connect(nonceSigner).deposit(amount);
         yield { key: DepositSteps.DEPOSITING, txHash: depositTx.hash };
 
         const cr = await depositTx.wait();
@@ -618,7 +638,8 @@ export class LedgerMethods extends ClientCore implements ILedgerMethods, IClient
         const currentDepositAmount = await ledgerContract.tokenBalanceOf(account);
         if (currentDepositAmount.lte(amount)) throw new InsufficientBalanceError();
 
-        const tx = await ledgerContract.connect(signer).withdraw(amount);
+        const nonceSigner = new NonceManager(signer);
+        const tx = await ledgerContract.connect(nonceSigner).withdraw(amount);
         yield { key: WithdrawSteps.WITHDRAWING, txHash: tx.hash };
 
         const cr = await tx.wait();
@@ -653,7 +674,8 @@ export class LedgerMethods extends ClientCore implements ILedgerMethods, IClient
             throw new UnsupportedNetworkError(networkName);
         }
 
-        const tokenInstance = Token__factory.connect(params.tokenAddress, signer);
+        const nonceSigner = new NonceManager(signer);
+        const tokenInstance = Token__factory.connect(params.tokenAddress, nonceSigner);
         const currentAllowance = await tokenInstance.allowance(await signer.getAddress(), params.targetAddress);
 
         yield {
@@ -692,10 +714,9 @@ export class LedgerMethods extends ClientCore implements ILedgerMethods, IClient
 
     /**
      * 적립되는 로얄티의 종류를 변경한다.
-     * @param useRelay - 이값이 true 이면 릴레이 서버를 경유해서 전송합니다. 그렇지 않으면 직접 컨트랙트를 호출합니다.
      * @return {AsyncGenerator<ChangeLoyaltyTypeStepValue>}
      */
-    public async *changeToLoyaltyToken(useRelay: boolean = true): AsyncGenerator<ChangeLoyaltyTypeStepValue> {
+    public async *changeToLoyaltyToken(): AsyncGenerator<ChangeLoyaltyTypeStepValue> {
         const signer = this.web3.getConnectedSigner();
         if (!signer) {
             throw new NoSignerError();
@@ -712,38 +733,34 @@ export class LedgerMethods extends ClientCore implements ILedgerMethods, IClient
         const ledgerContract: Ledger = Ledger__factory.connect(this.web3.getLedgerAddress(), signer);
         const account: string = await signer.getAddress();
         let contractTx: ContractTransaction;
-        if (useRelay) {
-            const nonce = await ledgerContract.nonceOf(account);
-            const signature = await ContractUtils.signLoyaltyType(signer, nonce);
+        const nonce = await ledgerContract.nonceOf(account);
+        const signature = await ContractUtils.signLoyaltyType(signer, nonce);
 
-            yield { key: NormalSteps.PREPARED, account, signature };
+        yield { key: NormalSteps.PREPARED, account, signature };
 
-            const param = {
-                account,
-                signature
-            };
-            const res = await Network.post(await this.getEndpoint("/v1/ledger/changeToLoyaltyToken"), param);
-            if (res.code !== 0) {
-                throw new InternalServerError(res?.error?.message ?? "");
-            }
-
-            contractTx = (await signer.provider.getTransaction(res.data.txHash)) as ContractTransaction;
-
-            yield { key: NormalSteps.SENT, txHash: res.data.txHash };
-        } else {
-            yield { key: NormalSteps.PREPARED, account, signature: SignatureZero };
-
-            contractTx = await ledgerContract.changeToLoyaltyTokenDirect();
-
-            yield { key: NormalSteps.SENT, txHash: contractTx.hash };
+        const param = {
+            account,
+            signature
+        };
+        const res = await Network.post(await this.getEndpoint("/v1/ledger/changeToLoyaltyToken"), param);
+        if (res.code !== 0) {
+            throw new InternalServerError(res?.error?.message ?? "");
         }
+
+        contractTx = (await signer.provider.getTransaction(res.data.txHash)) as ContractTransaction;
+
+        yield { key: NormalSteps.SENT, txHash: res.data.txHash };
         const txReceipt = await contractTx.wait();
 
-        const log = findLog(txReceipt, ledgerContract.interface, "ChangedToLoyaltyToken");
+        const exchangerContract: LoyaltyExchanger = LoyaltyExchanger__factory.connect(
+            this.web3.getLedgerAddress(),
+            signer
+        );
+        const log = findLog(txReceipt, exchangerContract.interface, "ChangedToLoyaltyToken");
         if (!log) {
             throw new FailedPayTokenError();
         }
-        const parsedLog = ledgerContract.interface.parseLog(log);
+        const parsedLog = exchangerContract.interface.parseLog(log);
 
         yield {
             key: NormalSteps.DONE,
@@ -776,13 +793,9 @@ export class LedgerMethods extends ClientCore implements ILedgerMethods, IClient
     /**
      * 사용가능한 포인트로 변환한다.
      * @param phone 전화번호
-     * @param useRelay - 이값이 true 이면 릴레이 서버를 경유해서 전송합니다. 그렇지 않으면 직접 컨트랙트를 호출합니다.
      * @return {AsyncGenerator<ChangeToPayablePointStepValue>}
      */
-    public async *changeToPayablePoint(
-        phone: string,
-        useRelay: boolean = true
-    ): AsyncGenerator<ChangeToPayablePointStepValue> {
+    public async *changeToPayablePoint(phone: string): AsyncGenerator<ChangeToPayablePointStepValue> {
         const signer = this.web3.getConnectedSigner();
         if (!signer) {
             throw new NoSignerError();
@@ -805,7 +818,7 @@ export class LedgerMethods extends ClientCore implements ILedgerMethods, IClient
         }
 
         const linkContract: PhoneLinkCollection = PhoneLinkCollection__factory.connect(
-            this.web3.getLinkCollectionAddress(),
+            this.web3.getLinkAddress(),
             signer.provider
         );
         const phoneToAddress: string = await linkContract.toAddress(phoneHash);
@@ -814,47 +827,36 @@ export class LedgerMethods extends ClientCore implements ILedgerMethods, IClient
 
         const account: string = await signer.getAddress();
         let contractTx: ContractTransaction;
-        if (useRelay) {
-            const nonce = await ledgerContract.nonceOf(account);
-            const signature = await ContractUtils.signChangePayablePoint(signer, phoneHash, nonce);
+        const nonce = await ledgerContract.nonceOf(account);
+        const signature = await ContractUtils.signChangePayablePoint(signer, phoneHash, nonce);
 
-            const param = {
-                phone: phoneHash,
-                account,
-                signature
-            };
+        const param = {
+            phone: phoneHash,
+            account,
+            signature
+        };
 
-            yield { key: NormalSteps.PREPARED, phone, phoneHash, account, signature, balance };
+        yield { key: NormalSteps.PREPARED, phone, phoneHash, account, signature, balance };
 
-            const res = await Network.post(await this.getEndpoint("/v1/ledger/changeToPayablePoint"), param);
-            if (res.code !== 0) {
-                throw new InternalServerError(res?.error?.message ?? "");
-            }
-
-            contractTx = (await signer.provider.getTransaction(res.data.txHash)) as ContractTransaction;
-
-            yield { key: NormalSteps.SENT, txHash: res.data.txHash };
-        } else {
-            yield {
-                key: NormalSteps.PREPARED,
-                phone,
-                phoneHash,
-                account,
-                signature: SignatureZero,
-                balance
-            };
-
-            contractTx = await ledgerContract.changeToPayablePointDirect(phoneHash);
-
-            yield { key: NormalSteps.SENT, txHash: contractTx.hash };
+        const res = await Network.post(await this.getEndpoint("/v1/ledger/changeToPayablePoint"), param);
+        if (res.code !== 0) {
+            throw new InternalServerError(res?.error?.message ?? "");
         }
+
+        contractTx = (await signer.provider.getTransaction(res.data.txHash)) as ContractTransaction;
+
+        yield { key: NormalSteps.SENT, txHash: res.data.txHash };
         const txReceipt = await contractTx.wait();
 
-        const log = findLog(txReceipt, ledgerContract.interface, "ChangedToPayablePoint");
+        const exchangerContract: LoyaltyExchanger = LoyaltyExchanger__factory.connect(
+            this.web3.getLedgerAddress(),
+            signer
+        );
+        const log = findLog(txReceipt, exchangerContract.interface, "ChangedToPayablePoint");
         if (!log) {
             throw new FailedPayTokenError();
         }
-        const parsedLog = ledgerContract.interface.parseLog(log);
+        const parsedLog = exchangerContract.interface.parseLog(log);
         if (!balance.eq(parsedLog.args["changedPoint"])) {
             throw new AmountMismatchError(balance, parsedLog.args["changedPoint"]);
         }

@@ -1,25 +1,18 @@
-import { Server } from "ganache";
-import { GanacheServer } from "../helper/GanacheServer";
-import { ContractDeployer } from "../helper/ContractDeployer";
-import { contextParamsLocalChain } from "../helper/constants";
 import { Amount, Client, Context } from "../../src";
+import { NodeInfo } from "../helper/NodeInfo";
 
 describe("Currency", () => {
-    let node: Server;
-
-    beforeAll(async () => {
-        node = await GanacheServer.start();
-        await ContractDeployer.deploy();
-    });
-
-    afterAll(async () => {
-        await node.close();
-    });
-
+    const contextParams = NodeInfo.getContextParams();
     let client: Client;
+
     beforeAll(async () => {
-        const ctx = new Context(contextParamsLocalChain);
+        const ctx = new Context(contextParams);
         client = new Client(ctx);
+    });
+
+    it("Web3 Health Checking", async () => {
+        const isUp = await client.link.web3.isUp();
+        expect(isUp).toEqual(true);
     });
 
     it("Test of Currency", async () => {

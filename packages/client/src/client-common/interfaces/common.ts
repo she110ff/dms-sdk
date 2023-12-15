@@ -3,10 +3,13 @@ export type SupportedNetworks = typeof SupportedNetworksArray[number];
 export type NetworkDeployment = {
     PhoneLinkCollectionAddress: string;
     TokenAddress: string;
-    ValidatorCollectionAddress: string;
+    ValidatorAddress: string;
     CurrencyRateAddress: string;
-    ShopCollectionAddress: string;
+    ShopAddress: string;
     LedgerAddress: string;
+    LoyaltyProviderAddress: string;
+    LoyaltyConsumerAddress: string;
+    LoyaltyExchangerAddress: string;
     relayEndpoint?: string | URL;
 };
 export type GenericRecord = Record<string, string | number | boolean | null | undefined>;

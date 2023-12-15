@@ -6,7 +6,7 @@ import {
     SupportedNetworks,
     SupportedNetworksArray
 } from "../../client-common";
-import { ShopCollection, ShopCollection__factory } from "dms-osx-lib";
+import { Shop, Shop__factory } from "dms-osx-lib";
 import { Provider } from "@ethersproject/providers";
 import { NoProviderError, NoSignerError, UnsupportedNetworkError } from "dms-sdk-common";
 import { ContractUtils } from "../../utils/ContractUtils";
@@ -19,7 +19,6 @@ import {
     ShopData,
     SortByBlock,
     SortDirection,
-    SignatureZero,
     ShopDetailData,
     ApproveShopStepValue,
     ShopUpdateEvent,
@@ -112,10 +111,7 @@ export class ShopMethods extends ClientCore implements IShopMethods, IClientHttp
             throw new UnsupportedNetworkError(networkName);
         }
 
-        const shopContract: ShopCollection = ShopCollection__factory.connect(
-            this.web3.getShopCollectionAddress(),
-            provider
-        );
+        const shopContract: Shop = Shop__factory.connect(this.web3.getShopAddress(), provider);
         return await shopContract.withdrawableOf(shopId);
     }
 
@@ -134,10 +130,7 @@ export class ShopMethods extends ClientCore implements IShopMethods, IClientHttp
             throw new UnsupportedNetworkError(networkName);
         }
 
-        const shopContract: ShopCollection = ShopCollection__factory.connect(
-            this.web3.getShopCollectionAddress(),
-            provider
-        );
+        const shopContract: Shop = Shop__factory.connect(this.web3.getShopAddress(), provider);
         const shopInfo = await shopContract.shopOf(shopId);
         return {
             shopId: shopInfo.shopId,
@@ -159,14 +152,9 @@ export class ShopMethods extends ClientCore implements IShopMethods, IClientHttp
      * 상점주가 정산금 출금 신청을 오픈한다.
      * @param shopId
      * @param amount
-     * @param useRelay
      * @return {AsyncGenerator<OpenWithdrawalShopStepValue>}
      */
-    public async *openWithdrawal(
-        shopId: BytesLike,
-        amount: BigNumberish,
-        useRelay: boolean = true
-    ): AsyncGenerator<OpenWithdrawalShopStepValue> {
+    public async *openWithdrawal(shopId: BytesLike, amount: BigNumberish): AsyncGenerator<OpenWithdrawalShopStepValue> {
         const signer = this.web3.getConnectedSigner();
         if (!signer) {
             throw new NoSignerError();
@@ -180,52 +168,35 @@ export class ShopMethods extends ClientCore implements IShopMethods, IClientHttp
             throw new UnsupportedNetworkError(networkName);
         }
 
-        const shopContract: ShopCollection = ShopCollection__factory.connect(
-            this.web3.getShopCollectionAddress(),
-            signer
-        );
+        const shopContract: Shop = Shop__factory.connect(this.web3.getShopAddress(), signer);
         let contractTx: ContractTransaction;
         const account: string = await signer.getAddress();
-        if (useRelay) {
-            const nonce = await shopContract.nonceOf(account);
-            const signature = await ContractUtils.signShop(signer, shopId, nonce);
+        const nonce = await shopContract.nonceOf(account);
+        const signature = await ContractUtils.signShop(signer, shopId, nonce);
 
-            const param = {
-                shopId,
-                account,
-                amount: amount.toString(),
-                signature
-            };
+        const param = {
+            shopId,
+            account,
+            amount: amount.toString(),
+            signature
+        };
 
-            yield {
-                key: NormalSteps.PREPARED,
-                shopId,
-                account,
-                amount,
-                signature
-            };
+        yield {
+            key: NormalSteps.PREPARED,
+            shopId,
+            account,
+            amount,
+            signature
+        };
 
-            const res = await Network.post(await this.getEndpoint("/v1/shop/withdrawal/open"), param);
-            if (res.code !== 0) {
-                throw new InternalServerError(res?.error?.message ?? "");
-            }
-
-            contractTx = (await signer.provider.getTransaction(res.data.txHash)) as ContractTransaction;
-
-            yield { key: NormalSteps.SENT, txHash: res.data.txHash, shopId };
-        } else {
-            yield {
-                key: NormalSteps.PREPARED,
-                shopId,
-                account,
-                amount,
-                signature: SignatureZero
-            };
-
-            contractTx = await shopContract.openWithdrawalDirect(shopId, amount);
-
-            yield { key: NormalSteps.SENT, txHash: contractTx.hash, shopId };
+        const res = await Network.post(await this.getEndpoint("/v1/shop/withdrawal/open"), param);
+        if (res.code !== 0) {
+            throw new InternalServerError(res?.error?.message ?? "");
         }
+
+        contractTx = (await signer.provider.getTransaction(res.data.txHash)) as ContractTransaction;
+
+        yield { key: NormalSteps.SENT, txHash: res.data.txHash, shopId };
 
         const txReceipt = await contractTx.wait();
 
@@ -246,13 +217,9 @@ export class ShopMethods extends ClientCore implements IShopMethods, IClientHttp
     /**
      * 상점주가 정산금 출금 신청을 확인하고 닫는다.
      * @param shopId
-     * @param useRelay
      * @return {AsyncGenerator<OpenWithdrawalShopStepValue>}
      */
-    public async *closeWithdrawal(
-        shopId: BytesLike,
-        useRelay: boolean = true
-    ): AsyncGenerator<CloseWithdrawalShopStepValue> {
+    public async *closeWithdrawal(shopId: BytesLike): AsyncGenerator<CloseWithdrawalShopStepValue> {
         const signer = this.web3.getConnectedSigner();
         if (!signer) {
             throw new NoSignerError();
@@ -266,49 +233,33 @@ export class ShopMethods extends ClientCore implements IShopMethods, IClientHttp
             throw new UnsupportedNetworkError(networkName);
         }
 
-        const shopContract: ShopCollection = ShopCollection__factory.connect(
-            this.web3.getShopCollectionAddress(),
-            signer
-        );
+        const shopContract: Shop = Shop__factory.connect(this.web3.getShopAddress(), signer);
         const account: string = await signer.getAddress();
         let contractTx: ContractTransaction;
-        if (useRelay) {
-            const nonce = await shopContract.nonceOf(account);
-            const signature = await ContractUtils.signShop(signer, shopId, nonce);
+        const nonce = await shopContract.nonceOf(account);
+        const signature = await ContractUtils.signShop(signer, shopId, nonce);
 
-            const param = {
-                shopId,
-                account,
-                signature
-            };
+        const param = {
+            shopId,
+            account,
+            signature
+        };
 
-            yield {
-                key: NormalSteps.PREPARED,
-                shopId,
-                account,
-                signature
-            };
+        yield {
+            key: NormalSteps.PREPARED,
+            shopId,
+            account,
+            signature
+        };
 
-            const res = await Network.post(await this.getEndpoint("/v1/shop/withdrawal/close"), param);
-            if (res.code !== 0) {
-                throw new InternalServerError(res?.error?.message ?? "");
-            }
-
-            contractTx = (await signer.provider.getTransaction(res.data.txHash)) as ContractTransaction;
-
-            yield { key: NormalSteps.SENT, txHash: res.data.txHash, shopId };
-        } else {
-            yield {
-                key: NormalSteps.PREPARED,
-                shopId,
-                account,
-                signature: SignatureZero
-            };
-
-            contractTx = await shopContract.closeWithdrawalDirect(shopId);
-
-            yield { key: NormalSteps.SENT, txHash: contractTx.hash, shopId };
+        const res = await Network.post(await this.getEndpoint("/v1/shop/withdrawal/close"), param);
+        if (res.code !== 0) {
+            throw new InternalServerError(res?.error?.message ?? "");
         }
+
+        contractTx = (await signer.provider.getTransaction(res.data.txHash)) as ContractTransaction;
+
+        yield { key: NormalSteps.SENT, txHash: res.data.txHash, shopId };
 
         const txReceipt = await contractTx.wait();
 
@@ -358,6 +309,7 @@ export class ShopMethods extends ClientCore implements IShopMethods, IClientHttp
      * 상점의 정보를 추가한다.
      * @param shopId
      * @param name
+     * @param currency
      * @return {AsyncGenerator<AddShopStepValue>}
      */
     public async *add(shopId: BytesLike, name: string, currency: string): AsyncGenerator<AddShopStepValue> {
@@ -374,10 +326,7 @@ export class ShopMethods extends ClientCore implements IShopMethods, IClientHttp
             throw new UnsupportedNetworkError(networkName);
         }
 
-        const shopContract: ShopCollection = ShopCollection__factory.connect(
-            this.web3.getShopCollectionAddress(),
-            signer
-        );
+        const shopContract: Shop = Shop__factory.connect(this.web3.getShopAddress(), signer);
         let contractTx: ContractTransaction;
         const account: string = await signer.getAddress();
         const nonce = await shopContract.nonceOf(account);
@@ -443,10 +392,7 @@ export class ShopMethods extends ClientCore implements IShopMethods, IClientHttp
             throw new UnsupportedNetworkError(networkName);
         }
 
-        const shopContract: ShopCollection = ShopCollection__factory.connect(
-            this.web3.getShopCollectionAddress(),
-            signer
-        );
+        const shopContract: Shop = Shop__factory.connect(this.web3.getShopAddress(), signer);
         let contractTx: ContractTransaction;
         const account: string = await signer.getAddress();
         const nonce = await shopContract.nonceOf(account);
@@ -520,10 +466,7 @@ export class ShopMethods extends ClientCore implements IShopMethods, IClientHttp
             throw new UnsupportedNetworkError(networkName);
         }
 
-        const shopContract: ShopCollection = ShopCollection__factory.connect(
-            this.web3.getShopCollectionAddress(),
-            signer
-        );
+        const shopContract: Shop = Shop__factory.connect(this.web3.getShopAddress(), signer);
         let contractTx: ContractTransaction;
         const account: string = await signer.getAddress();
         const nonce = await shopContract.nonceOf(account);
@@ -544,7 +487,7 @@ export class ShopMethods extends ClientCore implements IShopMethods, IClientHttp
             signature
         };
 
-        const res = await Network.post(await this.getEndpoint("/v1/shop/status/approval"), param);
+        let res = await Network.post(await this.getEndpoint("/v1/shop/status/approval"), param);
         if (res.code !== 0) {
             throw new InternalServerError(res?.error?.message ?? "");
         }
@@ -575,10 +518,7 @@ export class ShopMethods extends ClientCore implements IShopMethods, IClientHttp
         }
     }
 
-    private async waitAndUpdateEvent(
-        contract: ShopCollection,
-        tx: ContractTransaction
-    ): Promise<ShopUpdateEvent | undefined> {
+    private async waitAndUpdateEvent(contract: Shop, tx: ContractTransaction): Promise<ShopUpdateEvent | undefined> {
         const contractReceipt = await tx.wait();
         const log = findLog(contractReceipt, contract.interface, "UpdatedShop");
         if (log !== undefined) {
@@ -597,7 +537,7 @@ export class ShopMethods extends ClientCore implements IShopMethods, IClientHttp
     }
 
     private async waitAndChangeStatusEvent(
-        contract: ShopCollection,
+        contract: Shop,
         tx: ContractTransaction
     ): Promise<ShopStatusEvent | undefined> {
         const contractReceipt = await tx.wait();

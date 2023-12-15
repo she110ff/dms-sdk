@@ -4,6 +4,7 @@
   "description": "JS SDK for decentralized point system",
   "repository": "https://github.com/bosagora/dms-sdk",
   "author": "BOSagora Foundation",
+  "license": "AGPL-3.0-or-later",
   "private": true,
   "workspaces": {
     "packages": [

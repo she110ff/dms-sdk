@@ -80,22 +80,32 @@ export class Context {
         return this.state.tokenAddress;
     }
 
-    get phoneLinkCollectionAddress(): string | undefined {
-        return this.state.phoneLinkCollectionAddress;
+    get phoneLinkAddress(): string | undefined {
+        return this.state.phoneLinkAddress;
     }
 
-    get validatorCollectionAddress(): string | undefined {
-        return this.state.validatorCollectionAddress;
+    get validatorAddress(): string | undefined {
+        return this.state.validatorAddress;
     }
 
     get currencyRateAddress(): string | undefined {
         return this.state.currencyRateAddress;
     }
-    get shopCollectionAddress(): string | undefined {
-        return this.state.shopCollectionAddress;
+    get shopAddress(): string | undefined {
+        return this.state.shopAddress;
     }
     get ledgerAddress(): string | undefined {
         return this.state.ledgerAddress;
+    }
+
+    get loyaltyProviderAddress(): string | undefined {
+        return this.state.loyaltyProviderAddress;
+    }
+    get loyaltyConsumerAddress(): string | undefined {
+        return this.state.loyaltyConsumerAddress;
+    }
+    get loyaltyExchangerAddress(): string | undefined {
+        return this.state.loyaltyExchangerAddress;
     }
 
     /**
@@ -176,16 +186,22 @@ export class Context {
             throw new Error("No web3 endpoints defined");
         } else if (!contextParams.tokenAddress) {
             throw new Error("Missing token contract address");
-        } else if (!contextParams.phoneLinkCollectionAddress) {
+        } else if (!contextParams.phoneLinkAddress) {
             throw new Error("Missing link collection contract address");
-        } else if (!contextParams.validatorCollectionAddress) {
+        } else if (!contextParams.validatorAddress) {
             throw new Error("Missing validator collection contract address");
         } else if (!contextParams.currencyRateAddress) {
             throw new Error("Missing token price contract address");
-        } else if (!contextParams.shopCollectionAddress) {
+        } else if (!contextParams.shopAddress) {
             throw new Error("Missing shop collection  contract address");
         } else if (!contextParams.ledgerAddress) {
             throw new Error("Missing ledger contract address");
+        } else if (!contextParams.loyaltyProviderAddress) {
+            throw new Error("Missing loyalty provider contract address");
+        } else if (!contextParams.loyaltyConsumerAddress) {
+            throw new Error("Missing loyalty consumer contract address");
+        } else if (!contextParams.loyaltyExchangerAddress) {
+            throw new Error("Missing loyalty exchanger contract address");
         } else if (!contextParams.graphqlNodes?.length) {
             throw new Error("No graphql URL defined");
         }
@@ -195,11 +211,14 @@ export class Context {
             signer: contextParams.signer,
             web3Providers: Context.resolveWeb3Providers(contextParams.web3Providers, contextParams.network),
             tokenAddress: contextParams.tokenAddress,
-            phoneLinkCollectionAddress: contextParams.phoneLinkCollectionAddress,
-            validatorCollectionAddress: contextParams.validatorCollectionAddress,
+            phoneLinkAddress: contextParams.phoneLinkAddress,
+            validatorAddress: contextParams.validatorAddress,
             currencyRateAddress: contextParams.currencyRateAddress,
-            shopCollectionAddress: contextParams.shopCollectionAddress,
+            shopAddress: contextParams.shopAddress,
             ledgerAddress: contextParams.ledgerAddress,
+            loyaltyProviderAddress: contextParams.loyaltyProviderAddress,
+            loyaltyConsumerAddress: contextParams.loyaltyConsumerAddress,
+            loyaltyExchangerAddress: contextParams.loyaltyExchangerAddress,
             graphql: Context.resolveGraphql(contextParams.graphqlNodes)
         };
     }
@@ -220,20 +239,29 @@ export class Context {
         if (contextParams.tokenAddress) {
             this.state.tokenAddress = contextParams.tokenAddress;
         }
-        if (contextParams.phoneLinkCollectionAddress) {
-            this.state.phoneLinkCollectionAddress = contextParams.phoneLinkCollectionAddress;
+        if (contextParams.phoneLinkAddress) {
+            this.state.phoneLinkAddress = contextParams.phoneLinkAddress;
         }
-        if (contextParams.validatorCollectionAddress) {
-            this.state.validatorCollectionAddress = contextParams.validatorCollectionAddress;
+        if (contextParams.validatorAddress) {
+            this.state.validatorAddress = contextParams.validatorAddress;
         }
         if (contextParams.currencyRateAddress) {
             this.state.currencyRateAddress = contextParams.currencyRateAddress;
         }
-        if (contextParams.shopCollectionAddress) {
-            this.state.shopCollectionAddress = contextParams.shopCollectionAddress;
+        if (contextParams.shopAddress) {
+            this.state.shopAddress = contextParams.shopAddress;
         }
         if (contextParams.ledgerAddress) {
             this.state.ledgerAddress = contextParams.ledgerAddress;
+        }
+        if (contextParams.loyaltyProviderAddress) {
+            this.state.loyaltyProviderAddress = contextParams.loyaltyProviderAddress;
+        }
+        if (contextParams.loyaltyConsumerAddress) {
+            this.state.loyaltyConsumerAddress = contextParams.loyaltyConsumerAddress;
+        }
+        if (contextParams.loyaltyExchangerAddress) {
+            this.state.loyaltyExchangerAddress = contextParams.loyaltyExchangerAddress;
         }
         if (contextParams.graphqlNodes?.length) {
             this.state.graphql = Context.resolveGraphql(contextParams.graphqlNodes);

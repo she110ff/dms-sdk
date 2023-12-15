@@ -48,10 +48,10 @@ export interface ILedgerMethods extends IClientCore, IClientHttpCore {
     withdraw: (amount: BigNumber) => AsyncGenerator<WithdrawStepValue>;
     updateAllowance: (params: UpdateAllowanceParams) => AsyncGenerator<UpdateAllowanceStepValue>;
 
-    changeToLoyaltyToken: (useRelay?: boolean) => AsyncGenerator<ChangeLoyaltyTypeStepValue>;
+    changeToLoyaltyToken: () => AsyncGenerator<ChangeLoyaltyTypeStepValue>;
     getLoyaltyType: (account: string) => Promise<LoyaltyType>;
 
-    changeToPayablePoint: (phone: string, useRelay?: boolean) => AsyncGenerator<ChangeToPayablePointStepValue>;
+    changeToPayablePoint: (phone: string) => AsyncGenerator<ChangeToPayablePointStepValue>;
 
     getSaveAndUseHistory: (account: string, option?: QueryOption) => Promise<any>;
     getDepositAndWithdrawHistory: (account: string, option?: QueryOption) => Promise<any>;

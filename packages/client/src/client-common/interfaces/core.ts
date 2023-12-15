@@ -15,11 +15,14 @@ export interface IClientWeb3Core {
     ensureOnline: () => Promise<void>;
     attachContract: <T>(address: string, abi: ContractInterface) => Contract & T;
     getTokenAddress: () => string;
-    getLinkCollectionAddress: () => string;
-    getValidatorCollectionAddress: () => string;
+    getLinkAddress: () => string;
+    getValidatorAddress: () => string;
     getCurrencyRateAddress: () => string;
-    getShopCollectionAddress: () => string;
+    getShopAddress: () => string;
     getLedgerAddress: () => string;
+    getLoyaltyProviderAddress: () => string;
+    getLoyaltyConsumerAddress: () => string;
+    getLoyaltyExchangerAddress: () => string;
 }
 
 export interface IClientHttpCore {

@@ -9,12 +9,15 @@ type Web3ContextParams = {
     network: Networkish;
     signer?: Signer;
     web3Providers?: string | JsonRpcProvider | (string | JsonRpcProvider)[];
-    phoneLinkCollectionAddress?: string;
+    phoneLinkAddress?: string;
     tokenAddress?: string;
-    validatorCollectionAddress?: string;
+    validatorAddress?: string;
     currencyRateAddress?: string;
-    shopCollectionAddress?: string;
+    shopAddress?: string;
     ledgerAddress?: string;
+    loyaltyProviderAddress?: string;
+    loyaltyConsumerAddress?: string;
+    loyaltyExchangerAddress?: string;
 };
 type HttpContextParams = {
     relayEndpoint?: string | URL;
@@ -30,12 +33,15 @@ type Web3ContextState = {
     network: Networkish;
     signer?: Signer;
     web3Providers: JsonRpcProvider[];
-    phoneLinkCollectionAddress?: string;
+    phoneLinkAddress?: string;
     tokenAddress?: string;
-    validatorCollectionAddress?: string;
+    validatorAddress?: string;
     currencyRateAddress?: string;
-    shopCollectionAddress?: string;
+    shopAddress?: string;
     ledgerAddress?: string;
+    loyaltyProviderAddress?: string;
+    loyaltyConsumerAddress?: string;
+    loyaltyExchangerAddress?: string;
 };
 type HTTPContextState = {
     relayEndpoint?: string | URL;

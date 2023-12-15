@@ -10,7 +10,10 @@ import {
     NoLinkCollectionAddress,
     NoTokenAddress,
     NoCurrencyRateAddress,
-    NoValidatorCollectionAddress
+    NoValidatorCollectionAddress,
+    NoLoyaltyProviderAddress,
+    NoLoyaltyConsumerAddress,
+    NoLoyaltyExchangerAddress
 } from "../../utils/errors";
 
 const providersMap = new Map<Web3Module, JsonRpcProvider[]>();
@@ -18,11 +21,14 @@ const providerIdxMap = new Map<Web3Module, number>();
 const signerMap = new Map<Web3Module, Signer>();
 
 const tokenAddressMap = new Map<Web3Module, string>();
-const linkCollectionAddressMap = new Map<Web3Module, string>();
-const validatorCollectionAddressMap = new Map<Web3Module, string>();
+const linkAddressMap = new Map<Web3Module, string>();
+const validatorAddressMap = new Map<Web3Module, string>();
 const currencyRateAddressMap = new Map<Web3Module, string>();
-const shopCollectionAddressMap = new Map<Web3Module, string>();
+const shopAddressMap = new Map<Web3Module, string>();
 const ledgerAddressMap = new Map<Web3Module, string>();
+const providerAddressMap = new Map<Web3Module, string>();
+const consumerAddressMap = new Map<Web3Module, string>();
+const exchangerAddressMap = new Map<Web3Module, string>();
 
 export class Web3Module implements IClientWeb3Core {
     constructor(context: Context) {
@@ -41,24 +47,36 @@ export class Web3Module implements IClientWeb3Core {
             tokenAddressMap.set(this, context.tokenAddress);
         }
 
-        if (context.phoneLinkCollectionAddress) {
-            linkCollectionAddressMap.set(this, context.phoneLinkCollectionAddress);
+        if (context.phoneLinkAddress) {
+            linkAddressMap.set(this, context.phoneLinkAddress);
         }
 
-        if (context.validatorCollectionAddress) {
-            validatorCollectionAddressMap.set(this, context.validatorCollectionAddress);
+        if (context.validatorAddress) {
+            validatorAddressMap.set(this, context.validatorAddress);
         }
 
         if (context.currencyRateAddress) {
             currencyRateAddressMap.set(this, context.currencyRateAddress);
         }
 
-        if (context.shopCollectionAddress) {
-            shopCollectionAddressMap.set(this, context.shopCollectionAddress);
+        if (context.shopAddress) {
+            shopAddressMap.set(this, context.shopAddress);
         }
 
         if (context.ledgerAddress) {
             ledgerAddressMap.set(this, context.ledgerAddress);
+        }
+
+        if (context.loyaltyProviderAddress) {
+            providerAddressMap.set(this, context.loyaltyProviderAddress);
+        }
+
+        if (context.loyaltyConsumerAddress) {
+            consumerAddressMap.set(this, context.loyaltyConsumerAddress);
+        }
+
+        if (context.loyaltyExchangerAddress) {
+            exchangerAddressMap.set(this, context.loyaltyExchangerAddress);
         }
 
         Object.freeze(Web3Module.prototype);
@@ -69,24 +87,36 @@ export class Web3Module implements IClientWeb3Core {
         return tokenAddressMap.get(this) || "";
     }
 
-    private get phoneLinkCollectionAddress(): string {
-        return linkCollectionAddressMap.get(this) || "";
+    private get phoneLinkAddress(): string {
+        return linkAddressMap.get(this) || "";
     }
 
-    private get validatorCollectionAddress(): string {
-        return validatorCollectionAddressMap.get(this) || "";
+    private get validatorAddress(): string {
+        return validatorAddressMap.get(this) || "";
     }
 
     private get currencyRateAddress(): string {
         return currencyRateAddressMap.get(this) || "";
     }
 
-    private get shopCollectionAddress(): string {
-        return shopCollectionAddressMap.get(this) || "";
+    private get shopAddress(): string {
+        return shopAddressMap.get(this) || "";
     }
 
     private get ledgerAddress(): string {
         return ledgerAddressMap.get(this) || "";
+    }
+
+    private get loyaltyProviderAddress(): string {
+        return providerAddressMap.get(this) || "";
+    }
+
+    private get loyaltyConsumerAddress(): string {
+        return consumerAddressMap.get(this) || "";
+    }
+
+    private get loyaltyExchangerAddress(): string {
+        return exchangerAddressMap.get(this) || "";
     }
 
     private get providers(): JsonRpcProvider[] {
@@ -208,18 +238,18 @@ export class Web3Module implements IClientWeb3Core {
         return this.tokenAddress;
     }
 
-    public getLinkCollectionAddress(): string {
-        if (!this.phoneLinkCollectionAddress) {
+    public getLinkAddress(): string {
+        if (!this.phoneLinkAddress) {
             throw new NoLinkCollectionAddress();
         }
-        return this.phoneLinkCollectionAddress;
+        return this.phoneLinkAddress;
     }
 
-    public getValidatorCollectionAddress(): string {
-        if (!this.validatorCollectionAddress) {
+    public getValidatorAddress(): string {
+        if (!this.validatorAddress) {
             throw new NoValidatorCollectionAddress();
         }
-        return this.validatorCollectionAddress;
+        return this.validatorAddress;
     }
 
     public getCurrencyRateAddress(): string {
@@ -229,11 +259,11 @@ export class Web3Module implements IClientWeb3Core {
         return this.currencyRateAddress;
     }
 
-    public getShopCollectionAddress(): string {
-        if (!this.shopCollectionAddress) {
+    public getShopAddress(): string {
+        if (!this.shopAddress) {
             throw new NoShopCollectionAddress();
         }
-        return this.shopCollectionAddress;
+        return this.shopAddress;
     }
 
     public getLedgerAddress(): string {
@@ -241,5 +271,26 @@ export class Web3Module implements IClientWeb3Core {
             throw new NoLedgerAddress();
         }
         return this.ledgerAddress;
+    }
+
+    public getLoyaltyProviderAddress(): string {
+        if (!this.loyaltyProviderAddress) {
+            throw new NoLoyaltyProviderAddress();
+        }
+        return this.loyaltyProviderAddress;
+    }
+
+    public getLoyaltyConsumerAddress(): string {
+        if (!this.loyaltyConsumerAddress) {
+            throw new NoLoyaltyConsumerAddress();
+        }
+        return this.loyaltyConsumerAddress;
+    }
+
+    public getLoyaltyExchangerAddress(): string {
+        if (!this.loyaltyExchangerAddress) {
+            throw new NoLoyaltyExchangerAddress();
+        }
+        return this.loyaltyExchangerAddress;
     }
 }

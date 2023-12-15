@@ -1,7 +1,4 @@
-import { Server } from "ganache";
-import { AccountIndex, GanacheServer } from "../helper/GanacheServer";
-import { ContractDeployer, Deployment, purchaseData, shopData, userData } from "../helper/ContractDeployer";
-import { contextParamsLocalChain } from "../helper/constants";
+import { AccountIndex, NodeInfo } from "../helper/NodeInfo";
 import {
     Amount,
     Client,
@@ -12,58 +9,177 @@ import {
     NormalSteps,
     WithdrawSteps
 } from "../../src";
-import { FakerRelayServer } from "../helper/FakerRelayServer";
 import { Signer } from "@ethersproject/abstract-signer";
 import { BigNumber } from "@ethersproject/bignumber";
 import { AddressZero } from "@ethersproject/constants";
 import { Network } from "../../src/client-common/interfaces/network";
 
 import * as assert from "assert";
+import { Wallet } from "@ethersproject/wallet";
+import { IPurchaseData, IShopData, IUserData } from "../helper/types";
 
 describe("Ledger", () => {
-    let node: Server;
-    let deployment: Deployment;
-    let fakerRelayServer: FakerRelayServer;
-    const accounts = GanacheServer.accounts();
+    const contextParams = NodeInfo.getContextParams();
+    const contractInfo = NodeInfo.getContractInfo();
+    const accounts = NodeInfo.accounts();
     const validatorWallets = [
         accounts[AccountIndex.VALIDATOR1],
         accounts[AccountIndex.VALIDATOR2],
-        accounts[AccountIndex.VALIDATOR3]
+        accounts[AccountIndex.VALIDATOR3],
+        accounts[AccountIndex.VALIDATOR4],
+        accounts[AccountIndex.VALIDATOR5]
+    ];
+    const linkValidatorWallets = [
+        accounts[AccountIndex.LINK_VALIDATOR1],
+        accounts[AccountIndex.LINK_VALIDATOR2],
+        accounts[AccountIndex.LINK_VALIDATOR3]
     ];
     const userWallets = [
-        accounts[AccountIndex.USER1],
-        accounts[AccountIndex.USER2],
-        accounts[AccountIndex.USER3],
-        accounts[AccountIndex.USER4],
-        accounts[AccountIndex.USER5]
+        Wallet.createRandom(),
+        Wallet.createRandom(),
+        Wallet.createRandom(),
+        Wallet.createRandom(),
+        Wallet.createRandom()
     ];
     const shopWallets = [
-        accounts[AccountIndex.SHOP1],
-        accounts[AccountIndex.SHOP2],
-        accounts[AccountIndex.SHOP3],
-        accounts[AccountIndex.SHOP4],
-        accounts[AccountIndex.SHOP5],
-        accounts[AccountIndex.SHOP6]
+        Wallet.createRandom(),
+        Wallet.createRandom(),
+        Wallet.createRandom(),
+        Wallet.createRandom(),
+        Wallet.createRandom(),
+        Wallet.createRandom()
     ];
-    beforeAll(async () => {
-        node = await GanacheServer.start();
 
-        deployment = await ContractDeployer.deploy();
-
-        GanacheServer.setTestWeb3Signer(userWallets[0]);
-
-        fakerRelayServer = new FakerRelayServer(6070, deployment);
-        await fakerRelayServer.start();
-    });
-
-    afterAll(async () => {
-        await node.close();
-        await fakerRelayServer.stop();
-    });
+    const userData: IUserData[] = [
+        {
+            phone: NodeInfo.getRandomPhoneNumber(),
+            address: userWallets[0].address,
+            privateKey: userWallets[0].privateKey
+        },
+        {
+            phone: NodeInfo.getRandomPhoneNumber(),
+            address: userWallets[1].address,
+            privateKey: userWallets[1].privateKey
+        },
+        {
+            phone: NodeInfo.getRandomPhoneNumber(),
+            address: userWallets[2].address,
+            privateKey: userWallets[2].privateKey
+        },
+        {
+            phone: NodeInfo.getRandomPhoneNumber(),
+            address: userWallets[3].address,
+            privateKey: userWallets[3].privateKey
+        },
+        {
+            phone: NodeInfo.getRandomPhoneNumber(),
+            address: userWallets[4].address,
+            privateKey: userWallets[4].privateKey
+        }
+    ];
+    const shopData: IShopData[] = [
+        {
+            shopId: "",
+            name: "Shop1",
+            currency: "krw",
+            provideWaitTime: 0,
+            providePercent: 1,
+            wallet: shopWallets[0]
+        },
+        {
+            shopId: "",
+            name: "Shop2",
+            currency: "krw",
+            provideWaitTime: 0,
+            providePercent: 1,
+            wallet: shopWallets[1]
+        },
+        {
+            shopId: "",
+            name: "Shop3",
+            currency: "krw",
+            provideWaitTime: 0,
+            providePercent: 1,
+            wallet: shopWallets[2]
+        },
+        {
+            shopId: "",
+            name: "Shop4",
+            currency: "krw",
+            provideWaitTime: 0,
+            providePercent: 1,
+            wallet: shopWallets[3]
+        },
+        {
+            shopId: "",
+            name: "Shop5",
+            currency: "krw",
+            provideWaitTime: 0,
+            providePercent: 1,
+            wallet: shopWallets[4]
+        }
+    ];
+    const purchaseData: IPurchaseData[] = [
+        {
+            purchaseId: "P000001",
+            timestamp: 1672844400,
+            amount: 10000,
+            method: 0,
+            currency: "krw",
+            shopIndex: 0,
+            userIndex: 0
+        },
+        {
+            purchaseId: "P000002",
+            timestamp: 1675522800,
+            amount: 10000,
+            method: 0,
+            currency: "krw",
+            shopIndex: 0,
+            userIndex: 0
+        },
+        {
+            purchaseId: "P000003",
+            timestamp: 1677942000,
+            amount: 10000,
+            method: 0,
+            currency: "krw",
+            shopIndex: 0,
+            userIndex: 0
+        },
+        {
+            purchaseId: "P000004",
+            timestamp: 1680620400,
+            amount: 10000,
+            method: 0,
+            currency: "krw",
+            shopIndex: 1,
+            userIndex: 0
+        },
+        {
+            purchaseId: "P000005",
+            timestamp: 1683212400,
+            amount: 10000,
+            method: 0,
+            currency: "krw",
+            shopIndex: 2,
+            userIndex: 0
+        },
+        {
+            purchaseId: "P000005",
+            timestamp: 1683212400,
+            amount: 10000,
+            method: 0,
+            currency: "krw",
+            shopIndex: 3,
+            userIndex: 0
+        }
+    ];
 
     let client: Client;
     beforeAll(async () => {
-        const ctx = new Context(contextParamsLocalChain);
+        contextParams.signer = userWallets[0];
+        const ctx = new Context(contextParams);
         client = new Client(ctx);
     });
 
@@ -72,6 +188,7 @@ describe("Ledger", () => {
     let phone: string;
     let phoneHash: string;
     beforeAll(async () => {
+        client.useSigner(userWallets[0]);
         signer = client.web3.getConnectedSigner();
         userAddress = await signer.getAddress();
         phone = userData[purchaseData[0].userIndex].phone;
@@ -83,9 +200,27 @@ describe("Ledger", () => {
         expect(isUp).toEqual(true);
     });
 
+    it("Prepare", async () => {
+        await NodeInfo.transferBOA(userWallets.map((m) => m.address));
+        await NodeInfo.transferBOA(shopWallets.map((m) => m.address));
+        await NodeInfo.transferToken(
+            contractInfo,
+            userWallets.map((m) => m.address)
+        );
+        await NodeInfo.transferToken(
+            contractInfo,
+            shopWallets.map((m) => m.address)
+        );
+
+        for (const elem of shopData) {
+            elem.shopId = ContractUtils.getShopId(elem.wallet.address);
+        }
+        await NodeInfo.addShopData(contractInfo, shopData);
+    });
+
     it("Save Purchase Data 1", async () => {
         const purchaseAmount = Amount.make(purchaseData[0].amount, 18).value.mul(1000);
-        await deployment.ledger.connect(validatorWallets[0]).savePurchase({
+        await contractInfo.loyaltyProvider.connect(validatorWallets[4]).savePurchase({
             purchaseId: purchaseData[0].purchaseId,
             timestamp: purchaseData[0].timestamp,
             amount: purchaseAmount,
@@ -99,7 +234,7 @@ describe("Ledger", () => {
 
     it("Save Purchase Data 2", async () => {
         const purchaseAmount = Amount.make(purchaseData[0].amount, 18).value.mul(1000);
-        await deployment.ledger.connect(validatorWallets[1]).savePurchase({
+        await contractInfo.loyaltyProvider.connect(validatorWallets[4]).savePurchase({
             purchaseId: purchaseData[0].purchaseId,
             timestamp: purchaseData[0].timestamp,
             amount: purchaseAmount,
@@ -131,15 +266,15 @@ describe("Ledger", () => {
     });
 
     it("Link phone-wallet", async () => {
-        const nonce = await deployment.phoneLinkCollection.nonceOf(userAddress);
+        const nonce = await contractInfo.phoneLinkCollection.nonceOf(userAddress);
         const signature = await ContractUtils.signRequestHash(signer, phoneHash, nonce);
         const requestId = ContractUtils.getRequestId(phoneHash, userAddress, nonce);
         //Add Phone
-        await deployment.phoneLinkCollection.connect(signer).addRequest(requestId, phoneHash, userAddress, signature);
+        await contractInfo.phoneLinkCollection.connect(signer).addRequest(requestId, phoneHash, userAddress, signature);
         // Vote
-        await deployment.phoneLinkCollection.connect(validatorWallets[0]).voteRequest(requestId);
-        await deployment.phoneLinkCollection.connect(validatorWallets[1]).voteRequest(requestId);
-        await deployment.phoneLinkCollection.connect(validatorWallets[0]).countVote(requestId);
+        await contractInfo.phoneLinkCollection.connect(linkValidatorWallets[0]).voteRequest(requestId);
+        await contractInfo.phoneLinkCollection.connect(linkValidatorWallets[1]).voteRequest(requestId);
+        await contractInfo.phoneLinkCollection.connect(linkValidatorWallets[0]).countVote(requestId);
     });
 
     it("Change to Payable Point", async () => {
@@ -186,8 +321,8 @@ describe("Ledger", () => {
         const feePoint = await client.currency.currencyToPoint(amount.value.mul(feeRate).div(100), purchase.currency);
 
         // Open New
-        let res = await Network.post(new URL("http://localhost:6070/v1/payment/new/open"), {
-            accessKey: FakerRelayServer.ACCESS_KEY,
+        let res = await Network.post(new URL(contextParams.relayEndpoint + "v1/payment/new/open"), {
+            accessKey: NodeInfo.RELAY_ACCESS_KEY,
             purchaseId: purchase.purchaseId,
             amount: amount.toString(),
             currency: purchase.currency.toLowerCase(),
@@ -244,8 +379,8 @@ describe("Ledger", () => {
         await ContractUtils.delay(3000);
 
         // Close New
-        res = await Network.post(new URL("http://localhost:6070/v1/payment/new/close"), {
-            accessKey: FakerRelayServer.ACCESS_KEY,
+        res = await Network.post(new URL(contextParams.relayEndpoint + "v1/payment/new/close"), {
+            accessKey: NodeInfo.RELAY_ACCESS_KEY,
             confirm: true,
             paymentId
         });
@@ -259,8 +394,8 @@ describe("Ledger", () => {
         );
 
         // Open Cancel
-        res = await Network.post(new URL("http://localhost:6070/v1/payment/cancel/open"), {
-            accessKey: FakerRelayServer.ACCESS_KEY,
+        res = await Network.post(new URL(contextParams.relayEndpoint + "v1/payment/cancel/open"), {
+            accessKey: NodeInfo.RELAY_ACCESS_KEY,
             paymentId
         });
         assert.deepStrictEqual(res.code, 0);
@@ -300,8 +435,8 @@ describe("Ledger", () => {
         await ContractUtils.delay(1000);
 
         // Close Cancel
-        res = await Network.post(new URL("http://localhost:6070/v1/payment/cancel/close"), {
-            accessKey: FakerRelayServer.ACCESS_KEY,
+        res = await Network.post(new URL(contextParams.relayEndpoint + "v1/payment/cancel/close"), {
+            accessKey: NodeInfo.RELAY_ACCESS_KEY,
             confirm: true,
             paymentId
         });
@@ -364,8 +499,8 @@ describe("Ledger", () => {
         const feeToken = await client.currency.pointToToken(feePoint);
 
         // Open New
-        let res = await Network.post(new URL("http://localhost:6070/v1/payment/new/open"), {
-            accessKey: FakerRelayServer.ACCESS_KEY,
+        let res = await Network.post(new URL(contextParams.relayEndpoint + "v1/payment/new/open"), {
+            accessKey: NodeInfo.RELAY_ACCESS_KEY,
             purchaseId: purchase.purchaseId,
             amount: amount.toString(),
             currency: purchase.currency.toLowerCase(),
@@ -422,8 +557,8 @@ describe("Ledger", () => {
         await ContractUtils.delay(3000);
 
         // Close New
-        res = await Network.post(new URL("http://localhost:6070/v1/payment/new/close"), {
-            accessKey: FakerRelayServer.ACCESS_KEY,
+        res = await Network.post(new URL(contextParams.relayEndpoint + "v1/payment/new/close"), {
+            accessKey: NodeInfo.RELAY_ACCESS_KEY,
             confirm: true,
             paymentId
         });
@@ -437,8 +572,8 @@ describe("Ledger", () => {
         );
 
         // Open Cancel
-        res = await Network.post(new URL("http://localhost:6070/v1/payment/cancel/open"), {
-            accessKey: FakerRelayServer.ACCESS_KEY,
+        res = await Network.post(new URL(contextParams.relayEndpoint + "v1/payment/cancel/open"), {
+            accessKey: NodeInfo.RELAY_ACCESS_KEY,
             paymentId
         });
         assert.deepStrictEqual(res.code, 0);
@@ -480,8 +615,8 @@ describe("Ledger", () => {
         await ContractUtils.delay(1000);
 
         // Close Cancel
-        res = await Network.post(new URL("http://localhost:6070/v1/payment/cancel/close"), {
-            accessKey: FakerRelayServer.ACCESS_KEY,
+        res = await Network.post(new URL(contextParams.relayEndpoint + "v1/payment/cancel/close"), {
+            accessKey: NodeInfo.RELAY_ACCESS_KEY,
             confirm: true,
             paymentId
         });
@@ -498,7 +633,12 @@ describe("Ledger", () => {
     const amountToTrade = Amount.make(tradeAmount, 18);
 
     it("Test of the deposit", async () => {
-        const beforeBalance = await deployment.ledger.tokenBalanceOf(userAddress);
+        const beforeBalance = await contractInfo.ledger.tokenBalanceOf(userAddress);
+
+        let tx = await contractInfo.token
+            .connect(accounts[AccountIndex.OWNER])
+            .transfer(userWallets[0].address, amountToTrade.value);
+        await tx.wait();
 
         for await (const step of client.ledger.deposit(amountToTrade.value)) {
             switch (step.key) {
@@ -527,12 +667,12 @@ describe("Ledger", () => {
             }
         }
 
-        const afterBalance = await deployment.ledger.tokenBalanceOf(userAddress);
+        const afterBalance = await contractInfo.ledger.tokenBalanceOf(userAddress);
         expect(afterBalance.toString()).toEqual(beforeBalance.add(amountToTrade.value).toString());
     });
 
     it("Test of the withdraw", async () => {
-        const beforeBalance = await deployment.ledger.tokenBalanceOf(userAddress);
+        const beforeBalance = await contractInfo.ledger.tokenBalanceOf(userAddress);
 
         for await (const step of client.ledger.withdraw(amountToTrade.value)) {
             switch (step.key) {
@@ -549,7 +689,7 @@ describe("Ledger", () => {
             }
         }
 
-        const afterBalance = await deployment.ledger.tokenBalanceOf(userAddress);
+        const afterBalance = await contractInfo.ledger.tokenBalanceOf(userAddress);
         expect(afterBalance.toString()).toEqual(beforeBalance.sub(amountToTrade.value).toString());
     });
 

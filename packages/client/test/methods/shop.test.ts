@@ -1,38 +1,28 @@
-import { Server } from "ganache";
-import { AccountIndex, GanacheServer } from "../helper/GanacheServer";
-import { ContractDeployer, Deployment, IShopData } from "../helper/ContractDeployer";
-import { contextParamsLocalChain } from "../helper/constants";
 import { Client, Context, ContractUtils, NormalSteps, ShopStatus } from "../../src";
-import { FakerRelayServer } from "../helper/FakerRelayServer";
 import { Wallet } from "@ethersproject/wallet";
 import { Network } from "../../src/client-common/interfaces/network";
 
 import * as assert from "assert";
+import { NodeInfo } from "../helper/NodeInfo";
+
+export interface IShopData {
+    shopId: string;
+    name: string;
+    currency: string;
+    provideWaitTime: number;
+    providePercent: number;
+    wallet: Wallet;
+}
 
 describe("Shop", () => {
-    let node: Server;
-    let deployment: Deployment;
-    let fakerRelayServer: FakerRelayServer;
-
-    beforeAll(async () => {
-        node = await GanacheServer.start();
-
-        deployment = await ContractDeployer.deploy();
-
-        fakerRelayServer = new FakerRelayServer(6070, deployment);
-        await fakerRelayServer.start();
-    });
-
-    afterAll(async () => {
-        await node.close();
-        await fakerRelayServer.stop();
-    });
+    const contextParams = NodeInfo.getContextParams();
+    let client: Client;
 
     let shopData: IShopData;
     let shopWallet: Wallet;
+
     beforeAll(async () => {
-        let accounts = GanacheServer.accounts();
-        shopWallet = accounts[AccountIndex.SHOP6];
+        shopWallet = Wallet.createRandom();
         shopData = {
             shopId: "",
             name: "Shop6",
@@ -42,13 +32,11 @@ describe("Shop", () => {
             wallet: shopWallet
         };
         shopData.shopId = ContractUtils.getShopId(shopData.wallet.address);
-        GanacheServer.setTestWeb3Signer(shopWallet);
     });
 
-    let client: Client;
     beforeAll(async () => {
-        contextParamsLocalChain.signer = shopWallet;
-        const ctx = new Context(contextParamsLocalChain);
+        contextParams.signer = shopWallet;
+        const ctx = new Context(contextParams);
         client = new Client(ctx);
     });
 
@@ -88,8 +76,8 @@ describe("Shop", () => {
         shopData.providePercent = 3;
 
         // Open New
-        let res = await Network.post(new URL("http://localhost:6070/v1/shop/update/create"), {
-            accessKey: FakerRelayServer.ACCESS_KEY,
+        let res = await Network.post(new URL(contextParams.relayEndpoint + "v1/shop/update/create"), {
+            accessKey: NodeInfo.RELAY_ACCESS_KEY,
             shopId: shopData.shopId,
             name: shopData.name,
             currency: shopData.currency,
@@ -142,8 +130,8 @@ describe("Shop", () => {
         assert.deepStrictEqual(info1.status, ShopStatus.INACTIVE);
 
         // Open New
-        let res = await Network.post(new URL("http://localhost:6070/v1/shop/status/create"), {
-            accessKey: FakerRelayServer.ACCESS_KEY,
+        let res = await Network.post(new URL(contextParams.relayEndpoint + "v1/shop/status/create"), {
+            accessKey: NodeInfo.RELAY_ACCESS_KEY,
             shopId: shopData.shopId,
             status: ShopStatus.ACTIVE
         });

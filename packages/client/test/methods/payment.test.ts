@@ -1,13 +1,11 @@
-/*
-import { contextParamsDevnet } from "../helper/constants";
-
-import { Amount, Client, Context, ContractUtils, LIVE_CONTRACTS, NormalSteps } from "../../src";
+import { Amount, Client, Context, ContractUtils, NormalSteps } from "../../src";
 import { Wallet } from "@ethersproject/wallet";
 import { Network } from "../../src/client-common/interfaces/network";
 
 import * as assert from "assert";
 // @ts-ignore
 import fs from "fs";
+import { NodeInfo } from "../helper/NodeInfo";
 
 interface IUserData {
     idx: number;
@@ -28,24 +26,14 @@ export interface IShopData {
 }
 
 describe("Ledger", () => {
+    const contextParams = NodeInfo.getContextParams();
     let client: Client;
     const users: IUserData[] = JSON.parse(fs.readFileSync("test/helper/users_mobile.json", "utf8"));
     const shopData: IShopData[] = JSON.parse(fs.readFileSync("test/helper/shops.json", "utf8"));
     let user = new Wallet(users[5].privateKey);
     beforeAll(async () => {
-        const network = "bosagora_devnet";
-        contextParamsDevnet.tokenAddress = LIVE_CONTRACTS[network].TokenAddress;
-        contextParamsDevnet.phoneLinkCollectionAddress = LIVE_CONTRACTS[network].PhoneLinkCollectionAddress;
-        contextParamsDevnet.validatorCollectionAddress = LIVE_CONTRACTS[network].ValidatorCollectionAddress;
-        contextParamsDevnet.currencyRateAddress = LIVE_CONTRACTS[network].CurrencyRateAddress;
-        contextParamsDevnet.shopCollectionAddress = LIVE_CONTRACTS[network].ShopCollectionAddress;
-        contextParamsDevnet.ledgerAddress = LIVE_CONTRACTS[network].LedgerAddress;
-        contextParamsDevnet.signer = user;
-        contextParamsDevnet.relayEndpoint = "http://relay.devnet.bosagora.org:7070/";
-        contextParamsDevnet.web3Providers = ["http://rpc.devnet.bosagora.org:8545/"];
-        contextParamsDevnet.relayEndpoint = "http://localhost:7070/";
-        contextParamsDevnet.web3Providers = ["http://localhost:8545/"];
-        const ctx = new Context(contextParamsDevnet);
+        contextParams.signer = user;
+        const ctx = new Context(contextParams);
         client = new Client(ctx);
     });
 
@@ -80,8 +68,8 @@ describe("Ledger", () => {
 
             // Open New
             console.log("Open New");
-            let res = await Network.post(new URL(contextParamsDevnet.relayEndpoint + "v1/payment/new/open"), {
-                accessKey: "0x2c93e943c0d7f6f1a42f53e116c52c40fe5c1b428506dc04b290f2a77580a342",
+            let res = await Network.post(new URL(contextParams.relayEndpoint + "v1/payment/new/open"), {
+                accessKey: NodeInfo.RELAY_ACCESS_KEY,
                 purchaseId: purchase.purchaseId,
                 amount: amount.toString(),
                 currency: purchase.currency.toLowerCase(),
@@ -146,8 +134,8 @@ describe("Ledger", () => {
 
             // Close New
             console.log("Close New");
-            res = await Network.post(new URL(contextParamsDevnet.relayEndpoint + "v1/payment/new/close"), {
-                accessKey: "0x2c93e943c0d7f6f1a42f53e116c52c40fe5c1b428506dc04b290f2a77580a342",
+            res = await Network.post(new URL(contextParams.relayEndpoint + "v1/payment/new/close"), {
+                accessKey: NodeInfo.RELAY_ACCESS_KEY,
                 confirm: true,
                 paymentId
             });
@@ -160,16 +148,5 @@ describe("Ledger", () => {
                 oldBalance.sub(paidToken).sub(feeToken)
             );
         }
-    });
-});
-*/
-
-import { ContractUtils } from "../../src";
-
-describe("Integrated test of Ledger", () => {
-    describe("Method Check", () => {
-        it("Wait", async () => {
-            await ContractUtils.delay(1000);
-        });
     });
 });

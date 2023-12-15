@@ -123,6 +123,24 @@ export class NoLedgerAddress extends Error {
     }
 }
 
+export class NoLoyaltyProviderAddress extends Error {
+    constructor() {
+        super("A loyalty provider address is needed");
+    }
+}
+
+export class NoLoyaltyConsumerAddress extends Error {
+    constructor() {
+        super("A loyalty consumer address is needed");
+    }
+}
+
+export class NoLoyaltyExchangerAddress extends Error {
+    constructor() {
+        super("A loyalty exchanger address is needed");
+    }
+}
+
 export class FailedDepositError extends Error {
     constructor() {
         super("Failed to deposit");

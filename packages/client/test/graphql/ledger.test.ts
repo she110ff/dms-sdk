@@ -1,10 +1,9 @@
-/*
-import { contextParamsDevnet } from "../helper/constants";
-import { Client, Context, ContractUtils, LedgerAction, LIVE_CONTRACTS } from "../../src";
+import { Client, Context, ContractUtils, LedgerAction } from "../../src";
 import { Wallet } from "@ethersproject/wallet";
 
 // @ts-ignore
 import fs from "fs";
+import { NodeInfo } from "../helper/NodeInfo";
 
 interface IUserData {
     idx: number;
@@ -15,20 +14,13 @@ interface IUserData {
 }
 
 describe("Integrated test of Ledger", () => {
+    const contextParams = NodeInfo.getContextParams();
     describe("Method Check", () => {
         let client: Client;
         const users: IUserData[] = JSON.parse(fs.readFileSync("test/helper/users.json", "utf8"));
         beforeAll(async () => {
-            contextParamsDevnet.tokenAddress = LIVE_CONTRACTS["bosagora_devnet"].TokenAddress;
-            contextParamsDevnet.phoneLinkCollectionAddress =
-                LIVE_CONTRACTS["bosagora_devnet"].PhoneLinkCollectionAddress;
-            contextParamsDevnet.validatorCollectionAddress =
-                LIVE_CONTRACTS["bosagora_devnet"].ValidatorCollectionAddress;
-            contextParamsDevnet.currencyRateAddress = LIVE_CONTRACTS["bosagora_devnet"].CurrencyRateAddress;
-            contextParamsDevnet.shopCollectionAddress = LIVE_CONTRACTS["bosagora_devnet"].ShopCollectionAddress;
-            contextParamsDevnet.ledgerAddress = LIVE_CONTRACTS["bosagora_devnet"].LedgerAddress;
-            contextParamsDevnet.signer = new Wallet(users[50].privateKey);
-            const ctx = new Context(contextParamsDevnet);
+            contextParams.signer = new Wallet(users[50].privateKey);
+            const ctx = new Context(contextParams);
             client = new Client(ctx);
         });
 
@@ -81,17 +73,6 @@ describe("Integrated test of Ledger", () => {
                     }
                 }
             });
-        });
-    });
-});
-*/
-
-import { ContractUtils } from "../../src";
-
-describe("Integrated test of Ledger", () => {
-    describe("Method Check", () => {
-        it("Wait", async () => {
-            await ContractUtils.delay(1000);
         });
     });
 });

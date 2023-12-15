@@ -1,5 +1,8 @@
+import * as dotenv from "dotenv";
+
 import { Wallet } from "@ethersproject/wallet";
 import { ContextParams } from "../../src";
+dotenv.config({ path: "env/.env" });
 
 export const web3EndpointsMainnet = {
     working: ["https://mainnet.bosagora.org/"],
@@ -11,7 +14,6 @@ export const web3EndpointsDevnet = {
     failing: ["https://bad-url-gateway.io/"]
 };
 
-export const TEST_WALLET_ADDRESS = "0xc8195b3420abb2AcDdc3C309d4Ed22ddAAa0d8CE";
 export const TEST_WALLET = "d09672244a06a32f74d051e5adbbb62ae0eda27832a973159d475da6d53ba5c0";
 
 const grapqhlEndpoints = {
@@ -57,8 +59,8 @@ export const contextParamsDevnet: ContextParams = {
 export const contextParamsLocalChain: ContextParams = {
     network: 24680,
     signer: new Wallet(TEST_WALLET),
-    web3Providers: ["http://localhost:7545"],
-    relayEndpoint: "http://localhost:6070",
+    web3Providers: ["http://localhost:8545"],
+    relayEndpoint: "http://localhost:7070",
     graphqlNodes: grapqhlEndpoints.working
 };
 

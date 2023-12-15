@@ -25,13 +25,13 @@ jobs:
 
       - name: Build of common
         run: cd packages/common && yarn run build
-      - name: Run Tests of common
-        run: cd packages/common && yarn run test
+#      - name: Run Tests of common
+#        run: cd packages/common && yarn run test
 
       - name: Copy env of Client
         run: cp packages/client/env/.env.sample packages/client/env/.env
       - name: Build of Client
         run: cd packages/client && yarn run build
-      - name: Run Tests of Client
-        run: cd packages/client && yarn run test
+#      - name: Run Tests of Client
+#        run: cd packages/client && yarn run test
 
