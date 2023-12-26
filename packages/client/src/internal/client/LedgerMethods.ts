@@ -39,7 +39,8 @@ import {
     LoyaltyPaymentEvent,
     ApproveCancelPaymentValue,
     LedgerPageType,
-    PaymentDetailTaskStatus
+    PaymentDetailTaskStatus,
+    MobileType
 } from "../../interfaces";
 import {
     AmountMismatchError,
@@ -919,8 +920,14 @@ export class LedgerMethods extends ClientCore implements ILedgerMethods, IClient
      * @param token
      * @param language
      * @param os
+     * @param type
      */
-    public async registerMobileToken(token: string, language: string, os: string): Promise<void> {
+    public async registerMobileToken(
+        token: string,
+        language: string,
+        os: string,
+        type: MobileType = MobileType.USER_APP
+    ): Promise<void> {
         const signer = this.web3.getConnectedSigner();
         if (!signer) {
             throw new NoSignerError();
@@ -931,6 +938,7 @@ export class LedgerMethods extends ClientCore implements ILedgerMethods, IClient
         const signature = await ContractUtils.signMobileToken(signer, token);
         const param = {
             account: await signer.getAddress(),
+            type,
             token,
             language,
             os,

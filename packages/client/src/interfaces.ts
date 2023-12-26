@@ -480,3 +480,8 @@ export enum ShopAction {
     OPEN_WITHDRAWN = 11,
     CLOSE_WITHDRAWN = 12
 }
+
+export enum MobileType {
+    USER_APP,
+    SHOP_APP
+}
