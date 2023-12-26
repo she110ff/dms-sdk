@@ -21,7 +21,7 @@ import {
     Validator__factory
 } from "dms-osx-lib";
 import { PhoneLinkCollection, PhoneLinkCollection__factory } from "del-osx-lib";
-import { ContractShopStatus, IShopData } from "./types";
+import { IShopData } from "./types";
 import { Signer } from "@ethersproject/abstract-signer";
 import { NonceManager } from "@ethersproject/experimental";
 
@@ -424,34 +424,6 @@ export class NodeInfo {
                 await contracts.shop
                     .connect(sender)
                     .add(shop.shopId, shop.name, shop.currency, shop.wallet.address, signature)
-            ).wait();
-        }
-
-        console.log("Update Shop");
-        for (const shop of shopData) {
-            const signature1 = ContractUtils.signShop(
-                new Wallet(shop.wallet.privateKey),
-                shop.shopId,
-                await contracts.shop.nonceOf(shop.wallet.address)
-            );
-            await (
-                await contracts.shop
-                    .connect(sender)
-                    .update(shop.shopId, shop.name, shop.currency, shop.providePercent, shop.wallet.address, signature1)
-            ).wait();
-        }
-
-        console.log("Change Status of Shop");
-        for (const shop of shopData) {
-            const signature1 = ContractUtils.signShop(
-                new Wallet(shop.wallet.privateKey),
-                shop.shopId,
-                await contracts.shop.nonceOf(shop.wallet.address)
-            );
-            await (
-                await contracts.shop
-                    .connect(sender)
-                    .changeStatus(shop.shopId, ContractShopStatus.ACTIVE, shop.wallet.address, signature1)
             ).wait();
         }
     }

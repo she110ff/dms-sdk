@@ -69,35 +69,30 @@ describe("Shop Withdrawal", () => {
             shopId: "",
             name: "Shop1",
             currency: "krw",
-            providePercent: 1,
             wallet: shopWallets[0]
         },
         {
             shopId: "",
             name: "Shop2",
             currency: "krw",
-            providePercent: 1,
             wallet: shopWallets[1]
         },
         {
             shopId: "",
             name: "Shop3",
             currency: "krw",
-            providePercent: 1,
             wallet: shopWallets[2]
         },
         {
             shopId: "",
             name: "Shop4",
             currency: "krw",
-            providePercent: 1,
             wallet: shopWallets[3]
         },
         {
             shopId: "",
             name: "Shop5",
             currency: "krw",
-            providePercent: 1,
             wallet: shopWallets[4]
         }
     ];
@@ -196,14 +191,14 @@ describe("Shop Withdrawal", () => {
         for (const purchase of purchaseData) {
             const phoneHash = ContractUtils.getPhoneHash(userData[purchase.userIndex].phone);
             const purchaseAmount = Amount.make(purchase.amount, 18).value;
+            const loyaltyAmount = purchaseAmount.mul(1).div(100);
             const userAccount = userData[purchase.userIndex].address.trim();
             await contractInfo.loyaltyProvider.connect(validatorWallets[4]).savePurchase({
                 purchaseId: purchase.purchaseId,
-                timestamp: purchase.timestamp,
                 amount: purchaseAmount,
+                loyalty: loyaltyAmount,
                 currency: purchase.currency.toLowerCase(),
                 shopId: shopData[purchase.shopIndex].shopId,
-                method: purchase.method,
                 account: userAccount,
                 phone: phoneHash
             });
@@ -214,7 +209,7 @@ describe("Shop Withdrawal", () => {
         const shopInfo1 = await client.shop.getShopInfo(shopData[0].shopId);
         expect(shopInfo1.providedAmount.toString()).toEqual(
             Amount.make(10000 * 3, 18)
-                .value.mul(shopData[0].providePercent)
+                .value.mul(1)
                 .div(100)
                 .toString()
         );
@@ -222,21 +217,21 @@ describe("Shop Withdrawal", () => {
         const shopInfo2 = await client.shop.getShopInfo(shopData[1].shopId);
         expect(shopInfo2.providedAmount.toString()).toEqual(
             Amount.make(10000 * 1, 18)
-                .value.mul(shopData[1].providePercent)
+                .value.mul(1)
                 .div(100)
                 .toString()
         );
         const shopInfo3 = await client.shop.getShopInfo(shopData[2].shopId);
         expect(shopInfo3.providedAmount.toString()).toEqual(
             Amount.make(10000 * 1, 18)
-                .value.mul(shopData[2].providePercent)
+                .value.mul(1)
                 .div(100)
                 .toString()
         );
         const shopInfo4 = await client.shop.getShopInfo(shopData[3].shopId);
         expect(shopInfo4.providedAmount.toString()).toEqual(
             Amount.make(10000 * 1, 18)
-                .value.mul(shopData[3].providePercent)
+                .value.mul(1)
                 .div(100)
                 .toString()
         );

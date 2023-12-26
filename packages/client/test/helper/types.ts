@@ -14,7 +14,6 @@ export interface IShopData {
     shopId: string;
     name: string;
     currency: string;
-    providePercent: number;
     wallet: Wallet;
 }
 

@@ -39,7 +39,6 @@ interface IUserData {
 export interface IShopData {
     shopId: string;
     name: string;
-    providePercent: number;
     address: string;
     privateKey: string;
 }

@@ -69,7 +69,6 @@ export interface ShopDetailData {
     taskId: BytesLike;
     shopId: BytesLike;
     name: string;
-    providePercent: number;
     account: string;
     taskStatus: ShopDetailTaskStatus;
     timestamp: number;
@@ -281,7 +280,6 @@ export type ApproveShopStepValue =
           account: string;
           name?: string;
           currency?: string;
-          providePercent?: number;
           status?: ShopStatus;
       }
     | {
@@ -341,7 +339,6 @@ export interface ShopUpdateEvent {
     shopId: BytesLike;
     name: string;
     currency: string;
-    providePercent: number;
     account: string;
     status: ShopStatus;
 }
@@ -365,7 +362,6 @@ export enum ShopWithdrawStatus {
 export type ShopData = {
     shopId: BytesLike;
     name: string;
-    providePercent: number; // 구매금액에 대한 포인트 지급량
     account: string; // 상점주의 지갑주소
     providedAmount: BigNumber; // 제공된 포인트 총량
     usedAmount: BigNumber; // 사용된 포인트 총량

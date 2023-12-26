@@ -6,6 +6,7 @@ import {
     ContractUtils,
     DepositSteps,
     LoyaltyType,
+    MobileType,
     NormalSteps,
     WithdrawSteps
 } from "../../src";
@@ -82,35 +83,30 @@ describe("Ledger", () => {
             shopId: "",
             name: "Shop1",
             currency: "krw",
-            providePercent: 1,
             wallet: shopWallets[0]
         },
         {
             shopId: "",
             name: "Shop2",
             currency: "krw",
-            providePercent: 1,
             wallet: shopWallets[1]
         },
         {
             shopId: "",
             name: "Shop3",
             currency: "krw",
-            providePercent: 1,
             wallet: shopWallets[2]
         },
         {
             shopId: "",
             name: "Shop4",
             currency: "krw",
-            providePercent: 1,
             wallet: shopWallets[3]
         },
         {
             shopId: "",
             name: "Shop5",
             currency: "krw",
-            providePercent: 1,
             wallet: shopWallets[4]
         }
     ];
@@ -215,13 +211,13 @@ describe("Ledger", () => {
 
     it("Save Purchase Data 1", async () => {
         const purchaseAmount = Amount.make(purchaseData[0].amount, 18).value.mul(1000);
+        const loyaltyAmount = purchaseAmount.mul(1).div(100);
         await contractInfo.loyaltyProvider.connect(validatorWallets[4]).savePurchase({
             purchaseId: purchaseData[0].purchaseId,
-            timestamp: purchaseData[0].timestamp,
             amount: purchaseAmount,
+            loyalty: loyaltyAmount,
             currency: purchaseData[0].currency.toLowerCase(),
             shopId: shopData[purchaseData[0].shopIndex].shopId,
-            method: purchaseData[0].method,
             account: AddressZero,
             phone: phoneHash
         });
@@ -229,13 +225,13 @@ describe("Ledger", () => {
 
     it("Save Purchase Data 2", async () => {
         const purchaseAmount = Amount.make(purchaseData[0].amount, 18).value.mul(1000);
+        const loyaltyAmount = purchaseAmount.mul(1).div(100);
         await contractInfo.loyaltyProvider.connect(validatorWallets[4]).savePurchase({
             purchaseId: purchaseData[0].purchaseId,
-            timestamp: purchaseData[0].timestamp,
             amount: purchaseAmount,
+            loyalty: loyaltyAmount,
             currency: purchaseData[0].currency.toLowerCase(),
             shopId: shopData[purchaseData[0].shopIndex].shopId,
-            method: purchaseData[0].method,
             account: userAddress,
             phone: phoneHash
         });
@@ -692,6 +688,6 @@ describe("Ledger", () => {
         const token = "12345678901234567890123456789012345678901234567890";
         const language = "kr";
         const os = "iOS";
-        await client.ledger.registerMobileToken(token, language, os);
+        await client.ledger.registerMobileToken(token, language, os, MobileType.USER_APP);
     });
 });

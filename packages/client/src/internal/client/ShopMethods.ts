@@ -135,7 +135,6 @@ export class ShopMethods extends ClientCore implements IShopMethods, IClientHttp
         return {
             shopId: shopInfo.shopId,
             name: shopInfo.name,
-            providePercent: BigNumber.from(shopInfo.providePercent).toNumber(),
             account: shopInfo.account,
             providedAmount: shopInfo.providedAmount,
             usedAmount: shopInfo.usedAmount,
@@ -291,7 +290,6 @@ export class ShopMethods extends ClientCore implements IShopMethods, IClientHttp
                 taskId: res.data.taskId,
                 shopId: res.data.shopId,
                 name: res.data.name,
-                providePercent: res.data.providePercent,
                 account: res.data.account,
                 taskStatus: res.taskStatus,
                 timestamp: res.timestamp
@@ -431,7 +429,6 @@ export class ShopMethods extends ClientCore implements IShopMethods, IClientHttp
                 account: event.account,
                 name: event.name,
                 currency: event.currency,
-                providePercent: BigNumber.from(event.providePercent).toNumber(),
                 status: event.status
             };
         } else {
@@ -525,7 +522,6 @@ export class ShopMethods extends ClientCore implements IShopMethods, IClientHttp
                 shopId: parsedLog.args.shopId,
                 name: parsedLog.args.name,
                 currency: parsedLog.args.currency,
-                providePercent: (parsedLog.args.providePercent as BigNumber).toNumber(),
                 account: parsedLog.args.account,
                 status: parsedLog.args.status
             };

@@ -9,7 +9,6 @@ export interface IShopData {
     shopId: string;
     name: string;
     currency: string;
-    providePercent: number;
     wallet: Wallet;
 }
 
@@ -26,7 +25,6 @@ describe("Shop", () => {
             shopId: "",
             name: "Shop6",
             currency: "krw",
-            providePercent: 1,
             wallet: shopWallet
         };
         shopData.shopId = ContractUtils.getShopId(shopData.wallet.address);
@@ -70,7 +68,6 @@ describe("Shop", () => {
 
     it("Update", async () => {
         shopData.name = "New Name";
-        shopData.providePercent = 3;
 
         // Open New
         let res = await Network.post(new URL(contextParams.relayEndpoint + "v1/shop/update/create"), {
@@ -78,7 +75,6 @@ describe("Shop", () => {
             shopId: shopData.shopId,
             name: shopData.name,
             currency: shopData.currency,
-            providePercent: shopData.providePercent
         });
         assert.deepStrictEqual(res.code, 0);
         assert.notDeepStrictEqual(res.data, undefined);
@@ -110,7 +106,6 @@ describe("Shop", () => {
                     expect(step.shopId).toEqual(detail.shopId);
                     expect(step.account).toEqual(shopWallet.address);
                     expect(step.name).toEqual(shopData.name);
-                    expect(step.providePercent).toEqual(shopData.providePercent);
                     break;
                 default:
                     throw new Error("Unexpected pay point step: " + JSON.stringify(step, null, 2));
@@ -122,13 +117,13 @@ describe("Shop", () => {
 
     it("Status", async () => {
         const info1 = await client.shop.getShopInfo(shopData.shopId);
-        assert.deepStrictEqual(info1.status, ShopStatus.INACTIVE);
+        assert.deepStrictEqual(info1.status, ShopStatus.ACTIVE);
 
         // Open New
         let res = await Network.post(new URL(contextParams.relayEndpoint + "v1/shop/status/create"), {
             accessKey: NodeInfo.RELAY_ACCESS_KEY,
             shopId: shopData.shopId,
-            status: ShopStatus.ACTIVE
+            status: ShopStatus.INACTIVE
         });
         assert.deepStrictEqual(res.code, 0);
         assert.notDeepStrictEqual(res.data, undefined);
@@ -159,7 +154,7 @@ describe("Shop", () => {
                     expect(step.taskId).toEqual(taskId);
                     expect(step.shopId).toEqual(detail.shopId);
                     expect(step.account).toEqual(shopWallet.address);
-                    expect(step.status).toEqual(ShopStatus.ACTIVE);
+                    expect(step.status).toEqual(ShopStatus.INACTIVE);
                     break;
                 default:
                     throw new Error("Unexpected pay point step: " + JSON.stringify(step, null, 2));
