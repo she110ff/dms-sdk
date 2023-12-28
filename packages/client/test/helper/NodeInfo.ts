@@ -435,4 +435,12 @@ export class NodeInfo {
         }
         return res;
     }
+
+    static purchaseId = 0;
+    public static getPurchaseId(): string {
+        const res = "P" + NodeInfo.purchaseId.toString().padStart(10, "0");
+        NodeInfo.purchaseId++;
+        return res;
+    }
+
 }

@@ -74,7 +74,7 @@ describe("Shop", () => {
             accessKey: NodeInfo.RELAY_ACCESS_KEY,
             shopId: shopData.shopId,
             name: shopData.name,
-            currency: shopData.currency,
+            currency: shopData.currency
         });
         assert.deepStrictEqual(res.code, 0);
         assert.notDeepStrictEqual(res.data, undefined);

@@ -212,29 +212,51 @@ describe("Ledger", () => {
     it("Save Purchase Data 1", async () => {
         const purchaseAmount = Amount.make(purchaseData[0].amount, 18).value.mul(1000);
         const loyaltyAmount = purchaseAmount.mul(1).div(100);
-        await contractInfo.loyaltyProvider.connect(validatorWallets[4]).savePurchase({
-            purchaseId: purchaseData[0].purchaseId,
+        const purchaseParams = {
+            purchaseId:  NodeInfo.getPurchaseId(),
             amount: purchaseAmount,
             loyalty: loyaltyAmount,
             currency: purchaseData[0].currency.toLowerCase(),
             shopId: shopData[purchaseData[0].shopIndex].shopId,
             account: AddressZero,
             phone: phoneHash
-        });
+        };
+        const purchaseMessage = ContractUtils.getPurchaseMessage(
+            purchaseParams.purchaseId,
+            purchaseParams.amount,
+            purchaseParams.loyalty,
+            purchaseParams.currency,
+            purchaseParams.shopId,
+            purchaseParams.account,
+            purchaseParams.phone
+        );
+        const signatures = validatorWallets.map((m) => ContractUtils.signMessage(m, purchaseMessage));
+        await contractInfo.loyaltyProvider.connect(validatorWallets[4]).savePurchase({ ...purchaseParams, signatures });
     });
 
     it("Save Purchase Data 2", async () => {
         const purchaseAmount = Amount.make(purchaseData[0].amount, 18).value.mul(1000);
         const loyaltyAmount = purchaseAmount.mul(1).div(100);
-        await contractInfo.loyaltyProvider.connect(validatorWallets[4]).savePurchase({
-            purchaseId: purchaseData[0].purchaseId,
+        const purchaseParams = {
+            purchaseId: NodeInfo.getPurchaseId(),
             amount: purchaseAmount,
             loyalty: loyaltyAmount,
             currency: purchaseData[0].currency.toLowerCase(),
             shopId: shopData[purchaseData[0].shopIndex].shopId,
             account: userAddress,
             phone: phoneHash
-        });
+        };
+        const purchaseMessage = ContractUtils.getPurchaseMessage(
+            purchaseParams.purchaseId,
+            purchaseParams.amount,
+            purchaseParams.loyalty,
+            purchaseParams.currency,
+            purchaseParams.shopId,
+            purchaseParams.account,
+            purchaseParams.phone
+        );
+        const signatures = validatorWallets.map((m) => ContractUtils.signMessage(m, purchaseMessage));
+        await contractInfo.loyaltyProvider.connect(validatorWallets[4]).savePurchase({ ...purchaseParams, signatures });
     });
 
     const purchaseAmount = Amount.make(purchaseData[0].amount, 18).value.mul(1000);
