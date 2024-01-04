@@ -79,7 +79,7 @@
     "@ethersproject/random": "^5.7.0",
     "@ethersproject/wallet": "^5.7.0",
     "del-osx-lib": "^2.0.0",
-    "dms-osx-lib": "^2.0.3",
+    "dms-osx-lib": "^2.1.0",
     "dms-sdk-common": "^1.0.3",
     "graphql": "^16.5.0",
     "graphql-request": "^4.3.0",

@@ -438,7 +438,8 @@ export class NodeInfo {
 
     static purchaseId = 0;
     public static getPurchaseId(): string {
-        const res = "P" + NodeInfo.purchaseId.toString().padStart(10, "0");
+        const randomIdx = Math.floor(Math.random() * 1000);
+        const res = "P" + NodeInfo.purchaseId.toString().padStart(10, "0") + randomIdx.toString().padStart(4, "0");
         NodeInfo.purchaseId++;
         return res;
     }

@@ -57,7 +57,7 @@ describe("Ledger", () => {
             const feeRate = await client.ledger.getFeeRate();
             const paidPoint = await client.currency.currencyToPoint(amount.value, purchase.currency);
             const feePoint = await client.currency.currencyToPoint(
-                amount.value.mul(feeRate).div(100),
+                amount.value.mul(feeRate).div(10000),
                 purchase.currency
             );
 

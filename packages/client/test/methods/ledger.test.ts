@@ -331,7 +331,7 @@ describe("Ledger", () => {
 
         const feeRate = await client.ledger.getFeeRate();
         const paidPoint = await client.currency.currencyToPoint(amount.value, purchase.currency);
-        const feePoint = await client.currency.currencyToPoint(amount.value.mul(feeRate).div(100), purchase.currency);
+        const feePoint = await client.currency.currencyToPoint(amount.value.mul(feeRate).div(10000), purchase.currency);
 
         // Open New
         let res = await Network.post(new URL(contextParams.relayEndpoint + "v1/payment/new/open"), {
@@ -506,7 +506,7 @@ describe("Ledger", () => {
 
         const feeRate = await client.ledger.getFeeRate();
         const paidPoint = await client.currency.currencyToPoint(amount.value, purchase.currency);
-        const feePoint = await client.currency.currencyToPoint(amount.value.mul(feeRate).div(100), purchase.currency);
+        const feePoint = await client.currency.currencyToPoint(amount.value.mul(feeRate).div(10000), purchase.currency);
 
         const paidToken = await client.currency.pointToToken(paidPoint);
         const feeToken = await client.currency.pointToToken(feePoint);

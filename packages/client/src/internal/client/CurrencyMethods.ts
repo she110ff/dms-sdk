@@ -5,6 +5,7 @@ import { Provider } from "@ethersproject/providers";
 import { NoProviderError, UnsupportedNetworkError } from "dms-sdk-common";
 import { BigNumber } from "@ethersproject/bignumber";
 import { getNetwork } from "@ethersproject/networks";
+import {ContractUtils} from "../../utils/ContractUtils";
 
 /**
  * 환률정보를 제공하고, 통화량을 환산하는 기능이 포함된 클래스이다.
@@ -82,7 +83,7 @@ export class CurrencyMethods extends ClientCore implements ICurrencyMethods {
         const symbol = await this.getTokenSymbol();
         const rate = await this.getRate(symbol);
         const multiple = await this.getMultiple();
-        return amount.mul(multiple).div(rate);
+        return ContractUtils.zeroGWEI(amount.mul(multiple).div(rate));
     }
 
     /**
@@ -93,7 +94,7 @@ export class CurrencyMethods extends ClientCore implements ICurrencyMethods {
         const symbol = await this.getTokenSymbol();
         const rate = await this.getRate(symbol);
         const multiple = await this.getMultiple();
-        return amount.mul(rate).div(multiple);
+        return ContractUtils.zeroGWEI(amount.mul(rate).div(multiple));
     }
 
     /**
@@ -104,7 +105,7 @@ export class CurrencyMethods extends ClientCore implements ICurrencyMethods {
     public async currencyToPoint(amount: BigNumber, symbol: string): Promise<BigNumber> {
         const rate = await this.getRate(symbol.toLowerCase());
         const multiple = await this.getMultiple();
-        return amount.mul(rate).div(multiple);
+        return ContractUtils.zeroGWEI(amount.mul(rate).div(multiple));
     }
 
     /**
@@ -115,7 +116,7 @@ export class CurrencyMethods extends ClientCore implements ICurrencyMethods {
     public async pointToCurrency(amount: BigNumber, symbol: string): Promise<BigNumber> {
         const rate = await this.getRate(symbol.toLowerCase());
         const multiple = await this.getMultiple();
-        return amount.mul(multiple).div(rate);
+        return ContractUtils.zeroGWEI(amount.mul(multiple).div(rate));
     }
 
     /**

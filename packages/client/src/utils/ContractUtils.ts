@@ -10,7 +10,7 @@
 
 import { defaultAbiCoder } from "@ethersproject/abi";
 import { Signer } from "@ethersproject/abstract-signer";
-import { BigNumberish } from "@ethersproject/bignumber";
+import { BigNumber, BigNumberish } from "@ethersproject/bignumber";
 import { BytesLike } from "@ethersproject/bytes";
 import { arrayify } from "@ethersproject/bytes";
 import { keccak256 } from "@ethersproject/keccak256";
@@ -418,6 +418,10 @@ export class ContractUtils {
     public static getCurrencyMessage(timestamp: BigNumberish, symbols: string[], rates: BigNumberish[]): Uint8Array {
         const encodedResult = defaultAbiCoder.encode(["uint256", "string[]", "uint256[]"], [timestamp, symbols, rates]);
         return arrayify(keccak256(encodedResult));
+    }
+
+    public static zeroGWEI(value: BigNumber): BigNumber {
+        return value.div(1000000000).mul(1000000000);
     }
 }
 
