@@ -395,28 +395,51 @@ export class ContractUtils {
         return res.toLowerCase() === account.toLowerCase();
     }
 
-    public static getPurchaseMessage(
-        purchaseId: string,
-        amount: BigNumberish,
-        loyalty: BigNumberish,
-        currency: string,
-        shopId: BytesLike,
-        account: string,
-        phone: BytesLike
+    public static getPurchasesMessage(
+        purchases: {
+            purchaseId: string;
+            amount: BigNumberish;
+            loyalty: BigNumberish;
+            currency: string;
+            shopId: BytesLike;
+            account: string;
+            phone: BytesLike;
+        }[]
     ): Uint8Array {
+        const messages: BytesLike[] = [];
+        for (const elem of purchases) {
+            const encodedData = defaultAbiCoder.encode(
+                ["string", "uint256", "uint256", "string", "bytes32", "address", "bytes32"],
+                [elem.purchaseId, elem.amount, elem.loyalty, elem.currency, elem.shopId, elem.account, elem.phone]
+            );
+            messages.push(keccak256(encodedData));
+        }
         const encodedResult = defaultAbiCoder.encode(
-            ["string", "uint256", "uint256", "string", "bytes32", "address", "bytes32"],
-            [purchaseId, amount, loyalty, currency, shopId, account, phone]
+            ["uint256", "bytes32[]"],
+            [purchases.length, messages]
         );
         return arrayify(keccak256(encodedResult));
     }
-
     public static async signMessage(signer: Signer, message: Uint8Array): Promise<string> {
         return signer.signMessage(message);
     }
 
-    public static getCurrencyMessage(timestamp: BigNumberish, symbols: string[], rates: BigNumberish[]): Uint8Array {
-        const encodedResult = defaultAbiCoder.encode(["uint256", "string[]", "uint256[]"], [timestamp, symbols, rates]);
+    public static getCurrencyMessage(
+        timestamp: BigNumberish,
+        rates: { symbol: string; rate: BigNumberish }[]
+    ): Uint8Array {
+        const messages: BytesLike[] = [];
+        for (const elem of rates) {
+            const encodedData = defaultAbiCoder.encode(
+                ["string", "uint256"],
+                [elem.symbol, elem.rate]
+            );
+            messages.push(keccak256(encodedData));
+        }
+        const encodedResult = defaultAbiCoder.encode(
+            ["uint256", "uint256", "bytes32[]"],
+            [timestamp, rates.length, messages]
+        );
         return arrayify(keccak256(encodedResult));
     }
 

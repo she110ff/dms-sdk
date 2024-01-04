@@ -203,17 +203,9 @@ describe("Shop Withdrawal", () => {
                 account: userAccount,
                 phone: phoneHash
             };
-            const purchaseMessage = ContractUtils.getPurchaseMessage(
-                purchaseParams.purchaseId,
-                purchaseParams.amount,
-                purchaseParams.loyalty,
-                purchaseParams.currency,
-                purchaseParams.shopId,
-                purchaseParams.account,
-                purchaseParams.phone
-            );
+            const purchaseMessage = ContractUtils.getPurchasesMessage([purchaseParams]);
             const signatures = validatorWallets.map((m) => ContractUtils.signMessage(m, purchaseMessage));
-            await contractInfo.loyaltyProvider.connect(validatorWallets[4]).savePurchase({ ...purchaseParams, signatures });
+            await contractInfo.loyaltyProvider.connect(validatorWallets[4]).savePurchase([purchaseParams], signatures);
         }
     });
 
