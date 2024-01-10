@@ -20,6 +20,8 @@ import {
 import { Provider } from "@ethersproject/providers";
 import { NoProviderError, NoSignerError, UnsupportedNetworkError, UpdateAllowanceError } from "dms-sdk-common";
 import { ContractUtils } from "../../utils/ContractUtils";
+import { GasPriceManager } from "../../utils/GasPriceManager"
+import { NonceManager } from "../../utils/NonceManager"
 import {
     ChangeLoyaltyTypeStepValue,
     ChangeToPayablePointStepValue,
@@ -64,7 +66,6 @@ import { QueryUserTradeHistory } from "../graphql-queries/user/history";
 import { PhoneLinkCollection, PhoneLinkCollection__factory } from "del-osx-lib";
 import { AddressZero } from "@ethersproject/constants";
 import { BytesLike } from "@ethersproject/bytes";
-import { NonceManager } from "@ethersproject/experimental";
 
 /**
  * 사용자의 포인트/토큰의 잔고와 제품구매를 하는 기능이 포함되어 있다.
@@ -596,7 +597,7 @@ export class LedgerMethods extends ClientCore implements ILedgerMethods, IClient
             tokenAddress: this.web3.getTokenAddress()
         });
 
-        const nonceSigner = new NonceManager(signer);
+        const nonceSigner = new NonceManager(new GasPriceManager(signer));
         const depositTx = await ledgerContract.connect(nonceSigner).deposit(amount);
         yield { key: DepositSteps.DEPOSITING, txHash: depositTx.hash };
 
@@ -639,7 +640,7 @@ export class LedgerMethods extends ClientCore implements ILedgerMethods, IClient
         const currentDepositAmount = await ledgerContract.tokenBalanceOf(account);
         if (currentDepositAmount.lte(amount)) throw new InsufficientBalanceError();
 
-        const nonceSigner = new NonceManager(signer);
+        const nonceSigner = new NonceManager(new GasPriceManager(signer));
         const tx = await ledgerContract.connect(nonceSigner).withdraw(amount);
         yield { key: WithdrawSteps.WITHDRAWING, txHash: tx.hash };
 
@@ -675,7 +676,7 @@ export class LedgerMethods extends ClientCore implements ILedgerMethods, IClient
             throw new UnsupportedNetworkError(networkName);
         }
 
-        const nonceSigner = new NonceManager(signer);
+        const nonceSigner = new NonceManager(new GasPriceManager(signer));
         const tokenInstance = Token__factory.connect(params.tokenAddress, nonceSigner);
         const currentAllowance = await tokenInstance.allowance(await signer.getAddress(), params.targetAddress);
 

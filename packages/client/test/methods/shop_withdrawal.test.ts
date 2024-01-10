@@ -1,6 +1,6 @@
 import { Network } from "../../src/client-common/interfaces/network";
 import { AccountIndex, NodeInfo } from "../helper/NodeInfo";
-import { Amount, Client, Context, ContractUtils, NormalSteps, ShopWithdrawStatus } from "../../src";
+import { Amount, Client, Context, ContractUtils, NormalSteps, ShopWithdrawStatus, NonceManager } from "../../src";
 
 import { IShopData, IUserData, IPurchaseData } from "../helper/types";
 
@@ -8,7 +8,6 @@ import * as assert from "assert";
 
 import { BigNumber } from "@ethersproject/bignumber";
 import { Wallet } from "@ethersproject/wallet";
-import { NonceManager } from "@ethersproject/experimental";
 
 describe("Shop Withdrawal", () => {
     const contextParams = NodeInfo.getContextParams();
@@ -203,9 +202,9 @@ describe("Shop Withdrawal", () => {
                 account: userAccount,
                 phone: phoneHash
             };
-            const purchaseMessage = ContractUtils.getPurchasesMessage([purchaseParams]);
+            const purchaseMessage = ContractUtils.getPurchasesMessage(0, [purchaseParams]);
             const signatures = validatorWallets.map((m) => ContractUtils.signMessage(m, purchaseMessage));
-            await contractInfo.loyaltyProvider.connect(validatorWallets[4]).savePurchase([purchaseParams], signatures);
+            await contractInfo.loyaltyProvider.connect(validatorWallets[4]).savePurchase(0, [purchaseParams], signatures);
         }
     });
 

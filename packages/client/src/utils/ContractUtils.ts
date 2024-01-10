@@ -394,8 +394,8 @@ export class ContractUtils {
         }
         return res.toLowerCase() === account.toLowerCase();
     }
-
     public static getPurchasesMessage(
+        height: BigNumberish,
         purchases: {
             purchaseId: string;
             amount: BigNumberish;
@@ -415,11 +415,12 @@ export class ContractUtils {
             messages.push(keccak256(encodedData));
         }
         const encodedResult = defaultAbiCoder.encode(
-            ["uint256", "bytes32[]"],
-            [purchases.length, messages]
+            ["uint256", "uint256", "bytes32[]"],
+            [height, purchases.length, messages]
         );
         return arrayify(keccak256(encodedResult));
     }
+
     public static async signMessage(signer: Signer, message: Uint8Array): Promise<string> {
         return signer.signMessage(message);
     }
