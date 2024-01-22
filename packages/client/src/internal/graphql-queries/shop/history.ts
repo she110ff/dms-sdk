@@ -13,12 +13,14 @@ export const QueryShopTradeHistory = gql`
             shopId
             pageType
             action
-            purchaseId
+            cancel
             increase
             providedAmount
             usedAmount
             settledAmount
             withdrawnAmount
+            purchaseId
+            paymentId
             blockNumber
             blockTimestamp
             transactionHash

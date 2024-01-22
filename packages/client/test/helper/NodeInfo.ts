@@ -2,6 +2,7 @@ import * as dotenv from "dotenv";
 import { JsonRpcProvider, Networkish } from "@ethersproject/providers";
 import { Wallet } from "@ethersproject/wallet";
 import { Amount, ContractUtils, LIVE_CONTRACTS } from "../../src";
+import { NonceManager } from "../../src";
 import {
     CurrencyRate,
     CurrencyRate__factory,
@@ -23,7 +24,6 @@ import {
 import { PhoneLinkCollection, PhoneLinkCollection__factory } from "del-osx-lib";
 import { IShopData } from "./types";
 import { Signer } from "@ethersproject/abstract-signer";
-import { NonceManager } from "@ethersproject/experimental";
 
 dotenv.config({ path: "env/.env" });
 
