@@ -115,6 +115,20 @@ export class ShopMethods extends ClientCore implements IShopMethods, IClientHttp
         return await shopContract.withdrawableOf(shopId);
     }
 
+    public async isAvailableId(shopId: BytesLike): Promise<boolean> {
+        const provider = this.web3.getProvider() as Provider;
+        if (!provider) throw new NoProviderError();
+
+        const network = getNetwork((await provider.getNetwork()).chainId);
+        const networkName = network.name as SupportedNetworks;
+        if (!SupportedNetworksArray.includes(networkName)) {
+            throw new UnsupportedNetworkError(networkName);
+        }
+
+        const shopContract: Shop = Shop__factory.connect(this.web3.getShopAddress(), provider);
+        return await shopContract.isAvailableId(shopId);
+    }
+
     /**
      * 상점의 정보를 제공한다.
      * @param shopId
