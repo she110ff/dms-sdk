@@ -128,6 +128,20 @@ export type ApproveNewPaymentValue =
           account: string;
       };
 
+export type OpenCancelPaymentValue =
+    | {
+          key: NormalSteps.PREPARED;
+          paymentId: BytesLike;
+          account: string;
+          signature: BytesLike;
+      }
+    | {
+          key: NormalSteps.DONE;
+          paymentId: BytesLike;
+          account: string;
+          paymentStatus: number;
+      };
+
 export type ApproveCancelPaymentValue =
     | {
           key: NormalSteps.PREPARED;
@@ -362,6 +376,7 @@ export enum ShopWithdrawStatus {
 export type ShopData = {
     shopId: BytesLike;
     name: string;
+    currency: string;
     account: string; // 상점주의 지갑주소
     providedAmount: BigNumber; // 제공된 포인트 총량
     usedAmount: BigNumber; // 사용된 포인트 총량
