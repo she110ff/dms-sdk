@@ -5,6 +5,8 @@ import { Network } from "../../src/client-common/interfaces/network";
 import * as assert from "assert";
 import { NodeInfo } from "../helper/NodeInfo";
 
+import { BigNumber } from "@ethersproject/bignumber";
+
 export interface IShopData {
     shopId: string;
     name: string;
@@ -71,6 +73,13 @@ describe("Shop", () => {
                     throw new Error("Unexpected add shop step: " + JSON.stringify(step, null, 2));
             }
         }
+    });
+
+    it("Get ShopIDs", async () => {
+        const length = await client.shop.getShopsCount();
+        assert.deepStrictEqual(length, BigNumber.from(1));
+        const res = await client.shop.getShops(0, length.toNumber());
+        assert.deepStrictEqual(res, [shopData.shopId]);
     });
 
     it("Update", async () => {

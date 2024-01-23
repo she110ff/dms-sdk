@@ -129,6 +129,44 @@ export class ShopMethods extends ClientCore implements IShopMethods, IClientHttp
         return await shopContract.isAvailableId(shopId);
     }
 
+    public async getShops(from: number, to: number): Promise<BytesLike[]> {
+        const signer = this.web3.getConnectedSigner();
+        if (!signer) {
+            throw new NoSignerError();
+        } else if (!signer.provider) {
+            throw new NoProviderError();
+        }
+
+        const network = getNetwork((await signer.provider.getNetwork()).chainId);
+        const networkName = network.name as SupportedNetworks;
+        if (!SupportedNetworksArray.includes(networkName)) {
+            throw new UnsupportedNetworkError(networkName);
+        }
+
+        const shopContract: Shop = Shop__factory.connect(this.web3.getShopAddress(), signer);
+        const account: string = await signer.getAddress();
+        return await shopContract.getShopsOfAccount(account, BigNumber.from(from), BigNumber.from(to));
+    }
+
+    public async getShopsCount(): Promise<BigNumber> {
+        const signer = this.web3.getConnectedSigner();
+        if (!signer) {
+            throw new NoSignerError();
+        } else if (!signer.provider) {
+            throw new NoProviderError();
+        }
+
+        const network = getNetwork((await signer.provider.getNetwork()).chainId);
+        const networkName = network.name as SupportedNetworks;
+        if (!SupportedNetworksArray.includes(networkName)) {
+            throw new UnsupportedNetworkError(networkName);
+        }
+
+        const shopContract: Shop = Shop__factory.connect(this.web3.getShopAddress(), signer);
+        const account: string = await signer.getAddress();
+        return await shopContract.getShopsCountOfAccount(account);
+    }
+
     /**
      * 상점의 정보를 제공한다.
      * @param shopId
