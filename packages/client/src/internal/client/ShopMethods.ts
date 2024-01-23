@@ -187,6 +187,7 @@ export class ShopMethods extends ClientCore implements IShopMethods, IClientHttp
         return {
             shopId: shopInfo.shopId,
             name: shopInfo.name,
+            currency: shopInfo.currency,
             account: shopInfo.account,
             providedAmount: shopInfo.providedAmount,
             usedAmount: shopInfo.usedAmount,
@@ -197,7 +198,6 @@ export class ShopMethods extends ClientCore implements IShopMethods, IClientHttp
             withdrawStatus: shopInfo.withdrawData.status
         };
     }
-
     /**
      * 상점주가 정산금 출금 신청을 오픈한다.
      * @param shopId
