@@ -42,8 +42,7 @@ import {
     ApproveCancelPaymentValue,
     LedgerPageType,
     PaymentDetailTaskStatus,
-    MobileType,
-    OpenCancelPaymentValue
+    MobileType
 } from "../../interfaces";
 import {
     AmountMismatchError,
@@ -377,49 +376,6 @@ export class LedgerMethods extends ClientCore implements ILedgerMethods, IClient
             totalPoint: detail.paidPoint.add(detail.feePoint),
             totalToken: detail.paidToken.add(detail.feeToken),
             totalValue: detail.paidValue.add(detail.feeValue)
-        };
-    }
-
-    public async *openCancelPayment(shopId: BytesLike, paymentId: BytesLike): AsyncGenerator<OpenCancelPaymentValue> {
-        const signer = this.web3.getConnectedSigner();
-        if (!signer) {
-            throw new NoSignerError();
-        } else if (!signer.provider) {
-            throw new NoProviderError();
-        }
-
-        const network = getNetwork((await signer.provider.getNetwork()).chainId);
-        const networkName = network.name as SupportedNetworks;
-        if (!SupportedNetworksArray.includes(networkName)) {
-            throw new UnsupportedNetworkError(networkName);
-        }
-
-        const account: string = await signer.getAddress();
-        const nonce = BigNumber.from(paymentId);
-        const signature = await ContractUtils.signShop(signer, shopId, nonce);
-
-        const param = {
-            paymentId,
-            signature
-        };
-
-        yield {
-            key: NormalSteps.PREPARED,
-            paymentId,
-            account,
-            signature
-        };
-
-        const res = await Network.post(await this.getEndpoint("/v1/payment/cancel/shop/open"), param);
-        if (res.code !== 0 || res.data === undefined) {
-            throw new InternalServerError(res?.error?.message ?? "");
-        }
-
-        yield {
-            key: NormalSteps.DONE,
-            paymentId,
-            account,
-            paymentStatus: res.data.paymentStatus
         };
     }
 

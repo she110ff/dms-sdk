@@ -7,7 +7,6 @@ import {
     DepositStepValue,
     LoyaltyType,
     MobileType,
-    OpenCancelPaymentValue,
     PaymentDetailData,
     QueryOption,
     UpdateAllowanceParams,
@@ -39,8 +38,6 @@ export interface ILedgerMethods extends IClientCore, IClientHttpCore {
         shopId: BytesLike,
         approval: boolean
     ) => AsyncGenerator<ApproveNewPaymentValue>;
-
-    openCancelPayment: (shopId: BytesLike, paymentId: BytesLike) => AsyncGenerator<OpenCancelPaymentValue>;
 
     approveCancelPayment: (
         paymentId: BytesLike,

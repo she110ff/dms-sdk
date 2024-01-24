@@ -128,20 +128,6 @@ export type ApproveNewPaymentValue =
           account: string;
       };
 
-export type OpenCancelPaymentValue =
-    | {
-          key: NormalSteps.PREPARED;
-          paymentId: BytesLike;
-          account: string;
-          signature: BytesLike;
-      }
-    | {
-          key: NormalSteps.DONE;
-          paymentId: BytesLike;
-          account: string;
-          paymentStatus: number;
-      };
-
 export type ApproveCancelPaymentValue =
     | {
           key: NormalSteps.PREPARED;
