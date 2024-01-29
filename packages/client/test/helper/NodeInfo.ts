@@ -16,8 +16,8 @@ import {
     LoyaltyProvider__factory,
     Shop,
     Shop__factory,
-    Token,
-    Token__factory,
+    KIOS,
+    KIOS__factory,
     Validator,
     Validator__factory
 } from "dms-osx-lib";
@@ -67,7 +67,7 @@ export interface IContextParams {
 export interface IContractInfo {
     provider: JsonRpcProvider;
     phoneLinkCollection: PhoneLinkCollection;
-    token: Token;
+    token: KIOS;
     validator: Validator;
     currencyRate: CurrencyRate;
     shop: Shop;
@@ -76,6 +76,7 @@ export interface IContractInfo {
     loyaltyConsumer: LoyaltyConsumer;
     loyaltyExchanger: LoyaltyExchanger;
 }
+
 export class NodeInfo {
     public static initialAccounts: any[];
     public static RELAY_ACCESS_KEY = process.env.RELAY_ACCESS_KEY || "";
@@ -340,7 +341,7 @@ export class NodeInfo {
         console.log("Start Attach");
 
         console.log("Attach Token");
-        const tokenContract = Token__factory.connect(contextParams.tokenAddress, provider);
+        const tokenContract = KIOS__factory.connect(contextParams.tokenAddress, provider);
 
         console.log("Attach Validator");
         const validatorContract: Validator = Validator__factory.connect(contextParams.validatorAddress, provider);
@@ -443,5 +444,4 @@ export class NodeInfo {
         NodeInfo.purchaseId++;
         return res;
     }
-
 }

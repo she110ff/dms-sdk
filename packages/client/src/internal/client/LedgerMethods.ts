@@ -14,8 +14,8 @@ import {
     LoyaltyConsumer__factory,
     LoyaltyExchanger,
     LoyaltyExchanger__factory,
-    Token,
-    Token__factory
+    KIOS,
+    KIOS__factory
 } from "dms-osx-lib";
 import { Provider } from "@ethersproject/providers";
 import { NoProviderError, NoSignerError, UnsupportedNetworkError, UpdateAllowanceError } from "dms-sdk-common";
@@ -586,7 +586,7 @@ export class LedgerMethods extends ClientCore implements ILedgerMethods, IClient
         const account: string = await signer.getAddress();
 
         const ledgerContract: Ledger = Ledger__factory.connect(this.web3.getLedgerAddress(), signer);
-        const tokenContract: Token = Token__factory.connect(this.web3.getTokenAddress(), signer);
+        const tokenContract: KIOS = KIOS__factory.connect(this.web3.getTokenAddress(), signer);
 
         const balance = await tokenContract.balanceOf(account);
         if (amount.gte(balance)) throw new InsufficientBalanceError();
@@ -677,7 +677,7 @@ export class LedgerMethods extends ClientCore implements ILedgerMethods, IClient
         }
 
         const nonceSigner = new NonceManager(new GasPriceManager(signer));
-        const tokenInstance = Token__factory.connect(params.tokenAddress, nonceSigner);
+        const tokenInstance = KIOS__factory.connect(params.tokenAddress, nonceSigner);
         const currentAllowance = await tokenInstance.allowance(await signer.getAddress(), params.targetAddress);
 
         yield {

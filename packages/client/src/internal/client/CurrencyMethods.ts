@@ -1,11 +1,11 @@
 import { ClientCore, Context, SupportedNetworks, SupportedNetworksArray } from "../../client-common";
 import { ICurrencyMethods } from "../../interface/ICurrency";
-import { CurrencyRate, CurrencyRate__factory, Token, Token__factory } from "dms-osx-lib";
+import { CurrencyRate, CurrencyRate__factory, KIOS, KIOS__factory } from "dms-osx-lib";
 import { Provider } from "@ethersproject/providers";
 import { NoProviderError, UnsupportedNetworkError } from "dms-sdk-common";
 import { BigNumber } from "@ethersproject/bignumber";
 import { getNetwork } from "@ethersproject/networks";
-import {ContractUtils} from "../../utils/ContractUtils";
+import { ContractUtils } from "../../utils/ContractUtils";
 
 /**
  * 환률정보를 제공하고, 통화량을 환산하는 기능이 포함된 클래스이다.
@@ -69,7 +69,7 @@ export class CurrencyMethods extends ClientCore implements ICurrencyMethods {
                 throw new UnsupportedNetworkError(networkName);
             }
 
-            const contract: Token = Token__factory.connect(this.web3.getTokenAddress(), provider);
+            const contract: KIOS = KIOS__factory.connect(this.web3.getTokenAddress(), provider);
             CurrencyMethods._TokenSymbol = await contract.symbol();
         }
         return CurrencyMethods._TokenSymbol;

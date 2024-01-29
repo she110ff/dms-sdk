@@ -5,7 +5,7 @@ import { activeContractsList as delActiveContractList } from "del-osx-lib";
 export const LIVE_CONTRACTS: { [K in SupportedNetworks]: NetworkDeployment } = {
     bosagora_mainnet: {
         PhoneLinkCollectionAddress: delActiveContractList.bosagora_mainnet.PhoneLinkCollection,
-        TokenAddress: dmsActiveContractList.bosagora_mainnet.Token,
+        TokenAddress: dmsActiveContractList.bosagora_mainnet.KIOS,
         ValidatorAddress: dmsActiveContractList.bosagora_mainnet.Validator,
         CurrencyRateAddress: dmsActiveContractList.bosagora_mainnet.CurrencyRate,
         ShopAddress: dmsActiveContractList.bosagora_mainnet.Shop,
@@ -17,7 +17,7 @@ export const LIVE_CONTRACTS: { [K in SupportedNetworks]: NetworkDeployment } = {
     },
     bosagora_testnet: {
         PhoneLinkCollectionAddress: delActiveContractList.bosagora_testnet.PhoneLinkCollection,
-        TokenAddress: dmsActiveContractList.bosagora_testnet.Token,
+        TokenAddress: dmsActiveContractList.bosagora_testnet.KIOS,
         ValidatorAddress: dmsActiveContractList.bosagora_testnet.Validator,
         CurrencyRateAddress: dmsActiveContractList.bosagora_testnet.CurrencyRate,
         ShopAddress: dmsActiveContractList.bosagora_testnet.Shop,
@@ -29,7 +29,7 @@ export const LIVE_CONTRACTS: { [K in SupportedNetworks]: NetworkDeployment } = {
     },
     bosagora_devnet: {
         PhoneLinkCollectionAddress: delActiveContractList.bosagora_devnet.PhoneLinkCollection,
-        TokenAddress: dmsActiveContractList.bosagora_devnet.Token,
+        TokenAddress: dmsActiveContractList.bosagora_devnet.KIOS,
         ValidatorAddress: dmsActiveContractList.bosagora_devnet.Validator,
         CurrencyRateAddress: dmsActiveContractList.bosagora_devnet.CurrencyRate,
         ShopAddress: dmsActiveContractList.bosagora_devnet.Shop,
