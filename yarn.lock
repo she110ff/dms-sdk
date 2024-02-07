@@ -2821,10 +2821,10 @@ define-property@^2.0.2:
     is-descriptor "^1.0.2"
     isobject "^3.0.1"
 
-del-osx-lib@^2.0.0:
-  version "2.0.0"
-  resolved "https://registry.yarnpkg.com/del-osx-lib/-/del-osx-lib-2.0.0.tgz#781e34424c94936960a3690d92a89c9843c8127b"
-  integrity sha512-nQOCnnpCXS13m9R21jJIvBvZmdzOhOqwbvFMnWm1aTbxd2bZCD9fQSA0KiQxqYaZRD7Sx1t2ts1mvL7/CRI03w==
+del-osx-lib@^2.1.0:
+  version "2.1.0"
+  resolved "https://registry.yarnpkg.com/del-osx-lib/-/del-osx-lib-2.1.0.tgz#ce55230a4ac54ec617a0d4f733c86173bd7dfda2"
+  integrity sha512-IDp62tx2k7dN6ywhgZxvC493O/8k8Lk+2hWmtei8nNs5n7kscAsgAGntR584Pd50xCTyZ+mmGCOR2PD1Ar/51Q==
   dependencies:
     ethers "npm:boa-ethers2@^5.7.9"
 
@@ -2855,10 +2855,10 @@ dir-glob@^3.0.1:
   dependencies:
     path-type "^4.0.0"
 
-dms-osx-lib@^2.4.2:
-  version "2.4.2"
-  resolved "https://registry.yarnpkg.com/dms-osx-lib/-/dms-osx-lib-2.4.2.tgz#d61a889692052d46928fde07cb1a0a6c174fb544"
-  integrity sha512-ZnvIXe91DFEisdhfEWmZFNlfadkPTkGU2br0g/6K7JTDKxm7z0CgYeIM3LyEi91Aq/woZBilnOLLM8ylSbo9mQ==
+dms-osx-lib@^2.6.1:
+  version "2.6.1"
+  resolved "https://registry.yarnpkg.com/dms-osx-lib/-/dms-osx-lib-2.6.1.tgz#fa70b452a1d8992532767ee7e5d55991bdc17fe3"
+  integrity sha512-IPUxLdIYSoEq0psC8KHppgr2TjMoBmWNCCTOPryJ37HD8C/YT2ZyfLUKQtFrrH8EAimHlbV4BZncoJ29jd6IOQ==
   dependencies:
     ethers "npm:boa-ethers2@^5.7.9"
 

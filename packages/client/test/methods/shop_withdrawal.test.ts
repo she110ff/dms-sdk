@@ -14,11 +14,22 @@ describe("Shop Withdrawal", () => {
     const contractInfo = NodeInfo.getContractInfo();
     const accounts = NodeInfo.accounts();
     const validatorWallets = [
-        accounts[AccountIndex.VALIDATOR1],
-        accounts[AccountIndex.VALIDATOR2],
-        accounts[AccountIndex.VALIDATOR3],
-        accounts[AccountIndex.VALIDATOR4],
-        accounts[AccountIndex.VALIDATOR5]
+        accounts[AccountIndex.VALIDATOR01],
+        accounts[AccountIndex.VALIDATOR02],
+        accounts[AccountIndex.VALIDATOR03],
+        accounts[AccountIndex.VALIDATOR04],
+        accounts[AccountIndex.VALIDATOR05],
+        accounts[AccountIndex.VALIDATOR06],
+        accounts[AccountIndex.VALIDATOR07],
+        accounts[AccountIndex.VALIDATOR08],
+        accounts[AccountIndex.VALIDATOR09],
+        accounts[AccountIndex.VALIDATOR10],
+        accounts[AccountIndex.VALIDATOR11],
+        accounts[AccountIndex.VALIDATOR12],
+        accounts[AccountIndex.VALIDATOR13],
+        accounts[AccountIndex.VALIDATOR14],
+        accounts[AccountIndex.VALIDATOR15],
+        accounts[AccountIndex.VALIDATOR16]
     ];
     const userWallets = [
         Wallet.createRandom(),
@@ -200,11 +211,14 @@ describe("Shop Withdrawal", () => {
                 currency: purchase.currency.toLowerCase(),
                 shopId: shopData[purchase.shopIndex].shopId,
                 account: userAccount,
-                phone: phoneHash
+                phone: phoneHash,
+                sender: await accounts[AccountIndex.FOUNDATION].getAddress()
             };
             const purchaseMessage = ContractUtils.getPurchasesMessage(0, [purchaseParams]);
             const signatures = validatorWallets.map((m) => ContractUtils.signMessage(m, purchaseMessage));
-            await contractInfo.loyaltyProvider.connect(validatorWallets[4]).savePurchase(0, [purchaseParams], signatures);
+            await contractInfo.loyaltyProvider
+                .connect(validatorWallets[4])
+                .savePurchase(0, [purchaseParams], signatures);
         }
     });
 

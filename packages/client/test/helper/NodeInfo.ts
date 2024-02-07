@@ -1,8 +1,7 @@
 import * as dotenv from "dotenv";
 import { JsonRpcProvider, Networkish } from "@ethersproject/providers";
 import { Wallet } from "@ethersproject/wallet";
-import { Amount, ContractUtils, LIVE_CONTRACTS } from "../../src";
-import { NonceManager } from "../../src";
+import { Amount, ContractUtils, GasPriceManager, LIVE_CONTRACTS, NonceManager } from "../../src";
 import {
     CurrencyRate,
     CurrencyRate__factory,
@@ -33,15 +32,23 @@ export enum AccountIndex {
     FOUNDATION,
     SETTLEMENT,
     FEE,
-    CERTIFIER,
     CERTIFIER01,
-    CERTIFIER02,
-    CERTIFIER03,
-    VALIDATOR1,
-    VALIDATOR2,
-    VALIDATOR3,
-    VALIDATOR4,
-    VALIDATOR5,
+    VALIDATOR01,
+    VALIDATOR02,
+    VALIDATOR03,
+    VALIDATOR04,
+    VALIDATOR05,
+    VALIDATOR06,
+    VALIDATOR07,
+    VALIDATOR08,
+    VALIDATOR09,
+    VALIDATOR10,
+    VALIDATOR11,
+    VALIDATOR12,
+    VALIDATOR13,
+    VALIDATOR14,
+    VALIDATOR15,
+    VALIDATOR16,
     LINK_VALIDATOR1,
     LINK_VALIDATOR2,
     LINK_VALIDATOR3
@@ -59,6 +66,7 @@ export interface IContextParams {
     loyaltyProviderAddress: string;
     loyaltyConsumerAddress: string;
     loyaltyExchangerAddress: string;
+    LoyaltyTransferAddress: string;
     web3Providers: string | JsonRpcProvider | (string | JsonRpcProvider)[];
     relayEndpoint: string | URL;
     graphqlNodes: { url: string }[];
@@ -89,8 +97,6 @@ export class NodeInfo {
     public static CreateInitialAccounts(): any[] {
         const accounts: string[] = [];
         const reg_bytes64: RegExp = /^(0x)[0-9a-f]{64}$/i;
-
-        // 0
         if (
             process.env.DEPLOYER !== undefined &&
             process.env.DEPLOYER.trim() !== "" &&
@@ -102,7 +108,6 @@ export class NodeInfo {
             accounts.push(process.env.DEPLOYER);
         }
 
-        // 1
         if (process.env.OWNER !== undefined && process.env.OWNER.trim() !== "" && reg_bytes64.test(process.env.OWNER)) {
             accounts.push(process.env.OWNER);
         } else {
@@ -110,7 +115,6 @@ export class NodeInfo {
             accounts.push(process.env.OWNER);
         }
 
-        // 2
         if (
             process.env.FOUNDATION !== undefined &&
             process.env.FOUNDATION.trim() !== "" &&
@@ -122,19 +126,17 @@ export class NodeInfo {
             accounts.push(process.env.FOUNDATION);
         }
 
-        // 3
         if (
-            process.env.SETTLEMENT !== undefined &&
-            process.env.SETTLEMENT.trim() !== "" &&
-            reg_bytes64.test(process.env.SETTLEMENT)
+            process.env.SETTLEMENTS !== undefined &&
+            process.env.SETTLEMENTS.trim() !== "" &&
+            reg_bytes64.test(process.env.SETTLEMENTS)
         ) {
-            accounts.push(process.env.SETTLEMENT);
+            accounts.push(process.env.SETTLEMENTS);
         } else {
-            process.env.SETTLEMENT = Wallet.createRandom().privateKey;
-            accounts.push(process.env.SETTLEMENT);
+            process.env.SETTLEMENTS = Wallet.createRandom().privateKey;
+            accounts.push(process.env.SETTLEMENTS);
         }
 
-        // 4
         if (process.env.FEE !== undefined && process.env.FEE.trim() !== "" && reg_bytes64.test(process.env.FEE)) {
             accounts.push(process.env.FEE);
         } else {
@@ -142,19 +144,6 @@ export class NodeInfo {
             accounts.push(process.env.FEE);
         }
 
-        // 5
-        if (
-            process.env.CERTIFIER !== undefined &&
-            process.env.CERTIFIER.trim() !== "" &&
-            reg_bytes64.test(process.env.CERTIFIER)
-        ) {
-            accounts.push(process.env.CERTIFIER);
-        } else {
-            process.env.CERTIFIER = Wallet.createRandom().privateKey;
-            accounts.push(process.env.CERTIFIER);
-        }
-
-        // 6
         if (
             process.env.CERTIFIER01 !== undefined &&
             process.env.CERTIFIER01.trim() !== "" &&
@@ -166,91 +155,182 @@ export class NodeInfo {
             accounts.push(process.env.CERTIFIER01);
         }
 
-        // 7
         if (
-            process.env.CERTIFIER02 !== undefined &&
-            process.env.CERTIFIER02.trim() !== "" &&
-            reg_bytes64.test(process.env.CERTIFIER02)
+            process.env.VALIDATOR01 !== undefined &&
+            process.env.VALIDATOR01.trim() !== "" &&
+            reg_bytes64.test(process.env.VALIDATOR01)
         ) {
-            accounts.push(process.env.CERTIFIER02);
+            accounts.push(process.env.VALIDATOR01);
         } else {
-            process.env.CERTIFIER02 = Wallet.createRandom().privateKey;
-            accounts.push(process.env.CERTIFIER02);
+            process.env.VALIDATOR01 = Wallet.createRandom().privateKey;
+            accounts.push(process.env.VALIDATOR01);
         }
 
-        // 8
         if (
-            process.env.CERTIFIER03 !== undefined &&
-            process.env.CERTIFIER03.trim() !== "" &&
-            reg_bytes64.test(process.env.CERTIFIER03)
+            process.env.VALIDATOR02 !== undefined &&
+            process.env.VALIDATOR02.trim() !== "" &&
+            reg_bytes64.test(process.env.VALIDATOR02)
         ) {
-            accounts.push(process.env.CERTIFIER03);
+            accounts.push(process.env.VALIDATOR02);
         } else {
-            process.env.CERTIFIER03 = Wallet.createRandom().privateKey;
-            accounts.push(process.env.CERTIFIER03);
+            process.env.VALIDATOR02 = Wallet.createRandom().privateKey;
+            accounts.push(process.env.VALIDATOR02);
         }
 
-        // 9
         if (
-            process.env.VALIDATOR1 !== undefined &&
-            process.env.VALIDATOR1.trim() !== "" &&
-            reg_bytes64.test(process.env.VALIDATOR1)
+            process.env.VALIDATOR03 !== undefined &&
+            process.env.VALIDATOR03.trim() !== "" &&
+            reg_bytes64.test(process.env.VALIDATOR03)
         ) {
-            accounts.push(process.env.VALIDATOR1);
+            accounts.push(process.env.VALIDATOR03);
         } else {
-            process.env.VALIDATOR1 = Wallet.createRandom().privateKey;
-            accounts.push(process.env.VALIDATOR1);
+            process.env.VALIDATOR03 = Wallet.createRandom().privateKey;
+            accounts.push(process.env.VALIDATOR03);
         }
 
-        // 10
         if (
-            process.env.VALIDATOR2 !== undefined &&
-            process.env.VALIDATOR2.trim() !== "" &&
-            reg_bytes64.test(process.env.VALIDATOR2)
+            process.env.VALIDATOR04 !== undefined &&
+            process.env.VALIDATOR04.trim() !== "" &&
+            reg_bytes64.test(process.env.VALIDATOR04)
         ) {
-            accounts.push(process.env.VALIDATOR2);
+            accounts.push(process.env.VALIDATOR04);
         } else {
-            process.env.VALIDATOR2 = Wallet.createRandom().privateKey;
-            accounts.push(process.env.VALIDATOR2);
+            process.env.VALIDATOR04 = Wallet.createRandom().privateKey;
+            accounts.push(process.env.VALIDATOR04);
         }
 
-        // 11
         if (
-            process.env.VALIDATOR3 !== undefined &&
-            process.env.VALIDATOR3.trim() !== "" &&
-            reg_bytes64.test(process.env.VALIDATOR3)
+            process.env.VALIDATOR05 !== undefined &&
+            process.env.VALIDATOR05.trim() !== "" &&
+            reg_bytes64.test(process.env.VALIDATOR05)
         ) {
-            accounts.push(process.env.VALIDATOR3);
+            accounts.push(process.env.VALIDATOR05);
         } else {
-            process.env.VALIDATOR3 = Wallet.createRandom().privateKey;
-            accounts.push(process.env.VALIDATOR3);
+            process.env.VALIDATOR05 = Wallet.createRandom().privateKey;
+            accounts.push(process.env.VALIDATOR05);
         }
 
-        // 12
         if (
-            process.env.VALIDATOR4 !== undefined &&
-            process.env.VALIDATOR4.trim() !== "" &&
-            reg_bytes64.test(process.env.VALIDATOR4)
+            process.env.VALIDATOR06 !== undefined &&
+            process.env.VALIDATOR06.trim() !== "" &&
+            reg_bytes64.test(process.env.VALIDATOR06)
         ) {
-            accounts.push(process.env.VALIDATOR4);
+            accounts.push(process.env.VALIDATOR06);
         } else {
-            process.env.VALIDATOR4 = Wallet.createRandom().privateKey;
-            accounts.push(process.env.VALIDATOR4);
+            process.env.VALIDATOR06 = Wallet.createRandom().privateKey;
+            accounts.push(process.env.VALIDATOR06);
         }
 
-        // 13
         if (
-            process.env.VALIDATOR5 !== undefined &&
-            process.env.VALIDATOR5.trim() !== "" &&
-            reg_bytes64.test(process.env.VALIDATOR5)
+            process.env.VALIDATOR07 !== undefined &&
+            process.env.VALIDATOR07.trim() !== "" &&
+            reg_bytes64.test(process.env.VALIDATOR07)
         ) {
-            accounts.push(process.env.VALIDATOR5);
+            accounts.push(process.env.VALIDATOR07);
         } else {
-            process.env.VALIDATOR5 = Wallet.createRandom().privateKey;
-            accounts.push(process.env.VALIDATOR5);
+            process.env.VALIDATOR07 = Wallet.createRandom().privateKey;
+            accounts.push(process.env.VALIDATOR07);
         }
 
-        // 15
+        if (
+            process.env.VALIDATOR08 !== undefined &&
+            process.env.VALIDATOR08.trim() !== "" &&
+            reg_bytes64.test(process.env.VALIDATOR08)
+        ) {
+            accounts.push(process.env.VALIDATOR08);
+        } else {
+            process.env.VALIDATOR08 = Wallet.createRandom().privateKey;
+            accounts.push(process.env.VALIDATOR08);
+        }
+
+        if (
+            process.env.VALIDATOR09 !== undefined &&
+            process.env.VALIDATOR09.trim() !== "" &&
+            reg_bytes64.test(process.env.VALIDATOR09)
+        ) {
+            accounts.push(process.env.VALIDATOR09);
+        } else {
+            process.env.VALIDATOR09 = Wallet.createRandom().privateKey;
+            accounts.push(process.env.VALIDATOR09);
+        }
+
+        if (
+            process.env.VALIDATOR10 !== undefined &&
+            process.env.VALIDATOR10.trim() !== "" &&
+            reg_bytes64.test(process.env.VALIDATOR10)
+        ) {
+            accounts.push(process.env.VALIDATOR10);
+        } else {
+            process.env.VALIDATOR10 = Wallet.createRandom().privateKey;
+            accounts.push(process.env.VALIDATOR10);
+        }
+
+        if (
+            process.env.VALIDATOR11 !== undefined &&
+            process.env.VALIDATOR11.trim() !== "" &&
+            reg_bytes64.test(process.env.VALIDATOR11)
+        ) {
+            accounts.push(process.env.VALIDATOR11);
+        } else {
+            process.env.VALIDATOR11 = Wallet.createRandom().privateKey;
+            accounts.push(process.env.VALIDATOR11);
+        }
+
+        if (
+            process.env.VALIDATOR12 !== undefined &&
+            process.env.VALIDATOR12.trim() !== "" &&
+            reg_bytes64.test(process.env.VALIDATOR12)
+        ) {
+            accounts.push(process.env.VALIDATOR12);
+        } else {
+            process.env.VALIDATOR12 = Wallet.createRandom().privateKey;
+            accounts.push(process.env.VALIDATOR12);
+        }
+
+        if (
+            process.env.VALIDATOR13 !== undefined &&
+            process.env.VALIDATOR13.trim() !== "" &&
+            reg_bytes64.test(process.env.VALIDATOR13)
+        ) {
+            accounts.push(process.env.VALIDATOR13);
+        } else {
+            process.env.VALIDATOR13 = Wallet.createRandom().privateKey;
+            accounts.push(process.env.VALIDATOR13);
+        }
+
+        if (
+            process.env.VALIDATOR14 !== undefined &&
+            process.env.VALIDATOR14.trim() !== "" &&
+            reg_bytes64.test(process.env.VALIDATOR14)
+        ) {
+            accounts.push(process.env.VALIDATOR14);
+        } else {
+            process.env.VALIDATOR14 = Wallet.createRandom().privateKey;
+            accounts.push(process.env.VALIDATOR14);
+        }
+
+        if (
+            process.env.VALIDATOR15 !== undefined &&
+            process.env.VALIDATOR15.trim() !== "" &&
+            reg_bytes64.test(process.env.VALIDATOR15)
+        ) {
+            accounts.push(process.env.VALIDATOR15);
+        } else {
+            process.env.VALIDATOR15 = Wallet.createRandom().privateKey;
+            accounts.push(process.env.VALIDATOR15);
+        }
+
+        if (
+            process.env.VALIDATOR16 !== undefined &&
+            process.env.VALIDATOR16.trim() !== "" &&
+            reg_bytes64.test(process.env.VALIDATOR16)
+        ) {
+            accounts.push(process.env.VALIDATOR16);
+        } else {
+            process.env.VALIDATOR16 = Wallet.createRandom().privateKey;
+            accounts.push(process.env.VALIDATOR16);
+        }
+
         if (
             process.env.LINK_VALIDATOR1 !== undefined &&
             process.env.LINK_VALIDATOR1.trim() !== "" &&
@@ -262,7 +342,6 @@ export class NodeInfo {
             accounts.push(process.env.LINK_VALIDATOR1);
         }
 
-        // 15
         if (
             process.env.LINK_VALIDATOR2 !== undefined &&
             process.env.LINK_VALIDATOR2.trim() !== "" &&
@@ -274,7 +353,6 @@ export class NodeInfo {
             accounts.push(process.env.LINK_VALIDATOR2);
         }
 
-        // 16
         if (
             process.env.LINK_VALIDATOR3 !== undefined &&
             process.env.LINK_VALIDATOR3.trim() !== "" &&
@@ -284,6 +362,10 @@ export class NodeInfo {
         } else {
             process.env.LINK_VALIDATOR3 = Wallet.createRandom().privateKey;
             accounts.push(process.env.LINK_VALIDATOR3);
+        }
+
+        while (accounts.length < 70) {
+            accounts.push(Wallet.createRandom().privateKey);
         }
 
         return accounts.map((m) => {
@@ -299,7 +381,7 @@ export class NodeInfo {
             NodeInfo.initialAccounts = NodeInfo.CreateInitialAccounts();
         }
         return NodeInfo.initialAccounts.map(
-            (m) => new NonceManager(new Wallet(m.secretKey).connect(NodeInfo.createProvider()))
+            (m) => new NonceManager(new GasPriceManager(new Wallet(m.secretKey).connect(NodeInfo.createProvider())))
         );
     }
 
@@ -322,6 +404,7 @@ export class NodeInfo {
             loyaltyProviderAddress: LIVE_CONTRACTS[network].LoyaltyProviderAddress,
             loyaltyConsumerAddress: LIVE_CONTRACTS[network].LoyaltyConsumerAddress,
             loyaltyExchangerAddress: LIVE_CONTRACTS[network].LoyaltyExchangerAddress,
+            LoyaltyTransferAddress: LIVE_CONTRACTS[network].LoyaltyTransferAddress,
             relayEndpoint: NodeInfo.RELAY_END_POINT,
             web3Providers: NodeInfo.createProvider(),
             graphqlNodes: [
@@ -417,7 +500,7 @@ export class NodeInfo {
 
     public static async addShopData(contracts: IContractInfo, shopData: IShopData[]) {
         console.log("Add Shop Data");
-        const sender = NodeInfo.accounts()[AccountIndex.CERTIFIER];
+        const sender = NodeInfo.accounts()[AccountIndex.CERTIFIER01];
         for (const shop of shopData) {
             const nonce = await contracts.shop.nonceOf(shop.wallet.address);
             const signature = await ContractUtils.signShop(new Wallet(shop.wallet.privateKey), shop.shopId, nonce);

@@ -35,16 +35,28 @@ export class GasPriceManager extends Signer {
         return this.signer.signTransaction(transaction);
     }
 
-    sendTransaction(
-        transaction: Deferrable<TransactionRequest>
-    ): Promise<TransactionResponse> {
-        const maxPriorityFeePerGas = 1500000000;
-        const maxFeePerGas = maxPriorityFeePerGas;
+    sendTransaction(transaction: Deferrable<TransactionRequest>): Promise<TransactionResponse> {
+        const provider = this.signer.provider;
+        if (provider === undefined) {
+            const maxPriorityFeePerGas = 1500000000;
+            const maxFeePerGas = maxPriorityFeePerGas;
 
-        transaction.maxPriorityFeePerGas = BigNumber.from(maxPriorityFeePerGas);
-        transaction.maxFeePerGas = BigNumber.from(maxFeePerGas);
-        return this.signer.sendTransaction(transaction).then((tx) => {
-            return tx;
+            transaction.maxPriorityFeePerGas = BigNumber.from(maxPriorityFeePerGas);
+            transaction.maxFeePerGas = BigNumber.from(maxFeePerGas);
+            return this.signer.sendTransaction(transaction).then((tx) => {
+                return tx;
+            });
+        }
+        return provider.getBlock("latest").then((block) => {
+            const baseFeePerGas = block.baseFeePerGas != null ? block.baseFeePerGas.toNumber() : 0;
+            const maxPriorityFeePerGas = 1500000000;
+            const maxFeePerGas = Math.floor(baseFeePerGas * 1.265625) + maxPriorityFeePerGas;
+
+            transaction.maxPriorityFeePerGas = BigNumber.from(maxPriorityFeePerGas);
+            transaction.maxFeePerGas = BigNumber.from(maxFeePerGas);
+            return this.signer.sendTransaction(transaction).then((tx) => {
+                return tx;
+            });
         });
     }
 }

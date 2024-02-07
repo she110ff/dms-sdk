@@ -1,12 +1,21 @@
-import { ClientCore, Context, IClientHttpCore, SupportedNetworks, SupportedNetworksArray } from "../../client-common";
-import { PhoneLinkCollection__factory } from "del-osx-lib";
+import {
+    ClientCore,
+    Context,
+    findLog,
+    IClientHttpCore,
+    SupportedNetworks,
+    SupportedNetworksArray
+} from "../../client-common";
+import { PhoneLinkCollection, PhoneLinkCollection__factory } from "del-osx-lib";
 import { NoProviderError, NoSignerError, UnsupportedNetworkError } from "dms-sdk-common";
 import {
+    NormalSteps,
     PhoneLinkRegisterSteps,
     PhoneLinkRegisterStepValue,
     PhoneLinkRequestStatus,
     PhoneLinkSubmitSteps,
-    PhoneLinkSubmitStepValue
+    PhoneLinkSubmitStepValue,
+    RemovePhoneInfoStepValue
 } from "../../interfaces";
 import { ContractUtils } from "../../utils/ContractUtils";
 
@@ -16,7 +25,8 @@ import { Network } from "../../client-common/interfaces/network";
 import { getNetwork } from "@ethersproject/networks";
 import { BytesLike } from "@ethersproject/bytes";
 
-import { InternalServerError, NoValidator } from "../../utils/errors";
+import { FailedRemovePhoneInfoError, InternalServerError, NoValidator } from "../../utils/errors";
+import { ContractTransaction } from "@ethersproject/contracts";
 
 /**
  * 사용자의 전화번화와 지갑주소를 링크하여 스마트컨트랙트에 저장하는 기능이 포함되어 있다.
@@ -274,5 +284,60 @@ export class PhoneLinkMethods extends ClientCore implements IPhoneLinkMethods, I
         const contract = PhoneLinkCollection__factory.connect(this.web3.getLinkAddress(), provider);
         const res = await contract.getRequestItem(id);
         return res.status;
+    }
+    /**
+     * 사용가능한 포인트로 변환한다.
+     * @return {AsyncGenerator<RemovePhoneInfoStepValue>}
+     */
+    public async *removePhoneInfo(): AsyncGenerator<RemovePhoneInfoStepValue> {
+        const signer = this.web3.getConnectedSigner();
+        if (!signer) {
+            throw new NoSignerError();
+        } else if (!signer.provider) {
+            throw new NoProviderError();
+        }
+
+        const network = getNetwork((await signer.provider.getNetwork()).chainId);
+        const networkName = network.name as SupportedNetworks;
+        if (!SupportedNetworksArray.includes(networkName)) {
+            throw new UnsupportedNetworkError(networkName);
+        }
+
+        const contract: PhoneLinkCollection = PhoneLinkCollection__factory.connect(
+            this.web3.getLedgerAddress(),
+            signer
+        );
+
+        const account = await signer.getAddress();
+        const nonce = await contract.nonceOf(account);
+        const message = ContractUtils.getRemoveMessage(account, nonce);
+        const signature = await ContractUtils.signMessage(signer, message);
+        let contractTx: ContractTransaction;
+
+        const param = {
+            account,
+            signature
+        };
+
+        yield { key: NormalSteps.PREPARED, account, signature };
+
+        const res = await Network.post(await this.getEndpoint("/v1/link/removePhoneInfo"), param);
+        if (res.code !== 0) {
+            throw new InternalServerError(res?.error?.message ?? "");
+        }
+
+        contractTx = (await signer.provider.getTransaction(res.data.txHash)) as ContractTransaction;
+
+        yield { key: NormalSteps.SENT, txHash: res.data.txHash };
+        const txReceipt = await contractTx.wait();
+
+        const log = findLog(txReceipt, contract.interface, "RemovedItem");
+        if (!log) {
+            throw new FailedRemovePhoneInfoError();
+        }
+        yield {
+            key: NormalSteps.DONE,
+            account
+        };
     }
 }

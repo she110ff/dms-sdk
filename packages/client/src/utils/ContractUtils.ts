@@ -394,6 +394,7 @@ export class ContractUtils {
         }
         return res.toLowerCase() === account.toLowerCase();
     }
+
     public static getPurchasesMessage(
         height: BigNumberish,
         purchases: {
@@ -404,13 +405,23 @@ export class ContractUtils {
             shopId: BytesLike;
             account: string;
             phone: BytesLike;
+            sender: string;
         }[]
     ): Uint8Array {
         const messages: BytesLike[] = [];
         for (const elem of purchases) {
             const encodedData = defaultAbiCoder.encode(
-                ["string", "uint256", "uint256", "string", "bytes32", "address", "bytes32"],
-                [elem.purchaseId, elem.amount, elem.loyalty, elem.currency, elem.shopId, elem.account, elem.phone]
+                ["string", "uint256", "uint256", "string", "bytes32", "address", "bytes32", "address"],
+                [
+                    elem.purchaseId,
+                    elem.amount,
+                    elem.loyalty,
+                    elem.currency,
+                    elem.shopId,
+                    elem.account,
+                    elem.phone,
+                    elem.sender
+                ]
             );
             messages.push(keccak256(encodedData));
         }
@@ -418,6 +429,11 @@ export class ContractUtils {
             ["uint256", "uint256", "bytes32[]"],
             [height, purchases.length, messages]
         );
+        return arrayify(keccak256(encodedResult));
+    }
+
+    public static getRemoveMessage(address: string, nonce: BigNumberish): Uint8Array {
+        const encodedResult = defaultAbiCoder.encode(["address", "uint256"], [address, nonce]);
         return arrayify(keccak256(encodedResult));
     }
 
@@ -431,10 +447,7 @@ export class ContractUtils {
     ): Uint8Array {
         const messages: BytesLike[] = [];
         for (const elem of rates) {
-            const encodedData = defaultAbiCoder.encode(
-                ["string", "uint256"],
-                [elem.symbol, elem.rate]
-            );
+            const encodedData = defaultAbiCoder.encode(["string", "uint256"], [elem.symbol, elem.rate]);
             messages.push(keccak256(encodedData));
         }
         const encodedResult = defaultAbiCoder.encode(

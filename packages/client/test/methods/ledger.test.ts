@@ -5,8 +5,10 @@ import {
     Context,
     ContractUtils,
     DepositSteps,
+    GasPriceManager,
     LoyaltyType,
     MobileType,
+    NonceManager,
     NormalSteps,
     WithdrawSteps
 } from "../../src";
@@ -17,99 +19,60 @@ import { Network } from "../../src/client-common/interfaces/network";
 
 import * as assert from "assert";
 import { Wallet } from "@ethersproject/wallet";
-import { IPurchaseData, IShopData, IUserData } from "../helper/types";
+import { IPurchaseData } from "../helper/types";
+import * as fs from "fs";
+
+interface IUserData {
+    idx: number;
+    phone: string;
+    address: string;
+    privateKey: string;
+    loyaltyType: number;
+}
+
+export interface IShopData {
+    shopId: string;
+    name: string;
+    address: string;
+    privateKey: string;
+}
 
 describe("Ledger", () => {
     const contextParams = NodeInfo.getContextParams();
     const contractInfo = NodeInfo.getContractInfo();
     const accounts = NodeInfo.accounts();
     const validatorWallets = [
-        accounts[AccountIndex.VALIDATOR1],
-        accounts[AccountIndex.VALIDATOR2],
-        accounts[AccountIndex.VALIDATOR3],
-        accounts[AccountIndex.VALIDATOR4],
-        accounts[AccountIndex.VALIDATOR5]
+        accounts[AccountIndex.VALIDATOR01],
+        accounts[AccountIndex.VALIDATOR02],
+        accounts[AccountIndex.VALIDATOR03],
+        accounts[AccountIndex.VALIDATOR04],
+        accounts[AccountIndex.VALIDATOR05],
+        accounts[AccountIndex.VALIDATOR06],
+        accounts[AccountIndex.VALIDATOR07],
+        accounts[AccountIndex.VALIDATOR08],
+        accounts[AccountIndex.VALIDATOR09],
+        accounts[AccountIndex.VALIDATOR10],
+        accounts[AccountIndex.VALIDATOR11],
+        accounts[AccountIndex.VALIDATOR12],
+        accounts[AccountIndex.VALIDATOR13],
+        accounts[AccountIndex.VALIDATOR14],
+        accounts[AccountIndex.VALIDATOR15],
+        accounts[AccountIndex.VALIDATOR16]
     ];
     const linkValidatorWallets = [
         accounts[AccountIndex.LINK_VALIDATOR1],
         accounts[AccountIndex.LINK_VALIDATOR2],
         accounts[AccountIndex.LINK_VALIDATOR3]
     ];
-    const userWallets = [
-        Wallet.createRandom(),
-        Wallet.createRandom(),
-        Wallet.createRandom(),
-        Wallet.createRandom(),
-        Wallet.createRandom()
-    ];
-    const shopWallets = [
-        Wallet.createRandom(),
-        Wallet.createRandom(),
-        Wallet.createRandom(),
-        Wallet.createRandom(),
-        Wallet.createRandom(),
-        Wallet.createRandom()
-    ];
+    const users: IUserData[] = JSON.parse(fs.readFileSync("test/helper/users.json", "utf8"));
+    const shops: IShopData[] = JSON.parse(fs.readFileSync("test/helper/shops.json", "utf8"));
+    const userWallets = users.map(
+        (m) => new NonceManager(new GasPriceManager(new Wallet(m.privateKey, contractInfo.provider)))
+    );
+    const shopWallets = shops.map(
+        (m) => new NonceManager(new GasPriceManager(new Wallet(m.privateKey, contractInfo.provider)))
+    );
 
-    const userData: IUserData[] = [
-        {
-            phone: NodeInfo.getRandomPhoneNumber(),
-            address: userWallets[0].address,
-            privateKey: userWallets[0].privateKey
-        },
-        {
-            phone: NodeInfo.getRandomPhoneNumber(),
-            address: userWallets[1].address,
-            privateKey: userWallets[1].privateKey
-        },
-        {
-            phone: NodeInfo.getRandomPhoneNumber(),
-            address: userWallets[2].address,
-            privateKey: userWallets[2].privateKey
-        },
-        {
-            phone: NodeInfo.getRandomPhoneNumber(),
-            address: userWallets[3].address,
-            privateKey: userWallets[3].privateKey
-        },
-        {
-            phone: NodeInfo.getRandomPhoneNumber(),
-            address: userWallets[4].address,
-            privateKey: userWallets[4].privateKey
-        }
-    ];
-    const shopData: IShopData[] = [
-        {
-            shopId: "",
-            name: "Shop1",
-            currency: "krw",
-            wallet: shopWallets[0]
-        },
-        {
-            shopId: "",
-            name: "Shop2",
-            currency: "krw",
-            wallet: shopWallets[1]
-        },
-        {
-            shopId: "",
-            name: "Shop3",
-            currency: "krw",
-            wallet: shopWallets[2]
-        },
-        {
-            shopId: "",
-            name: "Shop4",
-            currency: "krw",
-            wallet: shopWallets[3]
-        },
-        {
-            shopId: "",
-            name: "Shop5",
-            currency: "krw",
-            wallet: shopWallets[4]
-        }
-    ];
     const purchaseData: IPurchaseData[] = [
         {
             purchaseId: "P000001",
@@ -182,31 +145,13 @@ describe("Ledger", () => {
         client.useSigner(userWallets[0]);
         signer = client.web3.getConnectedSigner();
         userAddress = await signer.getAddress();
-        phone = userData[purchaseData[0].userIndex].phone;
+        phone = users[purchaseData[0].userIndex].phone;
         phoneHash = ContractUtils.getPhoneHash(phone);
     });
 
     it("Server Health Checking", async () => {
         const isUp = await client.ledger.isRelayUp();
         expect(isUp).toEqual(true);
-    });
-
-    it("Prepare", async () => {
-        await NodeInfo.transferBOA(userWallets.map((m) => m.address));
-        await NodeInfo.transferBOA(shopWallets.map((m) => m.address));
-        await NodeInfo.transferToken(
-            contractInfo,
-            userWallets.map((m) => m.address)
-        );
-        await NodeInfo.transferToken(
-            contractInfo,
-            shopWallets.map((m) => m.address)
-        );
-
-        for (const elem of shopData) {
-            elem.shopId = ContractUtils.getShopId(elem.wallet.address);
-        }
-        await NodeInfo.addShopData(contractInfo, shopData);
     });
 
     it("Save Purchase Data 1", async () => {
@@ -217,9 +162,10 @@ describe("Ledger", () => {
             amount: purchaseAmount,
             loyalty: loyaltyAmount,
             currency: purchaseData[0].currency.toLowerCase(),
-            shopId: shopData[purchaseData[0].shopIndex].shopId,
+            shopId: shops[purchaseData[0].shopIndex].shopId,
             account: AddressZero,
-            phone: phoneHash
+            phone: phoneHash,
+            sender: await accounts[AccountIndex.FOUNDATION].getAddress()
         };
         const purchaseMessage = ContractUtils.getPurchasesMessage(0, [purchaseParams]);
         const signatures = validatorWallets.map((m) => ContractUtils.signMessage(m, purchaseMessage));
@@ -234,9 +180,10 @@ describe("Ledger", () => {
             amount: purchaseAmount,
             loyalty: loyaltyAmount,
             currency: purchaseData[0].currency.toLowerCase(),
-            shopId: shopData[purchaseData[0].shopIndex].shopId,
+            shopId: shops[purchaseData[0].shopIndex].shopId,
             account: userAddress,
-            phone: phoneHash
+            phone: phoneHash,
+            sender: await accounts[AccountIndex.FOUNDATION].getAddress()
         };
         const purchaseMessage = ContractUtils.getPurchasesMessage(0, [purchaseParams]);
         const signatures = validatorWallets.map((m) => ContractUtils.signMessage(m, purchaseMessage));
@@ -323,8 +270,8 @@ describe("Ledger", () => {
             purchaseId: purchase.purchaseId,
             amount: amount.toString(),
             currency: purchase.currency.toLowerCase(),
-            shopId: shopData[purchase.shopIndex].shopId,
-            account: userWallets[0].address
+            shopId: shops[purchase.shopIndex].shopId,
+            account: await userWallets[0].getAddress()
         });
         assert.deepStrictEqual(res.code, 0);
         assert.notDeepStrictEqual(res.data, undefined);
@@ -352,7 +299,7 @@ describe("Ledger", () => {
                     expect(step.amount).toEqual(amount.value);
                     expect(step.currency).toEqual(detail.currency.toLowerCase());
                     expect(step.shopId).toEqual(detail.shopId);
-                    expect(step.account).toEqual(userWallets[0].address);
+                    expect(step.account).toEqual(await userWallets[0].getAddress());
                     expect(step.signature).toMatch(/^0x[A-Fa-f0-9]{130}$/i);
                     break;
                 case NormalSteps.SENT:
@@ -408,21 +355,21 @@ describe("Ledger", () => {
                     expect(step.paymentId).toEqual(paymentId);
                     expect(step.purchaseId).toEqual(purchase.purchaseId);
                     expect(step.approval).toEqual(true);
-                    expect(step.account).toEqual(shopWallets[0].address);
+                    expect(step.account).toEqual(await shopWallets[0].getAddress());
                     expect(step.signature).toMatch(/^0x[A-Fa-f0-9]{130}$/i);
                     break;
                 case NormalSteps.SENT:
                     expect(step.paymentId).toEqual(paymentId);
                     expect(step.purchaseId).toEqual(detail.purchaseId);
                     expect(step.approval).toEqual(true);
-                    expect(step.account).toEqual(shopWallets[0].address);
+                    expect(step.account).toEqual(await shopWallets[0].getAddress());
                     expect(step.txHash).toMatch(/^0x[A-Fa-f0-9]{64}$/i);
                     break;
                 case NormalSteps.APPROVED:
                     expect(step.paymentId).toEqual(paymentId);
                     expect(step.purchaseId).toEqual(detail.purchaseId);
                     expect(step.approval).toEqual(true);
-                    expect(step.account).toEqual(userWallets[0].address);
+                    expect(step.account).toEqual(await shopWallets[0].getAddress());
                     break;
                 default:
                     throw new Error("Unexpected pay point step: " + JSON.stringify(step, null, 2));
@@ -462,7 +409,7 @@ describe("Ledger", () => {
                     expect(step.txHash).toMatch(/^0x[A-Fa-f0-9]{64}$/i);
                     break;
                 case NormalSteps.DONE:
-                    expect(step.account).toBe(userWallets[0].address);
+                    expect(step.account).toBe(await userWallets[0].getAddress());
                     break;
                 default:
                     throw new Error("Unexpected change loyalty step: " + JSON.stringify(step, null, 2));
@@ -501,8 +448,8 @@ describe("Ledger", () => {
             purchaseId: purchase.purchaseId,
             amount: amount.toString(),
             currency: purchase.currency.toLowerCase(),
-            shopId: shopData[purchase.shopIndex].shopId,
-            account: userWallets[0].address
+            shopId: shops[purchase.shopIndex].shopId,
+            account: userWallets[0].getAddress()
         });
         assert.deepStrictEqual(res.code, 0);
         assert.notDeepStrictEqual(res.data, undefined);
@@ -530,7 +477,7 @@ describe("Ledger", () => {
                     expect(step.amount).toEqual(amount.value);
                     expect(step.currency).toEqual(detail.currency.toLowerCase());
                     expect(step.shopId).toEqual(detail.shopId);
-                    expect(step.account).toEqual(userWallets[0].address);
+                    expect(step.account).toEqual(await userWallets[0].getAddress);
                     expect(step.signature).toMatch(/^0x[A-Fa-f0-9]{130}$/i);
                     break;
                 case NormalSteps.SENT:
@@ -588,21 +535,21 @@ describe("Ledger", () => {
                     expect(step.paymentId).toEqual(paymentId);
                     expect(step.purchaseId).toEqual(detail.purchaseId);
                     expect(step.approval).toEqual(true);
-                    expect(step.account).toEqual(shopWallets[0].address);
+                    expect(step.account).toEqual(await shopWallets[0].getAddress());
                     expect(step.signature).toMatch(/^0x[A-Fa-f0-9]{130}$/i);
                     break;
                 case NormalSteps.SENT:
                     expect(step.paymentId).toEqual(paymentId);
                     expect(step.purchaseId).toEqual(detail.purchaseId);
                     expect(step.approval).toEqual(true);
-                    expect(step.account).toEqual(shopWallets[0].address);
+                    expect(step.account).toEqual(await shopWallets[0].getAddress());
                     expect(step.txHash).toMatch(/^0x[A-Fa-f0-9]{64}$/i);
                     break;
                 case NormalSteps.APPROVED:
                     expect(step.paymentId).toEqual(paymentId);
                     expect(step.purchaseId).toEqual(detail.purchaseId);
                     expect(step.approval).toEqual(true);
-                    expect(step.account).toEqual(userWallets[0].address);
+                    expect(step.account).toEqual(await userWallets[0].getAddress());
                     break;
                 default:
                     throw new Error("Unexpected pay point step: " + JSON.stringify(step, null, 2));
@@ -634,7 +581,7 @@ describe("Ledger", () => {
 
         let tx = await contractInfo.token
             .connect(accounts[AccountIndex.OWNER])
-            .transfer(userWallets[0].address, amountToTrade.value);
+            .transfer(await userWallets[0].getAddress(), amountToTrade.value);
         await tx.wait();
 
         for await (const step of client.ledger.deposit(amountToTrade.value)) {

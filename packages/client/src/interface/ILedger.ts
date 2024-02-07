@@ -9,6 +9,7 @@ import {
     MobileType,
     PaymentDetailData,
     QueryOption,
+    RemovePhoneInfoStepValue,
     UpdateAllowanceParams,
     UpdateAllowanceStepValue,
     WithdrawStepValue
@@ -58,4 +59,6 @@ export interface ILedgerMethods extends IClientCore, IClientHttpCore {
     getDepositAndWithdrawHistory: (account: string, option?: QueryOption) => Promise<any>;
 
     registerMobileToken: (token: string, language: string, os: string, type: MobileType) => Promise<void>;
+
+    removePhoneInfo: () => AsyncGenerator<RemovePhoneInfoStepValue>;
 }

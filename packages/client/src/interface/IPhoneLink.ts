@@ -1,5 +1,5 @@
 import { IClientCore, IClientHttpCore } from "../client-common";
-import { PhoneLinkRegisterStepValue, PhoneLinkSubmitStepValue } from "../interfaces";
+import { PhoneLinkRegisterStepValue, PhoneLinkSubmitStepValue, RemovePhoneInfoStepValue } from "../interfaces";
 import { BytesLike } from "@ethersproject/bytes";
 
 export interface IPhoneLink {
@@ -13,4 +13,5 @@ export interface IPhoneLinkMethods extends IClientCore, IClientHttpCore {
     register: (phone: string) => AsyncGenerator<PhoneLinkRegisterStepValue>;
     submit: (requestId: BytesLike, code: string) => AsyncGenerator<PhoneLinkSubmitStepValue>;
     getRegisterStatus: (id: BytesLike) => Promise<number>;
+    removePhoneInfo: () => AsyncGenerator<RemovePhoneInfoStepValue>;
 }

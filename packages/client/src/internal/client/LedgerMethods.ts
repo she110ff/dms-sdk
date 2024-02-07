@@ -42,13 +42,15 @@ import {
     ApproveCancelPaymentValue,
     LedgerPageType,
     PaymentDetailTaskStatus,
-    MobileType
+    MobileType,
+    RemovePhoneInfoStepValue
 } from "../../interfaces";
 import {
     AmountMismatchError,
     FailedApprovePayment,
     FailedDepositError,
     FailedPayTokenError,
+    FailedRemovePhoneInfoError,
     FailedWithdrawError,
     InsufficientBalanceError,
     InternalServerError,
@@ -950,5 +952,58 @@ export class LedgerMethods extends ClientCore implements ILedgerMethods, IClient
         if (res.code !== 0) {
             throw new InternalServerError(res?.error?.message ?? "");
         }
+    }
+
+    /**
+     * 사용가능한 포인트로 변환한다.
+     * @return {AsyncGenerator<RemovePhoneInfoStepValue>}
+     */
+    public async *removePhoneInfo(): AsyncGenerator<RemovePhoneInfoStepValue> {
+        const signer = this.web3.getConnectedSigner();
+        if (!signer) {
+            throw new NoSignerError();
+        } else if (!signer.provider) {
+            throw new NoProviderError();
+        }
+
+        const network = getNetwork((await signer.provider.getNetwork()).chainId);
+        const networkName = network.name as SupportedNetworks;
+        if (!SupportedNetworksArray.includes(networkName)) {
+            throw new UnsupportedNetworkError(networkName);
+        }
+
+        const ledgerContract: Ledger = Ledger__factory.connect(this.web3.getLedgerAddress(), signer);
+
+        const account = await signer.getAddress();
+        const nonce = await ledgerContract.nonceOf(account);
+        const message = ContractUtils.getRemoveMessage(account, nonce);
+        const signature = await ContractUtils.signMessage(signer, message);
+        let contractTx: ContractTransaction;
+
+        const param = {
+            account,
+            signature
+        };
+
+        yield { key: NormalSteps.PREPARED, account, signature };
+
+        const res = await Network.post(await this.getEndpoint("/v1/ledger/removePhoneInfo"), param);
+        if (res.code !== 0) {
+            throw new InternalServerError(res?.error?.message ?? "");
+        }
+
+        contractTx = (await signer.provider.getTransaction(res.data.txHash)) as ContractTransaction;
+
+        yield { key: NormalSteps.SENT, txHash: res.data.txHash };
+        const txReceipt = await contractTx.wait();
+
+        const log = findLog(txReceipt, ledgerContract.interface, "RemovedPhoneInfo");
+        if (!log) {
+            throw new FailedRemovePhoneInfoError();
+        }
+        yield {
+            key: NormalSteps.DONE,
+            account
+        };
     }
 }

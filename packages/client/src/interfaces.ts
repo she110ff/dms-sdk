@@ -311,6 +311,18 @@ export type CloseWithdrawalShopStepValue =
     | { key: NormalSteps.SENT; txHash: BytesLike; shopId: BytesLike }
     | { key: NormalSteps.DONE; shopId: BytesLike; amount: BigNumberish; account: string };
 
+export type RemovePhoneInfoStepValue =
+    | {
+          key: NormalSteps.PREPARED;
+          account: string;
+          signature: BytesLike;
+      }
+    | { key: NormalSteps.SENT; txHash: BytesLike }
+    | {
+          key: NormalSteps.DONE;
+          account: string;
+      };
+
 export enum LoyaltyType {
     POINT,
     TOKEN

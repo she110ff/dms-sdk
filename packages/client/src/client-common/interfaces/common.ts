@@ -10,6 +10,7 @@ export type NetworkDeployment = {
     LoyaltyProviderAddress: string;
     LoyaltyConsumerAddress: string;
     LoyaltyExchangerAddress: string;
+    LoyaltyTransferAddress: string;
     relayEndpoint?: string | URL;
 };
 export type GenericRecord = Record<string, string | number | boolean | null | undefined>;

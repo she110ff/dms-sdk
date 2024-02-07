@@ -194,3 +194,9 @@ export class FailedApprovePayment extends Error {
         super("Failed to approve new payment ");
     }
 }
+
+export class FailedRemovePhoneInfoError extends Error {
+    constructor() {
+        super("Failed to remove phone information");
+    }
+}
