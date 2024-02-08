@@ -58,9 +58,7 @@ export class NonceManager extends Signer {
         return this.signer.signTransaction(transaction);
     }
 
-    sendTransaction(
-        transaction: Deferrable<TransactionRequest>
-    ): Promise<TransactionResponse> {
+    sendTransaction(transaction: Deferrable<TransactionRequest>): Promise<TransactionResponse> {
         if (transaction.nonce === undefined) {
             transaction = shallowCopy(transaction);
             transaction.nonce = this.getTransactionCount("pending");

@@ -42,6 +42,7 @@ describe("Ledger", () => {
 
     it("Test for token's payment", async () => {
         for (let idx = 0; idx < 10; idx++) {
+            console.log(`idx: ${idx}`);
             const oldBalance = await client.ledger.getTokenBalance(user.address);
             const purchase = {
                 purchaseId: "P000001",

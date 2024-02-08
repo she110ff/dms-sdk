@@ -15,8 +15,8 @@ import {
     LoyaltyProvider__factory,
     Shop,
     Shop__factory,
-    KIOS,
-    KIOS__factory,
+    LoyaltyToken,
+    LoyaltyToken__factory,
     Validator,
     Validator__factory
 } from "dms-osx-lib";
@@ -75,7 +75,7 @@ export interface IContextParams {
 export interface IContractInfo {
     provider: JsonRpcProvider;
     phoneLinkCollection: PhoneLinkCollection;
-    token: KIOS;
+    token: LoyaltyToken;
     validator: Validator;
     currencyRate: CurrencyRate;
     shop: Shop;
@@ -395,7 +395,7 @@ export class NodeInfo {
         const contexts: IContextParams = {
             network: 24680,
             signer: accounts[0],
-            tokenAddress: LIVE_CONTRACTS[network].TokenAddress,
+            tokenAddress: LIVE_CONTRACTS[network].LoyaltyTokenAddress,
             phoneLinkAddress: LIVE_CONTRACTS[network].PhoneLinkCollectionAddress,
             validatorAddress: LIVE_CONTRACTS[network].ValidatorAddress,
             currencyRateAddress: LIVE_CONTRACTS[network].CurrencyRateAddress,
@@ -424,7 +424,7 @@ export class NodeInfo {
         console.log("Start Attach");
 
         console.log("Attach Token");
-        const tokenContract = KIOS__factory.connect(contextParams.tokenAddress, provider);
+        const tokenContract = LoyaltyToken__factory.connect(contextParams.tokenAddress, provider);
 
         console.log("Attach Validator");
         const validatorContract: Validator = Validator__factory.connect(contextParams.validatorAddress, provider);

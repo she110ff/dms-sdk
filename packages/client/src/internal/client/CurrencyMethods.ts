@@ -1,6 +1,6 @@
 import { ClientCore, Context, SupportedNetworks, SupportedNetworksArray } from "../../client-common";
 import { ICurrencyMethods } from "../../interface/ICurrency";
-import { CurrencyRate, CurrencyRate__factory, KIOS, KIOS__factory } from "dms-osx-lib";
+import { CurrencyRate, CurrencyRate__factory, LoyaltyToken, LoyaltyToken__factory } from "dms-osx-lib";
 import { Provider } from "@ethersproject/providers";
 import { NoProviderError, UnsupportedNetworkError } from "dms-sdk-common";
 import { BigNumber } from "@ethersproject/bignumber";
@@ -69,7 +69,7 @@ export class CurrencyMethods extends ClientCore implements ICurrencyMethods {
                 throw new UnsupportedNetworkError(networkName);
             }
 
-            const contract: KIOS = KIOS__factory.connect(this.web3.getTokenAddress(), provider);
+            const contract: LoyaltyToken = LoyaltyToken__factory.connect(this.web3.getTokenAddress(), provider);
             CurrencyMethods._TokenSymbol = await contract.symbol();
         }
         return CurrencyMethods._TokenSymbol;

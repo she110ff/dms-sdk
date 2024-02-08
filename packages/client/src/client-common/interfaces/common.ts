@@ -2,7 +2,7 @@ export const SupportedNetworksArray = ["bosagora_mainnet", "bosagora_testnet", "
 export type SupportedNetworks = typeof SupportedNetworksArray[number];
 export type NetworkDeployment = {
     PhoneLinkCollectionAddress: string;
-    TokenAddress: string;
+    LoyaltyTokenAddress: string;
     ValidatorAddress: string;
     CurrencyRateAddress: string;
     ShopAddress: string;
