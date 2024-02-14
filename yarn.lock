@@ -2855,10 +2855,10 @@ dir-glob@^3.0.1:
   dependencies:
     path-type "^4.0.0"
 
-dms-osx-lib@^2.7.0:
-  version "2.7.0"
-  resolved "https://registry.yarnpkg.com/dms-osx-lib/-/dms-osx-lib-2.7.0.tgz#964ae365b6b80f16577445b650b24f4f151dcd55"
-  integrity sha512-RCZ8JgJBdp7p8AmQ77wvv0X15olGWq4T6dpwf9oH8YD8xMmdJHftSxx7fim/ahluvNrkMzQkzE2t7RIoAJT8xw==
+dms-osx-lib@^2.7.1:
+  version "2.7.1"
+  resolved "https://registry.yarnpkg.com/dms-osx-lib/-/dms-osx-lib-2.7.1.tgz#ede2e60d26bec2564c11005111a194579f40ee98"
+  integrity sha512-QKa1+r76QBhUd2Qe37SWBFPakCh8rA6lWGLt82YCc7JWy8NEddcR326pg3Wadb6O4ZGF71D9FBNI//1MEBO7dg==
   dependencies:
     ethers "npm:boa-ethers2@^5.7.9"
 
