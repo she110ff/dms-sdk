@@ -70,6 +70,8 @@ export interface ShopDetailData {
     shopId: BytesLike;
     name: string;
     account: string;
+    currency: string;
+    status: number;
     taskStatus: ShopDetailTaskStatus;
     timestamp: number;
 }

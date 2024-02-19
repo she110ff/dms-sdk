@@ -342,6 +342,8 @@ export class ShopMethods extends ClientCore implements IShopMethods, IClientHttp
                 taskId: res.data.taskId,
                 shopId: res.data.shopId,
                 name: res.data.name,
+                currency: res.data.currency,
+                status: res.data.status,
                 account: res.data.account,
                 taskStatus: res.taskStatus,
                 timestamp: res.timestamp
