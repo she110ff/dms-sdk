@@ -1006,4 +1006,30 @@ export class LedgerMethods extends ClientCore implements ILedgerMethods, IClient
             account
         };
     }
+
+    public async getEstimatedSaveHistory(account: string): Promise<any[]> {
+        const param = {
+            account
+        };
+
+        const res = await Network.get(await this.getEndpoint("/v1/purchase/user/provide"), param);
+        if (res.code !== 0) {
+            throw new InternalServerError(res?.error?.message ?? "");
+        }
+
+        return res.data;
+    }
+
+    public async getTotalEstimatedSaveHistory(account: string): Promise<any[]> {
+        const param = {
+            account
+        };
+
+        const res = await Network.get(await this.getEndpoint("/v1/purchase/user/provide/total"), param);
+        if (res.code !== 0) {
+            throw new InternalServerError(res?.error?.message ?? "");
+        }
+
+        return res.data;
+    }
 }

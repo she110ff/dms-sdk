@@ -644,4 +644,30 @@ export class ShopMethods extends ClientCore implements IShopMethods, IClientHttp
         const name = "shop trade history";
         return await this.graphql.request({ query, params, name });
     }
+
+    public async getEstimatedProvideHistory(shopId: BytesLike): Promise<any[]> {
+        const param = {
+            shopId: shopId.toString()
+        };
+
+        const res = await Network.get(await this.getEndpoint("/v1/purchase/shop/provide"), param);
+        if (res.code !== 0) {
+            throw new InternalServerError(res?.error?.message ?? "");
+        }
+
+        return res.data;
+    }
+
+    public async getTotalEstimatedProvideHistory(shopId: BytesLike): Promise<any[]> {
+        const param = {
+            shopId: shopId.toString()
+        };
+
+        const res = await Network.get(await this.getEndpoint("/v1/purchase/shop/provide/total"), param);
+        if (res.code !== 0) {
+            throw new InternalServerError(res?.error?.message ?? "");
+        }
+
+        return res.data;
+    }
 }
