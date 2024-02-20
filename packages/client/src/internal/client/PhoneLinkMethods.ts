@@ -111,7 +111,9 @@ export class PhoneLinkMethods extends ClientCore implements IPhoneLinkMethods, I
         const contract = PhoneLinkCollection__factory.connect(this.web3.getLinkAddress(), signer);
         const address = await signer.getAddress();
         const nonce = await contract.nonceOf(address);
-        const signature = await ContractUtils.signRequestPhone(signer, phone, nonce);
+        const phoneHash = ContractUtils.getPhoneHash(phone);
+        const msg = ContractUtils.getRequestMessage(phoneHash, address, nonce, network.chainId);
+        const signature = await ContractUtils.signMessage(signer, msg);
         const param = { phone, address, signature };
         const res = await Network.post(await this.getEndpoint("/request"), param);
 
@@ -310,7 +312,7 @@ export class PhoneLinkMethods extends ClientCore implements IPhoneLinkMethods, I
 
         const account = await signer.getAddress();
         const nonce = await contract.nonceOf(account);
-        const message = ContractUtils.getRemoveMessage(account, nonce);
+        const message = ContractUtils.getRemoveMessage(account, nonce, network.chainId);
         const signature = await ContractUtils.signMessage(signer, message);
         let contractTx: ContractTransaction;
 

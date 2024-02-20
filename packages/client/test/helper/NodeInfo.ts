@@ -51,7 +51,8 @@ export enum AccountIndex {
     VALIDATOR16,
     LINK_VALIDATOR1,
     LINK_VALIDATOR2,
-    LINK_VALIDATOR3
+    LINK_VALIDATOR3,
+    CUSTOM
 }
 
 export interface IContextParams {
@@ -479,6 +480,43 @@ export class NodeInfo {
         };
     }
 
+    public static async setExchangeRate(currencyRateContract: CurrencyRate, validators: Signer[]) {
+        {
+            const multiple = await currencyRateContract.multiple();
+            const height = 0;
+            const rates = [
+                {
+                    symbol: "KIOS",
+                    rate: multiple.mul(150)
+                },
+                {
+                    symbol: "USD",
+                    rate: multiple.mul(1000)
+                },
+                {
+                    symbol: "JPY",
+                    rate: multiple.mul(10)
+                },
+                {
+                    symbol: "kios",
+                    rate: multiple.mul(150)
+                },
+                {
+                    symbol: "usd",
+                    rate: multiple.mul(1000)
+                },
+                {
+                    symbol: "jpy",
+                    rate: multiple.mul(10)
+                }
+            ];
+            const message = ContractUtils.getCurrencyMessage(height, rates, NodeInfo.CHAIN_ID);
+            const signatures = validators.map((m) => ContractUtils.signMessage(m, message));
+            const tx1 = await currencyRateContract.connect(validators[0]).set(height, rates, signatures);
+            await tx1.wait();
+        }
+    }
+
     public static async transferBOA(addresses: string[]) {
         console.log("Transfer BOA");
         const sender = NodeInfo.accounts()[AccountIndex.DEPLOYER];
@@ -503,7 +541,12 @@ export class NodeInfo {
         const sender = NodeInfo.accounts()[AccountIndex.CERTIFIER01];
         for (const shop of shopData) {
             const nonce = await contracts.shop.nonceOf(shop.wallet.address);
-            const signature = await ContractUtils.signShop(new Wallet(shop.wallet.privateKey), shop.shopId, nonce);
+            const signature = await ContractUtils.signShop(
+                new Wallet(shop.wallet.privateKey),
+                shop.shopId,
+                nonce,
+                contracts.provider.network.chainId
+            );
             await (
                 await contracts.shop
                     .connect(sender)
@@ -526,5 +569,11 @@ export class NodeInfo {
         const res = "P" + NodeInfo.purchaseId.toString().padStart(10, "0") + randomIdx.toString().padStart(4, "0");
         NodeInfo.purchaseId++;
         return res;
+    }
+
+    public static getPhoneNumber(): string {
+        const randomIdx1 = Math.floor(Math.random() * 1000);
+        const randomIdx2 = Math.floor(Math.random() * 1000);
+        return "+82 10-" + randomIdx1.toString().padStart(4, "0") + "-" + randomIdx2.toString().padStart(4, "0");
     }
 }

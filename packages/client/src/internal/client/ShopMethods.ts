@@ -222,7 +222,7 @@ export class ShopMethods extends ClientCore implements IShopMethods, IClientHttp
         let contractTx: ContractTransaction;
         const account: string = await signer.getAddress();
         const nonce = await shopContract.nonceOf(account);
-        const signature = await ContractUtils.signShop(signer, shopId, nonce);
+        const signature = await ContractUtils.signShop(signer, shopId, nonce, network.chainId);
 
         const param = {
             shopId,
@@ -287,7 +287,7 @@ export class ShopMethods extends ClientCore implements IShopMethods, IClientHttp
         const account: string = await signer.getAddress();
         let contractTx: ContractTransaction;
         const nonce = await shopContract.nonceOf(account);
-        const signature = await ContractUtils.signShop(signer, shopId, nonce);
+        const signature = await ContractUtils.signShop(signer, shopId, nonce, network.chainId);
 
         const param = {
             shopId,
@@ -380,7 +380,7 @@ export class ShopMethods extends ClientCore implements IShopMethods, IClientHttp
         let contractTx: ContractTransaction;
         const account: string = await signer.getAddress();
         const nonce = await shopContract.nonceOf(account);
-        const signature = await ContractUtils.signShop(signer, shopId, nonce);
+        const signature = await ContractUtils.signShop(signer, shopId, nonce, network.chainId);
 
         const param = {
             shopId,
@@ -446,7 +446,7 @@ export class ShopMethods extends ClientCore implements IShopMethods, IClientHttp
         let contractTx: ContractTransaction;
         const account: string = await signer.getAddress();
         const nonce = await shopContract.nonceOf(account);
-        const signature = await ContractUtils.signShop(signer, shopId, nonce);
+        const signature = await ContractUtils.signShop(signer, shopId, nonce, network.chainId);
 
         const param = {
             taskId,
@@ -518,7 +518,7 @@ export class ShopMethods extends ClientCore implements IShopMethods, IClientHttp
         let contractTx: ContractTransaction;
         const account: string = await signer.getAddress();
         const nonce = await shopContract.nonceOf(account);
-        const signature = await ContractUtils.signShop(signer, shopId, nonce);
+        const signature = await ContractUtils.signShop(signer, shopId, nonce, network.chainId);
 
         const param = {
             taskId,

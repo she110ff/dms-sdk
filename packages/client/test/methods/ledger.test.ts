@@ -5,10 +5,8 @@ import {
     Context,
     ContractUtils,
     DepositSteps,
-    GasPriceManager,
     LoyaltyType,
     MobileType,
-    NonceManager,
     NormalSteps,
     WithdrawSteps
 } from "../../src";
@@ -18,24 +16,8 @@ import { AddressZero } from "@ethersproject/constants";
 import { Network } from "../../src/client-common/interfaces/network";
 
 import * as assert from "assert";
+import { IShopData, IPurchaseData } from "../helper/types";
 import { Wallet } from "@ethersproject/wallet";
-import { IPurchaseData } from "../helper/types";
-import * as fs from "fs";
-
-interface IUserData {
-    idx: number;
-    phone: string;
-    address: string;
-    privateKey: string;
-    loyaltyType: number;
-}
-
-export interface IShopData {
-    shopId: string;
-    name: string;
-    address: string;
-    privateKey: string;
-}
 
 describe("Ledger", () => {
     const contextParams = NodeInfo.getContextParams();
@@ -64,68 +46,63 @@ describe("Ledger", () => {
         accounts[AccountIndex.LINK_VALIDATOR2],
         accounts[AccountIndex.LINK_VALIDATOR3]
     ];
-    const users: IUserData[] = JSON.parse(fs.readFileSync("test/helper/users.json", "utf8"));
-    const shops: IShopData[] = JSON.parse(fs.readFileSync("test/helper/shops.json", "utf8"));
-    const userWallets = users.map(
-        (m) => new NonceManager(new GasPriceManager(new Wallet(m.privateKey, contractInfo.provider)))
-    );
-    const shopWallets = shops.map(
-        (m) => new NonceManager(new GasPriceManager(new Wallet(m.privateKey, contractInfo.provider)))
-    );
 
+    const userWallets = [
+        Wallet.createRandom(),
+        Wallet.createRandom(),
+        Wallet.createRandom(),
+        Wallet.createRandom(),
+        Wallet.createRandom()
+    ];
+    const shopWallets = [
+        Wallet.createRandom(),
+        Wallet.createRandom(),
+        Wallet.createRandom(),
+        Wallet.createRandom(),
+        Wallet.createRandom(),
+        Wallet.createRandom()
+    ];
+
+    const shopData: IShopData[] = [
+        {
+            shopId: "",
+            name: "Shop1",
+            currency: "krw",
+            wallet: shopWallets[0]
+        },
+        {
+            shopId: "",
+            name: "Shop2",
+            currency: "krw",
+            wallet: shopWallets[1]
+        },
+        {
+            shopId: "",
+            name: "Shop3",
+            currency: "krw",
+            wallet: shopWallets[2]
+        },
+        {
+            shopId: "",
+            name: "Shop4",
+            currency: "krw",
+            wallet: shopWallets[3]
+        },
+        {
+            shopId: "",
+            name: "Shop5",
+            currency: "krw",
+            wallet: shopWallets[4]
+        }
+    ];
     const purchaseData: IPurchaseData[] = [
         {
             purchaseId: "P000001",
             timestamp: 1672844400,
-            amount: 10000,
+            amount: 10000000000,
             method: 0,
             currency: "krw",
             shopIndex: 0,
-            userIndex: 0
-        },
-        {
-            purchaseId: "P000002",
-            timestamp: 1675522800,
-            amount: 10000,
-            method: 0,
-            currency: "krw",
-            shopIndex: 0,
-            userIndex: 0
-        },
-        {
-            purchaseId: "P000003",
-            timestamp: 1677942000,
-            amount: 10000,
-            method: 0,
-            currency: "krw",
-            shopIndex: 0,
-            userIndex: 0
-        },
-        {
-            purchaseId: "P000004",
-            timestamp: 1680620400,
-            amount: 10000,
-            method: 0,
-            currency: "krw",
-            shopIndex: 1,
-            userIndex: 0
-        },
-        {
-            purchaseId: "P000005",
-            timestamp: 1683212400,
-            amount: 10000,
-            method: 0,
-            currency: "krw",
-            shopIndex: 2,
-            userIndex: 0
-        },
-        {
-            purchaseId: "P000005",
-            timestamp: 1683212400,
-            amount: 10000,
-            method: 0,
-            currency: "krw",
-            shopIndex: 3,
             userIndex: 0
         }
     ];
@@ -145,13 +122,39 @@ describe("Ledger", () => {
         client.useSigner(userWallets[0]);
         signer = client.web3.getConnectedSigner();
         userAddress = await signer.getAddress();
-        phone = users[purchaseData[0].userIndex].phone;
+        phone = NodeInfo.getPhoneNumber();
         phoneHash = ContractUtils.getPhoneHash(phone);
+
+        console.log(`phone`, phone);
+        console.log(`signer.getAddress()`, userAddress);
+        console.log(`userWallets[0].address`, userWallets[0].address);
     });
 
     it("Server Health Checking", async () => {
         const isUp = await client.ledger.isRelayUp();
         expect(isUp).toEqual(true);
+    });
+
+    it("Prepare", async () => {
+        await NodeInfo.transferBOA(userWallets.map((m) => m.address));
+        await NodeInfo.transferBOA(shopWallets.map((m) => m.address));
+        await NodeInfo.transferToken(
+            contractInfo,
+            userWallets.map((m) => m.address)
+        );
+        await NodeInfo.transferToken(
+            contractInfo,
+            shopWallets.map((m) => m.address)
+        );
+
+        for (const elem of shopData) {
+            elem.shopId = ContractUtils.getShopId(elem.wallet.address);
+        }
+        await NodeInfo.addShopData(contractInfo, shopData);
+    });
+
+    it("Set Exchange Rate", async () => {
+        await NodeInfo.setExchangeRate(contractInfo.currencyRate, validatorWallets);
     });
 
     it("Save Purchase Data 1", async () => {
@@ -162,12 +165,12 @@ describe("Ledger", () => {
             amount: purchaseAmount,
             loyalty: loyaltyAmount,
             currency: purchaseData[0].currency.toLowerCase(),
-            shopId: shops[purchaseData[0].shopIndex].shopId,
+            shopId: shopData[purchaseData[0].shopIndex].shopId,
             account: AddressZero,
             phone: phoneHash,
             sender: await accounts[AccountIndex.FOUNDATION].getAddress()
         };
-        const purchaseMessage = ContractUtils.getPurchasesMessage(0, [purchaseParams]);
+        const purchaseMessage = ContractUtils.getPurchasesMessage(0, [purchaseParams], NodeInfo.CHAIN_ID);
         const signatures = validatorWallets.map((m) => ContractUtils.signMessage(m, purchaseMessage));
         await contractInfo.loyaltyProvider.connect(validatorWallets[4]).savePurchase(0, [purchaseParams], signatures);
     });
@@ -180,12 +183,12 @@ describe("Ledger", () => {
             amount: purchaseAmount,
             loyalty: loyaltyAmount,
             currency: purchaseData[0].currency.toLowerCase(),
-            shopId: shops[purchaseData[0].shopIndex].shopId,
+            shopId: shopData[purchaseData[0].shopIndex].shopId,
             account: userAddress,
             phone: phoneHash,
             sender: await accounts[AccountIndex.FOUNDATION].getAddress()
         };
-        const purchaseMessage = ContractUtils.getPurchasesMessage(0, [purchaseParams]);
+        const purchaseMessage = ContractUtils.getPurchasesMessage(0, [purchaseParams], NodeInfo.CHAIN_ID);
         const signatures = validatorWallets.map((m) => ContractUtils.signMessage(m, purchaseMessage));
         await contractInfo.loyaltyProvider.connect(validatorWallets[4]).savePurchase(0, [purchaseParams], signatures);
     });
@@ -211,7 +214,8 @@ describe("Ledger", () => {
 
     it("Link phone-wallet", async () => {
         const nonce = await contractInfo.phoneLinkCollection.nonceOf(userAddress);
-        const signature = await ContractUtils.signRequestHash(signer, phoneHash, nonce);
+        const msg = ContractUtils.getRequestMessage(phoneHash, await signer.getAddress(), nonce, NodeInfo.CHAIN_ID);
+        const signature = await ContractUtils.signMessage(signer, msg);
         const requestId = ContractUtils.getRequestId(phoneHash, userAddress, nonce);
         //Add Phone
         await contractInfo.phoneLinkCollection.connect(signer).addRequest(requestId, phoneHash, userAddress, signature);
@@ -270,8 +274,8 @@ describe("Ledger", () => {
             purchaseId: purchase.purchaseId,
             amount: amount.toString(),
             currency: purchase.currency.toLowerCase(),
-            shopId: shops[purchase.shopIndex].shopId,
-            account: await userWallets[0].getAddress()
+            shopId: shopData[purchase.shopIndex].shopId,
+            account: userWallets[0].address
         });
         assert.deepStrictEqual(res.code, 0);
         assert.notDeepStrictEqual(res.data, undefined);
@@ -299,7 +303,7 @@ describe("Ledger", () => {
                     expect(step.amount).toEqual(amount.value);
                     expect(step.currency).toEqual(detail.currency.toLowerCase());
                     expect(step.shopId).toEqual(detail.shopId);
-                    expect(step.account).toEqual(await userWallets[0].getAddress());
+                    expect(step.account).toEqual(userWallets[0].address);
                     expect(step.signature).toMatch(/^0x[A-Fa-f0-9]{130}$/i);
                     break;
                 case NormalSteps.SENT:
@@ -395,9 +399,7 @@ describe("Ledger", () => {
 
     it("Change point type to 'token'", async () => {
         const balancePoint = await client.ledger.getPointBalance(userAddress);
-        const multiple = BigNumber.from(1_000_000_000);
-        const price = BigNumber.from(150).mul(multiple);
-        const tokenAmount = balancePoint.mul(multiple).div(price);
+        const tokenAmount = await contractInfo.currencyRate.convertPointToToken(balancePoint);
 
         for await (const step of client.ledger.changeToLoyaltyToken()) {
             switch (step.key) {
@@ -409,7 +411,7 @@ describe("Ledger", () => {
                     expect(step.txHash).toMatch(/^0x[A-Fa-f0-9]{64}$/i);
                     break;
                 case NormalSteps.DONE:
-                    expect(step.account).toBe(await userWallets[0].getAddress());
+                    expect(step.account).toBe(userWallets[0].address);
                     break;
                 default:
                     throw new Error("Unexpected change loyalty step: " + JSON.stringify(step, null, 2));
@@ -448,8 +450,8 @@ describe("Ledger", () => {
             purchaseId: purchase.purchaseId,
             amount: amount.toString(),
             currency: purchase.currency.toLowerCase(),
-            shopId: shops[purchase.shopIndex].shopId,
-            account: userWallets[0].getAddress()
+            shopId: shopData[purchase.shopIndex].shopId,
+            account: userWallets[0].address
         });
         assert.deepStrictEqual(res.code, 0);
         assert.notDeepStrictEqual(res.data, undefined);
@@ -477,7 +479,7 @@ describe("Ledger", () => {
                     expect(step.amount).toEqual(amount.value);
                     expect(step.currency).toEqual(detail.currency.toLowerCase());
                     expect(step.shopId).toEqual(detail.shopId);
-                    expect(step.account).toEqual(await userWallets[0].getAddress);
+                    expect(step.account).toEqual(userWallets[0].address);
                     expect(step.signature).toMatch(/^0x[A-Fa-f0-9]{130}$/i);
                     break;
                 case NormalSteps.SENT:
@@ -549,7 +551,7 @@ describe("Ledger", () => {
                     expect(step.paymentId).toEqual(paymentId);
                     expect(step.purchaseId).toEqual(detail.purchaseId);
                     expect(step.approval).toEqual(true);
-                    expect(step.account).toEqual(await userWallets[0].getAddress());
+                    expect(step.account).toEqual(shopWallets[0].address);
                     break;
                 default:
                     throw new Error("Unexpected pay point step: " + JSON.stringify(step, null, 2));
@@ -581,7 +583,7 @@ describe("Ledger", () => {
 
         let tx = await contractInfo.token
             .connect(accounts[AccountIndex.OWNER])
-            .transfer(await userWallets[0].getAddress(), amountToTrade.value);
+            .transfer(userWallets[0].address, amountToTrade.value);
         await tx.wait();
 
         for await (const step of client.ledger.deposit(amountToTrade.value)) {

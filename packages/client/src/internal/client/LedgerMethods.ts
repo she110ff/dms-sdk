@@ -272,7 +272,8 @@ export class LedgerMethods extends ClientCore implements ILedgerMethods, IClient
             amount,
             currency,
             shopId,
-            nonce
+            nonce,
+            network.chainId
         );
 
         const param = {
@@ -402,7 +403,13 @@ export class LedgerMethods extends ClientCore implements ILedgerMethods, IClient
         const ledgerContract: Ledger = Ledger__factory.connect(this.web3.getLedgerAddress(), signer);
         const account: string = await signer.getAddress();
         const nonce = await ledgerContract.nonceOf(account);
-        const signature = await ContractUtils.signLoyaltyCancelPayment(signer, paymentId, purchaseId, nonce);
+        const signature = await ContractUtils.signLoyaltyCancelPayment(
+            signer,
+            paymentId,
+            purchaseId,
+            nonce,
+            network.chainId
+        );
 
         const param = {
             paymentId,
@@ -451,7 +458,7 @@ export class LedgerMethods extends ClientCore implements ILedgerMethods, IClient
                 paymentId: event.paymentId,
                 purchaseId: event.purchaseId,
                 approval,
-                account: event.account,
+                account: account,
                 loyaltyType: event.loyaltyType,
                 paidPoint: event.paidPoint,
                 paidToken: event.paidToken,
@@ -738,7 +745,7 @@ export class LedgerMethods extends ClientCore implements ILedgerMethods, IClient
         const account: string = await signer.getAddress();
         let contractTx: ContractTransaction;
         const nonce = await ledgerContract.nonceOf(account);
-        const signature = await ContractUtils.signLoyaltyType(signer, nonce);
+        const signature = await ContractUtils.signLoyaltyType(signer, nonce, network.chainId);
 
         yield { key: NormalSteps.PREPARED, account, signature };
 
@@ -832,7 +839,7 @@ export class LedgerMethods extends ClientCore implements ILedgerMethods, IClient
         const account: string = await signer.getAddress();
         let contractTx: ContractTransaction;
         const nonce = await ledgerContract.nonceOf(account);
-        const signature = await ContractUtils.signChangePayablePoint(signer, phoneHash, nonce);
+        const signature = await ContractUtils.signChangePayablePoint(signer, phoneHash, nonce, network.chainId);
 
         const param = {
             phone: phoneHash,
@@ -976,7 +983,7 @@ export class LedgerMethods extends ClientCore implements ILedgerMethods, IClient
 
         const account = await signer.getAddress();
         const nonce = await ledgerContract.nonceOf(account);
-        const message = ContractUtils.getRemoveMessage(account, nonce);
+        const message = ContractUtils.getRemoveMessage(account, nonce, network.chainId);
         const signature = await ContractUtils.signMessage(signer, message);
         let contractTx: ContractTransaction;
 

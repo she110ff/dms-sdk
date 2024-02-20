@@ -197,6 +197,10 @@ describe("Shop Withdrawal", () => {
         await NodeInfo.addShopData(contractInfo, shopData);
     });
 
+    it("Set Exchange Rate", async () => {
+        await NodeInfo.setExchangeRate(contractInfo.currencyRate, validatorWallets);
+    });
+
     it("Save Purchase Data", async () => {
         for (const purchase of purchaseData) {
             const phoneHash = ContractUtils.getPhoneHash(userData[purchase.userIndex].phone);
@@ -214,7 +218,7 @@ describe("Shop Withdrawal", () => {
                 phone: phoneHash,
                 sender: await accounts[AccountIndex.FOUNDATION].getAddress()
             };
-            const purchaseMessage = ContractUtils.getPurchasesMessage(0, [purchaseParams]);
+            const purchaseMessage = ContractUtils.getPurchasesMessage(0, [purchaseParams], NodeInfo.CHAIN_ID);
             const signatures = validatorWallets.map((m) => ContractUtils.signMessage(m, purchaseMessage));
             await contractInfo.loyaltyProvider
                 .connect(validatorWallets[4])

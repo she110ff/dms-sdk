@@ -17,7 +17,7 @@ describe("SDK Client", () => {
         expect(isUp).toEqual(true);
     });
 
-    const userPhone = "01012349999";
+    const userPhone = "+82 10-1234-9999";
     let requestId = "";
     it("register", async () => {
         for await (const step of client.link.register(userPhone)) {
