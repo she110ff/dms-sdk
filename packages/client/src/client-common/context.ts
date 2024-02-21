@@ -107,6 +107,12 @@ export class Context {
     get loyaltyExchangerAddress(): string | undefined {
         return this.state.loyaltyExchangerAddress;
     }
+    get loyaltyTransferAddress(): string | undefined {
+        return this.state.loyaltyTransferAddress;
+    }
+    get loyaltyBridgeAddress(): string | undefined {
+        return this.state.loyaltyBridgeAddress;
+    }
 
     /**
      * Getter for the GraphQL client
@@ -202,6 +208,10 @@ export class Context {
             throw new Error("Missing loyalty consumer contract address");
         } else if (!contextParams.loyaltyExchangerAddress) {
             throw new Error("Missing loyalty exchanger contract address");
+        } else if (!contextParams.loyaltyTransferAddress) {
+            throw new Error("Missing loyalty transfer contract address");
+        } else if (!contextParams.loyaltyBridgeAddress) {
+            throw new Error("Missing loyalty bridge contract address");
         } else if (!contextParams.graphqlNodes?.length) {
             throw new Error("No graphql URL defined");
         }
@@ -219,6 +229,8 @@ export class Context {
             loyaltyProviderAddress: contextParams.loyaltyProviderAddress,
             loyaltyConsumerAddress: contextParams.loyaltyConsumerAddress,
             loyaltyExchangerAddress: contextParams.loyaltyExchangerAddress,
+            loyaltyTransferAddress: contextParams.loyaltyTransferAddress,
+            loyaltyBridgeAddress: contextParams.loyaltyBridgeAddress,
             graphql: Context.resolveGraphql(contextParams.graphqlNodes)
         };
     }
@@ -262,6 +274,12 @@ export class Context {
         }
         if (contextParams.loyaltyExchangerAddress) {
             this.state.loyaltyExchangerAddress = contextParams.loyaltyExchangerAddress;
+        }
+        if (contextParams.loyaltyTransferAddress) {
+            this.state.loyaltyTransferAddress = contextParams.loyaltyTransferAddress;
+        }
+        if (contextParams.loyaltyBridgeAddress) {
+            this.state.loyaltyBridgeAddress = contextParams.loyaltyBridgeAddress;
         }
         if (contextParams.graphqlNodes?.length) {
             this.state.graphql = Context.resolveGraphql(contextParams.graphqlNodes);

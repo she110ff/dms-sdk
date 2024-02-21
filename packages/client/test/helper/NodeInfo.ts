@@ -7,12 +7,16 @@ import {
     CurrencyRate__factory,
     Ledger,
     Ledger__factory,
+    LoyaltyBridge,
+    LoyaltyBridge__factory,
     LoyaltyConsumer,
     LoyaltyConsumer__factory,
     LoyaltyExchanger,
     LoyaltyExchanger__factory,
     LoyaltyProvider,
     LoyaltyProvider__factory,
+    LoyaltyTransfer,
+    LoyaltyTransfer__factory,
     Shop,
     Shop__factory,
     LoyaltyToken,
@@ -52,6 +56,11 @@ export enum AccountIndex {
     LINK_VALIDATOR1,
     LINK_VALIDATOR2,
     LINK_VALIDATOR3,
+    BRIDGE_VALIDATOR1,
+    BRIDGE_VALIDATOR2,
+    BRIDGE_VALIDATOR3,
+    BRIDGE_VALIDATOR4,
+    BRIDGE_VALIDATOR5,
     CUSTOM
 }
 
@@ -67,7 +76,8 @@ export interface IContextParams {
     loyaltyProviderAddress: string;
     loyaltyConsumerAddress: string;
     loyaltyExchangerAddress: string;
-    LoyaltyTransferAddress: string;
+    loyaltyTransferAddress: string;
+    loyaltyBridgeAddress: string;
     web3Providers: string | JsonRpcProvider | (string | JsonRpcProvider)[];
     relayEndpoint: string | URL;
     graphqlNodes: { url: string }[];
@@ -84,6 +94,8 @@ export interface IContractInfo {
     loyaltyProvider: LoyaltyProvider;
     loyaltyConsumer: LoyaltyConsumer;
     loyaltyExchanger: LoyaltyExchanger;
+    loyaltyTransfer: LoyaltyTransfer;
+    loyaltyBridge: LoyaltyBridge;
 }
 
 export class NodeInfo {
@@ -365,6 +377,61 @@ export class NodeInfo {
             accounts.push(process.env.LINK_VALIDATOR3);
         }
 
+        if (
+            process.env.BRIDGE_VALIDATOR1 !== undefined &&
+            process.env.BRIDGE_VALIDATOR1.trim() !== "" &&
+            reg_bytes64.test(process.env.BRIDGE_VALIDATOR1)
+        ) {
+            accounts.push(process.env.BRIDGE_VALIDATOR1);
+        } else {
+            process.env.BRIDGE_VALIDATOR1 = Wallet.createRandom().privateKey;
+            accounts.push(process.env.BRIDGE_VALIDATOR1);
+        }
+
+        if (
+            process.env.BRIDGE_VALIDATOR2 !== undefined &&
+            process.env.BRIDGE_VALIDATOR2.trim() !== "" &&
+            reg_bytes64.test(process.env.BRIDGE_VALIDATOR2)
+        ) {
+            accounts.push(process.env.BRIDGE_VALIDATOR2);
+        } else {
+            process.env.BRIDGE_VALIDATOR2 = Wallet.createRandom().privateKey;
+            accounts.push(process.env.BRIDGE_VALIDATOR2);
+        }
+
+        if (
+            process.env.BRIDGE_VALIDATOR3 !== undefined &&
+            process.env.BRIDGE_VALIDATOR3.trim() !== "" &&
+            reg_bytes64.test(process.env.BRIDGE_VALIDATOR3)
+        ) {
+            accounts.push(process.env.BRIDGE_VALIDATOR3);
+        } else {
+            process.env.BRIDGE_VALIDATOR3 = Wallet.createRandom().privateKey;
+            accounts.push(process.env.BRIDGE_VALIDATOR3);
+        }
+
+        if (
+            process.env.BRIDGE_VALIDATOR4 !== undefined &&
+            process.env.BRIDGE_VALIDATOR4.trim() !== "" &&
+            reg_bytes64.test(process.env.BRIDGE_VALIDATOR4)
+        ) {
+            accounts.push(process.env.BRIDGE_VALIDATOR4);
+        } else {
+            process.env.BRIDGE_VALIDATOR4 = Wallet.createRandom().privateKey;
+            accounts.push(process.env.BRIDGE_VALIDATOR4);
+        }
+
+        if (
+            process.env.BRIDGE_VALIDATOR5 !== undefined &&
+            process.env.BRIDGE_VALIDATOR5.trim() !== "" &&
+            reg_bytes64.test(process.env.BRIDGE_VALIDATOR5)
+        ) {
+            accounts.push(process.env.BRIDGE_VALIDATOR5);
+        } else {
+            process.env.BRIDGE_VALIDATOR5 = Wallet.createRandom().privateKey;
+            accounts.push(process.env.BRIDGE_VALIDATOR5);
+        }
+
         while (accounts.length < 70) {
             accounts.push(Wallet.createRandom().privateKey);
         }
@@ -405,7 +472,8 @@ export class NodeInfo {
             loyaltyProviderAddress: LIVE_CONTRACTS[network].LoyaltyProviderAddress,
             loyaltyConsumerAddress: LIVE_CONTRACTS[network].LoyaltyConsumerAddress,
             loyaltyExchangerAddress: LIVE_CONTRACTS[network].LoyaltyExchangerAddress,
-            LoyaltyTransferAddress: LIVE_CONTRACTS[network].LoyaltyTransferAddress,
+            loyaltyTransferAddress: LIVE_CONTRACTS[network].LoyaltyTransferAddress,
+            loyaltyBridgeAddress: LIVE_CONTRACTS[network].LoyaltyBridgeAddress,
             relayEndpoint: NodeInfo.RELAY_END_POINT,
             web3Providers: NodeInfo.createProvider(),
             graphqlNodes: [
@@ -459,9 +527,22 @@ export class NodeInfo {
             contextParams.loyaltyConsumerAddress,
             provider
         );
+
         console.log("Attach LoyaltyExchanger");
         const exchangerContract: LoyaltyExchanger = LoyaltyExchanger__factory.connect(
             contextParams.loyaltyExchangerAddress,
+            provider
+        );
+
+        console.log("Attach LoyaltyTransfer");
+        const transferContract: LoyaltyTransfer = LoyaltyTransfer__factory.connect(
+            contextParams.loyaltyTransferAddress,
+            provider
+        );
+
+        console.log("Attach LoyaltyBridge");
+        const bridgeContract: LoyaltyBridge = LoyaltyBridge__factory.connect(
+            contextParams.loyaltyBridgeAddress,
             provider
         );
 
@@ -476,7 +557,9 @@ export class NodeInfo {
             ledger: ledgerContract,
             loyaltyProvider: providerContract,
             loyaltyConsumer: consumerContract,
-            loyaltyExchanger: exchangerContract
+            loyaltyExchanger: exchangerContract,
+            loyaltyTransfer: transferContract,
+            loyaltyBridge: bridgeContract
         };
     }
 

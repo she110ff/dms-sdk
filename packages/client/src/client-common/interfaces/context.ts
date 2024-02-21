@@ -18,6 +18,8 @@ type Web3ContextParams = {
     loyaltyProviderAddress?: string;
     loyaltyConsumerAddress?: string;
     loyaltyExchangerAddress?: string;
+    loyaltyTransferAddress?: string;
+    loyaltyBridgeAddress?: string;
 };
 type HttpContextParams = {
     relayEndpoint?: string | URL;
@@ -42,6 +44,8 @@ type Web3ContextState = {
     loyaltyProviderAddress?: string;
     loyaltyConsumerAddress?: string;
     loyaltyExchangerAddress?: string;
+    loyaltyTransferAddress?: string;
+    loyaltyBridgeAddress?: string;
 };
 type HTTPContextState = {
     relayEndpoint?: string | URL;

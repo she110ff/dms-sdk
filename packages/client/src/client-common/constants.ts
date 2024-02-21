@@ -14,6 +14,7 @@ export const LIVE_CONTRACTS: { [K in SupportedNetworks]: NetworkDeployment } = {
         LoyaltyConsumerAddress: dmsActiveContractList.bosagora_mainnet.LoyaltyConsumer,
         LoyaltyExchangerAddress: dmsActiveContractList.bosagora_mainnet.LoyaltyExchanger,
         LoyaltyTransferAddress: dmsActiveContractList.bosagora_mainnet.LoyaltyTransfer,
+        LoyaltyBridgeAddress: dmsActiveContractList.bosagora_mainnet.LoyaltyBridge,
         relayEndpoint: "http://relay.devnet.bosagora.org:7070/"
     },
     bosagora_testnet: {
@@ -27,6 +28,7 @@ export const LIVE_CONTRACTS: { [K in SupportedNetworks]: NetworkDeployment } = {
         LoyaltyConsumerAddress: dmsActiveContractList.bosagora_testnet.LoyaltyConsumer,
         LoyaltyExchangerAddress: dmsActiveContractList.bosagora_testnet.LoyaltyExchanger,
         LoyaltyTransferAddress: dmsActiveContractList.bosagora_testnet.LoyaltyTransfer,
+        LoyaltyBridgeAddress: dmsActiveContractList.bosagora_mainnet.LoyaltyBridge,
         relayEndpoint: "http://relay.devnet.bosagora.org:7070/"
     },
     bosagora_devnet: {
@@ -40,6 +42,7 @@ export const LIVE_CONTRACTS: { [K in SupportedNetworks]: NetworkDeployment } = {
         LoyaltyConsumerAddress: dmsActiveContractList.bosagora_devnet.LoyaltyConsumer,
         LoyaltyExchangerAddress: dmsActiveContractList.bosagora_devnet.LoyaltyExchanger,
         LoyaltyTransferAddress: dmsActiveContractList.bosagora_devnet.LoyaltyTransfer,
+        LoyaltyBridgeAddress: dmsActiveContractList.bosagora_mainnet.LoyaltyBridge,
         relayEndpoint: "http://relay.devnet.bosagora.org:7070/"
     },
     localhost: {
@@ -53,6 +56,7 @@ export const LIVE_CONTRACTS: { [K in SupportedNetworks]: NetworkDeployment } = {
         LoyaltyConsumerAddress: "",
         LoyaltyExchangerAddress: "",
         LoyaltyTransferAddress: "",
+        LoyaltyBridgeAddress: "",
         relayEndpoint: ""
     }
 };

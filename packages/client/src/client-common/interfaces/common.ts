@@ -11,6 +11,7 @@ export type NetworkDeployment = {
     LoyaltyConsumerAddress: string;
     LoyaltyExchangerAddress: string;
     LoyaltyTransferAddress: string;
+    LoyaltyBridgeAddress: string;
     relayEndpoint?: string | URL;
 };
 export type GenericRecord = Record<string, string | number | boolean | null | undefined>;
