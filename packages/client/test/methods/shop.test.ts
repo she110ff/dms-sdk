@@ -86,12 +86,17 @@ describe("Shop", () => {
         shopData.name = "New Name";
 
         // Open New
-        let res = await Network.post(new URL(contextParams.relayEndpoint + "v1/shop/update/create"), {
-            accessKey: NodeInfo.RELAY_ACCESS_KEY,
-            shopId: shopData.shopId,
-            name: shopData.name,
-            currency: shopData.currency
-        });
+        let res = await Network.post(
+            new URL(contextParams.relayEndpoint + "v1/shop/update/create"),
+            {
+                shopId: shopData.shopId,
+                name: shopData.name,
+                currency: shopData.currency
+            },
+            {
+                Authorization: NodeInfo.RELAY_ACCESS_KEY
+            }
+        );
         assert.deepStrictEqual(res.code, 0);
         assert.notDeepStrictEqual(res.data, undefined);
 
@@ -136,11 +141,16 @@ describe("Shop", () => {
         assert.deepStrictEqual(info1.status, ShopStatus.ACTIVE);
 
         // Open New
-        let res = await Network.post(new URL(contextParams.relayEndpoint + "v1/shop/status/create"), {
-            accessKey: NodeInfo.RELAY_ACCESS_KEY,
-            shopId: shopData.shopId,
-            status: ShopStatus.INACTIVE
-        });
+        let res = await Network.post(
+            new URL(contextParams.relayEndpoint + "v1/shop/status/create"),
+            {
+                shopId: shopData.shopId,
+                status: ShopStatus.INACTIVE
+            },
+            {
+                Authorization: NodeInfo.RELAY_ACCESS_KEY
+            }
+        );
         assert.deepStrictEqual(res.code, 0);
         assert.notDeepStrictEqual(res.data, undefined);
 

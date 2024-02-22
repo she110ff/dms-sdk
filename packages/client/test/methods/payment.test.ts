@@ -91,14 +91,19 @@ describe("Ledger", () => {
 
             // Open New
             console.log("Open New");
-            let res = await Network.post(new URL(contextParams.relayEndpoint + "v1/payment/new/open"), {
-                accessKey: NodeInfo.RELAY_ACCESS_KEY,
-                purchaseId: purchase.purchaseId,
-                amount: amount.toString(),
-                currency: purchase.currency.toLowerCase(),
-                shopId: shopData[purchase.shopIndex].shopId,
-                account: user.address
-            });
+            let res = await Network.post(
+                new URL(contextParams.relayEndpoint + "v1/payment/new/open"),
+                {
+                    purchaseId: purchase.purchaseId,
+                    amount: amount.toString(),
+                    currency: purchase.currency.toLowerCase(),
+                    shopId: shopData[purchase.shopIndex].shopId,
+                    account: user.address
+                },
+                {
+                    Authorization: NodeInfo.RELAY_ACCESS_KEY
+                }
+            );
             if (res.code !== 0) {
                 console.error(res.error.message);
                 process.exit(res.code);
@@ -157,11 +162,16 @@ describe("Ledger", () => {
 
             // Close New
             console.log("Close New");
-            res = await Network.post(new URL(contextParams.relayEndpoint + "v1/payment/new/close"), {
-                accessKey: NodeInfo.RELAY_ACCESS_KEY,
-                confirm: true,
-                paymentId
-            });
+            res = await Network.post(
+                new URL(contextParams.relayEndpoint + "v1/payment/new/close"),
+                {
+                    confirm: true,
+                    paymentId
+                },
+                {
+                    Authorization: NodeInfo.RELAY_ACCESS_KEY
+                }
+            );
             assert.deepStrictEqual(res.code, 0);
 
             await ContractUtils.delay(2000);

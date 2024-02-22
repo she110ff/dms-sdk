@@ -6,14 +6,19 @@ export class Network {
     /**
      * Performs a request and returns a JSON object with the response
      */
-    public static async get(endpoint: URL, data?: GenericRecord): Promise<any> {
+    public static async get(endpoint: URL, data?: GenericRecord, additionalHeaders?: any): Promise<any> {
         for (const [key, value] of Object.entries(data ?? {})) {
             if (value != null) {
                 endpoint.searchParams.set(key, String(value));
             }
         }
+        const headers = {
+            "Content-Type": "application/json",
+            ...additionalHeaders
+        };
         const response: UnfetchResponse = await fetch(endpoint.href, {
-            method: "GET"
+            method: "GET",
+            headers
         });
 
         if (!response.ok) {
@@ -30,12 +35,14 @@ export class Network {
         return response.json();
     }
 
-    public static async post(endpoint: URL, data?: any): Promise<any> {
+    public static async post(endpoint: URL, data?: any, additionalHeaders?: any): Promise<any> {
+        const headers = {
+            "Content-Type": "application/json",
+            ...additionalHeaders
+        };
         const response: UnfetchResponse = await fetch(endpoint.href, {
             method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
+            headers,
             body: JSON.stringify(data)
         });
 

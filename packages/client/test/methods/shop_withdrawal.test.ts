@@ -279,14 +279,19 @@ describe("Shop Withdrawal", () => {
         client.useSigner(userWallets[purchase.userIndex]);
 
         // Open New
-        let res = await Network.post(new URL(contextParams.relayEndpoint + "v1/payment/new/open"), {
-            accessKey: NodeInfo.RELAY_ACCESS_KEY,
-            purchaseId: purchase.purchaseId,
-            amount: purchaseAmount.toString(),
-            currency: purchase.currency.toLowerCase(),
-            shopId: shopData[shopIndex].shopId,
-            account: userWallets[userIndex].address
-        });
+        let res = await Network.post(
+            new URL(contextParams.relayEndpoint + "v1/payment/new/open"),
+            {
+                purchaseId: purchase.purchaseId,
+                amount: purchaseAmount.toString(),
+                currency: purchase.currency.toLowerCase(),
+                shopId: shopData[shopIndex].shopId,
+                account: userWallets[userIndex].address
+            },
+            {
+                Authorization: NodeInfo.RELAY_ACCESS_KEY
+            }
+        );
         assert.deepStrictEqual(res.code, 0);
         assert.notDeepStrictEqual(res.data, undefined);
 
@@ -399,14 +404,19 @@ describe("Shop Withdrawal", () => {
         client.useSigner(userWallets[purchase.userIndex]);
 
         // Open New
-        let res = await Network.post(new URL(contextParams.relayEndpoint + "v1/payment/new/open"), {
-            accessKey: NodeInfo.RELAY_ACCESS_KEY,
-            purchaseId: purchase.purchaseId,
-            amount: purchaseAmount.toString(),
-            currency: purchase.currency.toLowerCase(),
-            shopId: shopData[shopIndex].shopId,
-            account: userWallets[userIndex].address
-        });
+        let res = await Network.post(
+            new URL(contextParams.relayEndpoint + "v1/payment/new/open"),
+            {
+                purchaseId: purchase.purchaseId,
+                amount: purchaseAmount.toString(),
+                currency: purchase.currency.toLowerCase(),
+                shopId: shopData[shopIndex].shopId,
+                account: userWallets[userIndex].address
+            },
+            {
+                Authorization: NodeInfo.RELAY_ACCESS_KEY
+            }
+        );
         assert.deepStrictEqual(res.code, 0);
         assert.notDeepStrictEqual(res.data, undefined);
 
@@ -453,11 +463,16 @@ describe("Shop Withdrawal", () => {
         await ContractUtils.delay(3000);
 
         // Close New
-        res = await Network.post(new URL(contextParams.relayEndpoint + "v1/payment/new/close"), {
-            accessKey: NodeInfo.RELAY_ACCESS_KEY,
-            confirm: true,
-            paymentId
-        });
+        res = await Network.post(
+            new URL(contextParams.relayEndpoint + "v1/payment/new/close"),
+            {
+                confirm: true,
+                paymentId
+            },
+            {
+                Authorization: NodeInfo.RELAY_ACCESS_KEY
+            }
+        );
         assert.deepStrictEqual(res.code, 0);
 
         await ContractUtils.delay(2000);

@@ -269,14 +269,20 @@ describe("Ledger", () => {
         const feePoint = await client.currency.currencyToPoint(amount.value.mul(feeRate).div(10000), purchase.currency);
 
         // Open New
-        let res = await Network.post(new URL(contextParams.relayEndpoint + "v1/payment/new/open"), {
-            accessKey: NodeInfo.RELAY_ACCESS_KEY,
-            purchaseId: purchase.purchaseId,
-            amount: amount.toString(),
-            currency: purchase.currency.toLowerCase(),
-            shopId: shopData[purchase.shopIndex].shopId,
-            account: userWallets[0].address
-        });
+        console.log("Open New");
+        let res = await Network.post(
+            new URL(contextParams.relayEndpoint + "v1/payment/new/open"),
+            {
+                purchaseId: purchase.purchaseId,
+                amount: amount.toString(),
+                currency: purchase.currency.toLowerCase(),
+                shopId: shopData[purchase.shopIndex].shopId,
+                account: userWallets[0].address
+            },
+            {
+                Authorization: NodeInfo.RELAY_ACCESS_KEY
+            }
+        );
         assert.deepStrictEqual(res.code, 0);
         assert.notDeepStrictEqual(res.data, undefined);
 
@@ -287,6 +293,7 @@ describe("Ledger", () => {
         let detail = await client.ledger.getPaymentDetail(paymentId);
 
         // Approve New
+        console.log("Approve New");
         client.useSigner(userWallets[0]);
         for await (const step of client.ledger.approveNewPayment(
             paymentId,
@@ -327,11 +334,17 @@ describe("Ledger", () => {
         await ContractUtils.delay(3000);
 
         // Close New
-        res = await Network.post(new URL(contextParams.relayEndpoint + "v1/payment/new/close"), {
-            accessKey: NodeInfo.RELAY_ACCESS_KEY,
-            confirm: true,
-            paymentId
-        });
+        console.log("Close New");
+        res = await Network.post(
+            new URL(contextParams.relayEndpoint + "v1/payment/new/close"),
+            {
+                confirm: true,
+                paymentId
+            },
+            {
+                Authorization: NodeInfo.RELAY_ACCESS_KEY
+            }
+        );
         assert.deepStrictEqual(res.code, 0);
 
         await ContractUtils.delay(2000);
@@ -383,11 +396,16 @@ describe("Ledger", () => {
         await ContractUtils.delay(1000);
 
         // Close Cancel
-        res = await Network.post(new URL(contextParams.relayEndpoint + "v1/payment/cancel/close"), {
-            accessKey: NodeInfo.RELAY_ACCESS_KEY,
-            confirm: true,
-            paymentId
-        });
+        res = await Network.post(
+            new URL(contextParams.relayEndpoint + "v1/payment/cancel/close"),
+            {
+                confirm: true,
+                paymentId
+            },
+            {
+                Authorization: NodeInfo.RELAY_ACCESS_KEY
+            }
+        );
         assert.deepStrictEqual(res.code, 0);
 
         await ContractUtils.delay(1000);
@@ -445,14 +463,19 @@ describe("Ledger", () => {
         const feeToken = await client.currency.pointToToken(feePoint);
 
         // Open New
-        let res = await Network.post(new URL(contextParams.relayEndpoint + "v1/payment/new/open"), {
-            accessKey: NodeInfo.RELAY_ACCESS_KEY,
-            purchaseId: purchase.purchaseId,
-            amount: amount.toString(),
-            currency: purchase.currency.toLowerCase(),
-            shopId: shopData[purchase.shopIndex].shopId,
-            account: userWallets[0].address
-        });
+        let res = await Network.post(
+            new URL(contextParams.relayEndpoint + "v1/payment/new/open"),
+            {
+                purchaseId: purchase.purchaseId,
+                amount: amount.toString(),
+                currency: purchase.currency.toLowerCase(),
+                shopId: shopData[purchase.shopIndex].shopId,
+                account: userWallets[0].address
+            },
+            {
+                Authorization: NodeInfo.RELAY_ACCESS_KEY
+            }
+        );
         assert.deepStrictEqual(res.code, 0);
         assert.notDeepStrictEqual(res.data, undefined);
 
@@ -503,11 +526,16 @@ describe("Ledger", () => {
         await ContractUtils.delay(3000);
 
         // Close New
-        res = await Network.post(new URL(contextParams.relayEndpoint + "v1/payment/new/close"), {
-            accessKey: NodeInfo.RELAY_ACCESS_KEY,
-            confirm: true,
-            paymentId
-        });
+        res = await Network.post(
+            new URL(contextParams.relayEndpoint + "v1/payment/new/close"),
+            {
+                confirm: true,
+                paymentId
+            },
+            {
+                Authorization: NodeInfo.RELAY_ACCESS_KEY
+            }
+        );
         assert.deepStrictEqual(res.code, 0);
 
         await ContractUtils.delay(2000);
@@ -518,10 +546,15 @@ describe("Ledger", () => {
         );
 
         // Open Cancel
-        res = await Network.post(new URL(contextParams.relayEndpoint + "v1/payment/cancel/open"), {
-            accessKey: NodeInfo.RELAY_ACCESS_KEY,
-            paymentId
-        });
+        res = await Network.post(
+            new URL(contextParams.relayEndpoint + "v1/payment/cancel/open"),
+            {
+                paymentId
+            },
+            {
+                Authorization: NodeInfo.RELAY_ACCESS_KEY
+            }
+        );
         assert.deepStrictEqual(res.code, 0);
         assert.notDeepStrictEqual(res.data, undefined);
 
