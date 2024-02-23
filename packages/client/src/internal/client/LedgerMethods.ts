@@ -1039,4 +1039,39 @@ export class LedgerMethods extends ClientCore implements ILedgerMethods, IClient
 
         return res.data;
     }
+
+
+    public async getTemporaryAccount(): Promise<string> {
+        const signer = this.web3.getConnectedSigner();
+        if (!signer) {
+            throw new NoSignerError();
+        } else if (!signer.provider) {
+            throw new NoProviderError();
+        }
+
+        const network = getNetwork((await signer.provider.getNetwork()).chainId);
+        const networkName = network.name as SupportedNetworks;
+        if (!SupportedNetworksArray.includes(networkName)) {
+            throw new UnsupportedNetworkError(networkName);
+        }
+
+        const ledgerContract: Ledger = Ledger__factory.connect(this.web3.getLedgerAddress(), signer);
+
+        const account = await signer.getAddress();
+        const nonce = await ledgerContract.nonceOf(account);
+        const message = ContractUtils.getAccountMessage(account, nonce, network.chainId);
+        const signature = await ContractUtils.signMessage(signer, message);
+
+        const param = {
+            account,
+            signature
+        };
+
+        const res = await Network.post(await this.getEndpoint("/v1/payment/account/temporary"), param);
+        if (res.code !== 0) {
+            throw new InternalServerError(res?.error?.message ?? "");
+        }
+
+        return res.data.temporaryAccount;
+    }
 }

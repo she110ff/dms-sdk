@@ -63,4 +63,6 @@ export interface ILedgerMethods extends IClientCore, IClientHttpCore {
     registerMobileToken: (token: string, language: string, os: string, type: MobileType) => Promise<void>;
 
     removePhoneInfo: () => AsyncGenerator<RemovePhoneInfoStepValue>;
+
+    getTemporaryAccount: () => Promise<string>;
 }
