@@ -624,12 +624,13 @@ export class NodeInfo {
         const sender = NodeInfo.accounts()[AccountIndex.CERTIFIER01];
         for (const shop of shopData) {
             const nonce = await contracts.shop.nonceOf(shop.wallet.address);
-            const signature = await ContractUtils.signShop(
-                new Wallet(shop.wallet.privateKey),
+            const message = ContractUtils.getShopAccountMessage(
                 shop.shopId,
+                shop.wallet.address,
                 nonce,
                 contracts.provider.network.chainId
             );
+            const signature = await ContractUtils.signMessage(new Wallet(shop.wallet.privateKey), message);
             await (
                 await contracts.shop
                     .connect(sender)

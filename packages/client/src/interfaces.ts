@@ -8,6 +8,7 @@ export enum NormalSteps {
     PREPARED = "prepare",
     SENT = "sent",
     DONE = "done",
+    CREATED = "created",
     APPROVED = "approved",
     DENIED = "denied"
 }
@@ -325,6 +326,27 @@ export type RemovePhoneInfoStepValue =
           account: string;
       };
 
+export type CreateDelegateStepValue =
+    | {
+          key: NormalSteps.PREPARED;
+          shopId: BytesLike;
+          account: string;
+          signature: BytesLike;
+      }
+    | { key: NormalSteps.CREATED; shopId: BytesLike; account: string; delegator: string }
+    | { key: NormalSteps.SENT; txHash: BytesLike; shopId: BytesLike; account: string; delegator: string }
+    | { key: NormalSteps.DONE; shopId: BytesLike; account: string; delegator: string };
+
+export type RemoveDelegateStepValue =
+    | {
+          key: NormalSteps.PREPARED;
+          shopId: BytesLike;
+          account: string;
+          signature: BytesLike;
+      }
+    | { key: NormalSteps.SENT; txHash: BytesLike; shopId: BytesLike; account: string; delegator: string }
+    | { key: NormalSteps.DONE; shopId: BytesLike; account: string; delegator: string };
+
 export enum LoyaltyType {
     POINT,
     TOKEN
@@ -378,6 +400,7 @@ export type ShopData = {
     name: string;
     currency: string;
     account: string; // 상점주의 지갑주소
+    delegator: string;
     providedAmount: BigNumber; // 제공된 포인트 총량
     usedAmount: BigNumber; // 사용된 포인트 총량
     settledAmount: BigNumber; // 정산된 포인트 총량

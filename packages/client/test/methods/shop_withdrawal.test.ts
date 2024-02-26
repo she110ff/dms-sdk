@@ -521,34 +521,34 @@ describe("Shop Withdrawal", () => {
         expect(shopInfo.withdrawStatus).toEqual(ShopWithdrawStatus.OPEN);
         expect(shopInfo.withdrawAmount.toString()).toEqual(amount2.toString());
     });
-    //
-    // it("Close Withdrawal", async () => {
-    //     client.useSigner(shopWallets[shopIndex]);
-    //
-    //     for await (const step of client.shop.closeWithdrawal(shop.shopId)) {
-    //         switch (step.key) {
-    //             case NormalSteps.PREPARED:
-    //                 expect(step.shopId).toEqual(shop.shopId);
-    //                 expect(step.account.toUpperCase()).toEqual(shopWallets[shopIndex].address.toUpperCase());
-    //                 expect(step.signature).toMatch(/^0x[A-Fa-f0-9]{130}$/i);
-    //                 break;
-    //             case NormalSteps.SENT:
-    //                 expect(step.shopId).toEqual(shop.shopId);
-    //                 expect(step.txHash).toMatch(/^0x[A-Fa-f0-9]{64}$/i);
-    //                 break;
-    //             case NormalSteps.DONE:
-    //                 expect(step.shopId).toEqual(shop.shopId);
-    //                 expect(step.amount.toString()).toEqual(amount2.toString());
-    //                 expect(step.account.toUpperCase()).toEqual(shopWallets[shopIndex].address.toUpperCase());
-    //                 break;
-    //             default:
-    //                 throw new Error("Unexpected close withdrawal step: " + JSON.stringify(step, null, 2));
-    //         }
-    //     }
-    // });
-    //
-    // it("Check Withdraw Status - After", async () => {
-    //     const shopInfo = await client.shop.getShopInfo(shop.shopId);
-    //     expect(shopInfo.withdrawStatus).toEqual(ShopWithdrawStatus.CLOSE);
-    // });
+
+    it("Close Withdrawal", async () => {
+        client.useSigner(shopWallets[shopIndex]);
+
+        for await (const step of client.shop.closeWithdrawal(shop.shopId)) {
+            switch (step.key) {
+                case NormalSteps.PREPARED:
+                    expect(step.shopId).toEqual(shop.shopId);
+                    expect(step.account.toUpperCase()).toEqual(shopWallets[shopIndex].address.toUpperCase());
+                    expect(step.signature).toMatch(/^0x[A-Fa-f0-9]{130}$/i);
+                    break;
+                case NormalSteps.SENT:
+                    expect(step.shopId).toEqual(shop.shopId);
+                    expect(step.txHash).toMatch(/^0x[A-Fa-f0-9]{64}$/i);
+                    break;
+                case NormalSteps.DONE:
+                    expect(step.shopId).toEqual(shop.shopId);
+                    expect(step.amount.toString()).toEqual(amount2.toString());
+                    expect(step.account.toUpperCase()).toEqual(shopWallets[shopIndex].address.toUpperCase());
+                    break;
+                default:
+                    throw new Error("Unexpected close withdrawal step: " + JSON.stringify(step, null, 2));
+            }
+        }
+    });
+
+    it("Check Withdraw Status - After", async () => {
+        const shopInfo = await client.shop.getShopInfo(shop.shopId);
+        expect(shopInfo.withdrawStatus).toEqual(ShopWithdrawStatus.CLOSE);
+    });
 });

@@ -141,7 +141,7 @@ export class ContractUtils {
         return keccak256(encodedResult);
     }
 
-    public static getShopMessage(
+    public static getShopAccountMessage(
         shopId: BytesLike,
         account: string,
         nonce: BigNumberish,
@@ -154,14 +154,61 @@ export class ContractUtils {
         return arrayify(keccak256(encodedResult));
     }
 
-    public static async signShop(
-        signer: Signer,
+    public static getShopNameCurrencyAccountMessage(
         shopId: BytesLike,
+        name: string,
+        currency: string,
+        account: string,
         nonce: BigNumberish,
         chainId: BigNumberish
-    ): Promise<string> {
-        const message = ContractUtils.getShopMessage(shopId, await signer.getAddress(), nonce, chainId);
-        return signer.signMessage(message);
+    ): Uint8Array {
+        const encodedResult = defaultAbiCoder.encode(
+            ["bytes32", "string", "string", "address", "uint256", "uint256"],
+            [shopId, name, currency, account, chainId, nonce]
+        );
+        return arrayify(keccak256(encodedResult));
+    }
+
+    public static getShopStatusAccountMessage(
+        shopId: BytesLike,
+        status: BigNumberish,
+        account: string,
+        nonce: BigNumberish,
+        chainId: BigNumberish
+    ): Uint8Array {
+        const encodedResult = defaultAbiCoder.encode(
+            ["bytes32", "uint256", "address", "uint256", "uint256"],
+            [shopId, status, account, chainId, nonce]
+        );
+        return arrayify(keccak256(encodedResult));
+    }
+
+    public static getShopDelegatorAccountMessage(
+        shopId: BytesLike,
+        delegator: string,
+        account: string,
+        nonce: BigNumberish,
+        chainId: BigNumberish
+    ): Uint8Array {
+        const encodedResult = defaultAbiCoder.encode(
+            ["bytes32", "address", "address", "uint256", "uint256"],
+            [shopId, delegator, account, chainId, nonce]
+        );
+        return arrayify(keccak256(encodedResult));
+    }
+
+    public static getShopAmountAccountMessage(
+        shopId: BytesLike,
+        amount: BigNumberish,
+        account: string,
+        nonce: BigNumberish,
+        chainId: BigNumberish
+    ): Uint8Array {
+        const encodedResult = defaultAbiCoder.encode(
+            ["bytes32", "uint256", "address", "uint256", "uint256"],
+            [shopId, amount, account, chainId, nonce]
+        );
+        return arrayify(keccak256(encodedResult));
     }
 
     public static getLoyaltyNewPaymentMessage(
@@ -450,13 +497,9 @@ export class ContractUtils {
         return value.div(1000000000).mul(1000000000);
     }
     public static getAccountMessage(account: string, nonce: BigNumberish, chainId: BigNumberish): Uint8Array {
-        const encodedResult = defaultAbiCoder.encode(
-            ["address", "uint256", "uint256"],
-            [account, chainId, nonce]
-        );
+        const encodedResult = defaultAbiCoder.encode(["address", "uint256", "uint256"], [account, chainId, nonce]);
         return arrayify(keccak256(encodedResult));
     }
-
 }
 
 interface IEVMError {

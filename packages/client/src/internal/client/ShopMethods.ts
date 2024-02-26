@@ -23,7 +23,9 @@ import {
     ApproveShopStepValue,
     ShopUpdateEvent,
     ShopStatusEvent,
-    ShopPageType
+    ShopPageType,
+    CreateDelegateStepValue,
+    RemoveDelegateStepValue
 } from "../../interfaces";
 import { FailedAddShopError, FailedApprovePayment, InternalServerError, NoHttpModuleError } from "../../utils/errors";
 import { Network } from "../../client-common/interfaces/network";
@@ -36,6 +38,7 @@ import { IShopMethods } from "../../interface/IShop";
 import { BytesLike } from "@ethersproject/bytes";
 
 import { QueryShopTradeHistory } from "../graphql-queries/shop/history";
+import { AddressZero } from "@ethersproject/constants";
 
 /**
  * 상점의 정보를 추가/수정하는 기능과 정산의 요청/확인이 포함된 클래스이다.
@@ -189,6 +192,7 @@ export class ShopMethods extends ClientCore implements IShopMethods, IClientHttp
             name: shopInfo.name,
             currency: shopInfo.currency,
             account: shopInfo.account,
+            delegator: shopInfo.delegator,
             providedAmount: shopInfo.providedAmount,
             usedAmount: shopInfo.usedAmount,
             settledAmount: shopInfo.settledAmount,
@@ -198,6 +202,7 @@ export class ShopMethods extends ClientCore implements IShopMethods, IClientHttp
             withdrawStatus: shopInfo.withdrawData.status
         };
     }
+
     /**
      * 상점주가 정산금 출금 신청을 오픈한다.
      * @param shopId
@@ -222,7 +227,8 @@ export class ShopMethods extends ClientCore implements IShopMethods, IClientHttp
         let contractTx: ContractTransaction;
         const account: string = await signer.getAddress();
         const nonce = await shopContract.nonceOf(account);
-        const signature = await ContractUtils.signShop(signer, shopId, nonce, network.chainId);
+        const message = ContractUtils.getShopAccountMessage(shopId, account, nonce, network.chainId);
+        const signature = await ContractUtils.signMessage(signer, message);
 
         const param = {
             shopId,
@@ -287,7 +293,8 @@ export class ShopMethods extends ClientCore implements IShopMethods, IClientHttp
         const account: string = await signer.getAddress();
         let contractTx: ContractTransaction;
         const nonce = await shopContract.nonceOf(account);
-        const signature = await ContractUtils.signShop(signer, shopId, nonce, network.chainId);
+        const message = ContractUtils.getShopAccountMessage(shopId, account, nonce, network.chainId);
+        const signature = await ContractUtils.signMessage(signer, message);
 
         const param = {
             shopId,
@@ -380,7 +387,8 @@ export class ShopMethods extends ClientCore implements IShopMethods, IClientHttp
         let contractTx: ContractTransaction;
         const account: string = await signer.getAddress();
         const nonce = await shopContract.nonceOf(account);
-        const signature = await ContractUtils.signShop(signer, shopId, nonce, network.chainId);
+        const message = ContractUtils.getShopAccountMessage(shopId, account, nonce, network.chainId);
+        const signature = await ContractUtils.signMessage(signer, message);
 
         const param = {
             shopId,
@@ -446,7 +454,8 @@ export class ShopMethods extends ClientCore implements IShopMethods, IClientHttp
         let contractTx: ContractTransaction;
         const account: string = await signer.getAddress();
         const nonce = await shopContract.nonceOf(account);
-        const signature = await ContractUtils.signShop(signer, shopId, nonce, network.chainId);
+        const message = ContractUtils.getShopAccountMessage(shopId, account, nonce, network.chainId);
+        const signature = await ContractUtils.signMessage(signer, message);
 
         const param = {
             taskId,
@@ -518,7 +527,8 @@ export class ShopMethods extends ClientCore implements IShopMethods, IClientHttp
         let contractTx: ContractTransaction;
         const account: string = await signer.getAddress();
         const nonce = await shopContract.nonceOf(account);
-        const signature = await ContractUtils.signShop(signer, shopId, nonce, network.chainId);
+        const message = ContractUtils.getShopAccountMessage(shopId, account, nonce, network.chainId);
+        const signature = await ContractUtils.signMessage(signer, message);
 
         const param = {
             taskId,
@@ -671,5 +681,151 @@ export class ShopMethods extends ClientCore implements IShopMethods, IClientHttp
         }
 
         return res.data;
+    }
+
+    public async *createDelegate(shopId: BytesLike): AsyncGenerator<CreateDelegateStepValue> {
+        const signer = this.web3.getConnectedSigner();
+        if (!signer) {
+            throw new NoSignerError();
+        } else if (!signer.provider) {
+            throw new NoProviderError();
+        }
+
+        const network = getNetwork((await signer.provider.getNetwork()).chainId);
+        const networkName = network.name as SupportedNetworks;
+        if (!SupportedNetworksArray.includes(networkName)) {
+            throw new UnsupportedNetworkError(networkName);
+        }
+
+        const shopContract: Shop = Shop__factory.connect(this.web3.getShopAddress(), signer);
+        let contractTx: ContractTransaction;
+        const account: string = await signer.getAddress();
+        const nonce = await shopContract.nonceOf(account);
+        const message = ContractUtils.getShopAccountMessage(shopId, account, nonce, network.chainId);
+        const signature = await ContractUtils.signMessage(signer, message);
+
+        const param = {
+            shopId,
+            account,
+            signature
+        };
+
+        yield {
+            key: NormalSteps.PREPARED,
+            shopId,
+            account,
+            signature
+        };
+
+        const res = await Network.post(await this.getEndpoint("/v1/shop/account/delegator/create"), param);
+        if (res.code !== 0) {
+            throw new InternalServerError(res?.error?.message ?? "");
+        }
+
+        const delegator = res.data.delegator;
+        const nonce2 = await shopContract.nonceOf(account);
+        const message2 = ContractUtils.getShopDelegatorAccountMessage(
+            shopId,
+            delegator,
+            account,
+            nonce2,
+            network.chainId
+        );
+        const signature2 = await ContractUtils.signMessage(signer, message2);
+        const param2 = {
+            shopId,
+            account,
+            delegator,
+            signature: signature2
+        };
+
+        const res2 = await Network.post(await this.getEndpoint("/v1/shop/account/delegator/save"), param2);
+        if (res2.code !== 0) {
+            throw new InternalServerError(res2?.error?.message ?? "");
+        }
+
+        contractTx = (await signer.provider.getTransaction(res2.data.txHash)) as ContractTransaction;
+
+        yield { key: NormalSteps.SENT, txHash: res2.data.txHash, shopId, account, delegator };
+
+        const txReceipt = await contractTx.wait();
+
+        const log = findLog(txReceipt, shopContract.interface, "ChangedDelegator");
+        if (!log) {
+            throw new FailedAddShopError();
+        }
+
+        yield {
+            key: NormalSteps.DONE,
+            shopId,
+            account,
+            delegator
+        };
+    }
+
+    public async *removeDelegate(shopId: BytesLike): AsyncGenerator<RemoveDelegateStepValue> {
+        const signer = this.web3.getConnectedSigner();
+        if (!signer) {
+            throw new NoSignerError();
+        } else if (!signer.provider) {
+            throw new NoProviderError();
+        }
+
+        const network = getNetwork((await signer.provider.getNetwork()).chainId);
+        const networkName = network.name as SupportedNetworks;
+        if (!SupportedNetworksArray.includes(networkName)) {
+            throw new UnsupportedNetworkError(networkName);
+        }
+
+        const shopContract: Shop = Shop__factory.connect(this.web3.getShopAddress(), signer);
+        let contractTx: ContractTransaction;
+        const account: string = await signer.getAddress();
+        const delegator = AddressZero;
+        const nonce = await shopContract.nonceOf(account);
+        const message = ContractUtils.getShopDelegatorAccountMessage(
+            shopId,
+            delegator,
+            account,
+            nonce,
+            network.chainId
+        );
+        const signature = await ContractUtils.signMessage(signer, message);
+
+        const param = {
+            shopId,
+            account,
+            delegator,
+            signature
+        };
+
+        yield {
+            key: NormalSteps.PREPARED,
+            shopId,
+            account,
+            signature
+        };
+
+        const res = await Network.post(await this.getEndpoint("/v1/shop/account/delegator/save"), param);
+        if (res.code !== 0) {
+            throw new InternalServerError(res?.error?.message ?? "");
+        }
+
+        contractTx = (await signer.provider.getTransaction(res.data.txHash)) as ContractTransaction;
+
+        yield { key: NormalSteps.SENT, txHash: res.data.txHash, shopId, account, delegator };
+
+        const txReceipt = await contractTx.wait();
+
+        const log = findLog(txReceipt, shopContract.interface, "ChangedDelegator");
+        if (!log) {
+            throw new FailedAddShopError();
+        }
+
+        yield {
+            key: NormalSteps.DONE,
+            shopId,
+            account,
+            delegator
+        };
     }
 }
