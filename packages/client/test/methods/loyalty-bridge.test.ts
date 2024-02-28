@@ -67,6 +67,7 @@ describe("LoyaltyBridge", () => {
     });
 
     it("Test of the deposit to bridge", async () => {
+        const tokenId = ContractUtils.getTokenId(await contractInfo.token.name(), await contractInfo.token.symbol());
         for (let idx = 0; idx < users.length - 1; idx++) {
             console.log(`${users[idx].address}`);
             const amount = Amount.make(100, 18).value;
@@ -83,11 +84,12 @@ describe("LoyaltyBridge", () => {
             const signature = ContractUtils.signMessage(wallet, message);
             await contractInfo.loyaltyBridge
                 .connect(wallet)
-                .depositToBridge(depositId, users[idx].address, amount, signature);
+                .depositToBridge(tokenId, depositId, users[idx].address, amount, signature);
         }
     });
 
     it("Test of the withdraw from bridge", async () => {
+        const tokenId = ContractUtils.getTokenId(await contractInfo.token.name(), await contractInfo.token.symbol());
         for (let idx = 0; idx < users.length - 1; idx++) {
             console.log(`${users[idx].address}`);
             const amount = Amount.make(100, 18).value;
@@ -95,7 +97,7 @@ describe("LoyaltyBridge", () => {
             for (const validator of bridgeValidatorWallets) {
                 await contractInfo.loyaltyBridge
                     .connect(validator)
-                    .withdrawFromBridge(withdrawId, users[idx].address, amount);
+                    .withdrawFromBridge(tokenId, withdrawId, users[idx].address, amount);
             }
         }
     });

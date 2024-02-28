@@ -496,9 +496,14 @@ export class ContractUtils {
     public static zeroGWEI(value: BigNumber): BigNumber {
         return value.div(1000000000).mul(1000000000);
     }
+
     public static getAccountMessage(account: string, nonce: BigNumberish, chainId: BigNumberish): Uint8Array {
         const encodedResult = defaultAbiCoder.encode(["address", "uint256", "uint256"], [account, chainId, nonce]);
         return arrayify(keccak256(encodedResult));
+    }
+
+    public static getTokenId(name: string, symbol: string): string {
+        return keccak256(defaultAbiCoder.encode(["string", "string"], [name, symbol]));
     }
 }
 
