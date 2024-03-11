@@ -1,5 +1,15 @@
-export const SupportedNetworksArray = ["bosagora_mainnet", "bosagora_testnet", "bosagora_devnet", "localhost"] as const;
-export type SupportedNetworks = typeof SupportedNetworksArray[number];
+import { Networkish } from "@ethersproject/providers";
+
+export enum SupportedNetwork {
+    BOSAGORA_DEVNET = "bosagora_devnet",
+    KIOS_MAINNET = "kios_mainnet",
+    KIOS_TESTNET = "kios_testnet",
+    KIOS_DEVNET = "kios_devnet",
+    BOSAGORA_LOCAL = "localhost"
+}
+
+export const SupportedNetworkArray = Object.values(SupportedNetwork);
+
 export type NetworkDeployment = {
     PhoneLinkCollectionAddress: string;
     LoyaltyTokenAddress: string;
@@ -11,7 +21,10 @@ export type NetworkDeployment = {
     LoyaltyConsumerAddress: string;
     LoyaltyExchangerAddress: string;
     LoyaltyTransferAddress: string;
+    network: Networkish;
     LoyaltyBridgeAddress: string;
-    relayEndpoint?: string | URL;
+    web3Endpoint: string | URL;
+    relayEndpoint: string | URL;
+    graphqlEndpoint: string | URL;
 };
 export type GenericRecord = Record<string, string | number | boolean | null | undefined>;

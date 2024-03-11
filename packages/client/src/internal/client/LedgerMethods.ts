@@ -3,8 +3,8 @@ import {
     Context,
     IClientHttpCore,
     LIVE_CONTRACTS,
-    SupportedNetworks,
-    SupportedNetworksArray
+    SupportedNetwork,
+    SupportedNetworkArray
 } from "../../client-common";
 import { ILedgerMethods } from "../../interface/ILedger";
 import {
@@ -60,10 +60,10 @@ import {
 } from "../../utils/errors";
 import { Network } from "../../client-common/interfaces/network";
 import { findLog } from "../../client-common/utils";
+import { getNetwork } from "../../utils/Utilty";
 
 import { BigNumber } from "@ethersproject/bignumber";
 import { ContractTransaction } from "@ethersproject/contracts";
-import { getNetwork } from "@ethersproject/networks";
 import { QueryUserTradeHistory } from "../graphql-queries/user/history";
 import { PhoneLinkCollection, PhoneLinkCollection__factory } from "del-osx-lib";
 import { AddressZero } from "@ethersproject/constants";
@@ -112,8 +112,8 @@ export class LedgerMethods extends ClientCore implements ILedgerMethods, IClient
             if (!provider) throw new NoProviderError();
 
             const network = await provider.getNetwork();
-            const networkName = network.name as SupportedNetworks;
-            if (!SupportedNetworksArray.includes(networkName)) {
+            const networkName = network.name as SupportedNetwork;
+            if (!SupportedNetworkArray.includes(networkName)) {
                 throw new UnsupportedNetworkError(networkName);
             }
             endpoint = LIVE_CONTRACTS[networkName].relayEndpoint;
@@ -138,8 +138,8 @@ export class LedgerMethods extends ClientCore implements ILedgerMethods, IClient
         if (!provider) throw new NoProviderError();
 
         const network = getNetwork((await provider.getNetwork()).chainId);
-        const networkName = network.name as SupportedNetworks;
-        if (!SupportedNetworksArray.includes(networkName)) {
+        const networkName = network.name as SupportedNetwork;
+        if (!SupportedNetworkArray.includes(networkName)) {
             throw new UnsupportedNetworkError(networkName);
         }
 
@@ -157,8 +157,8 @@ export class LedgerMethods extends ClientCore implements ILedgerMethods, IClient
         if (!provider) throw new NoProviderError();
 
         const network = getNetwork((await provider.getNetwork()).chainId);
-        const networkName = network.name as SupportedNetworks;
-        if (!SupportedNetworksArray.includes(networkName)) {
+        const networkName = network.name as SupportedNetwork;
+        if (!SupportedNetworkArray.includes(networkName)) {
             throw new UnsupportedNetworkError(networkName);
         }
 
@@ -176,8 +176,8 @@ export class LedgerMethods extends ClientCore implements ILedgerMethods, IClient
         if (!provider) throw new NoProviderError();
 
         const network = getNetwork((await provider.getNetwork()).chainId);
-        const networkName = network.name as SupportedNetworks;
-        if (!SupportedNetworksArray.includes(networkName)) {
+        const networkName = network.name as SupportedNetwork;
+        if (!SupportedNetworkArray.includes(networkName)) {
             throw new UnsupportedNetworkError(networkName);
         }
 
@@ -194,8 +194,8 @@ export class LedgerMethods extends ClientCore implements ILedgerMethods, IClient
         if (!provider) throw new NoProviderError();
 
         const network = getNetwork((await provider.getNetwork()).chainId);
-        const networkName = network.name as SupportedNetworks;
-        if (!SupportedNetworksArray.includes(networkName)) {
+        const networkName = network.name as SupportedNetwork;
+        if (!SupportedNetworkArray.includes(networkName)) {
             throw new UnsupportedNetworkError(networkName);
         }
 
@@ -257,8 +257,8 @@ export class LedgerMethods extends ClientCore implements ILedgerMethods, IClient
         }
 
         const network = getNetwork((await signer.provider.getNetwork()).chainId);
-        const networkName = network.name as SupportedNetworks;
-        if (!SupportedNetworksArray.includes(networkName)) {
+        const networkName = network.name as SupportedNetwork;
+        if (!SupportedNetworkArray.includes(networkName)) {
             throw new UnsupportedNetworkError(networkName);
         }
 
@@ -395,8 +395,8 @@ export class LedgerMethods extends ClientCore implements ILedgerMethods, IClient
         }
 
         const network = getNetwork((await signer.provider.getNetwork()).chainId);
-        const networkName = network.name as SupportedNetworks;
-        if (!SupportedNetworksArray.includes(networkName)) {
+        const networkName = network.name as SupportedNetwork;
+        if (!SupportedNetworkArray.includes(networkName)) {
             throw new UnsupportedNetworkError(networkName);
         }
 
@@ -587,8 +587,8 @@ export class LedgerMethods extends ClientCore implements ILedgerMethods, IClient
         }
 
         const network = getNetwork((await signer.provider.getNetwork()).chainId);
-        const networkName = network.name as SupportedNetworks;
-        if (!SupportedNetworksArray.includes(networkName)) {
+        const networkName = network.name as SupportedNetwork;
+        if (!SupportedNetworkArray.includes(networkName)) {
             throw new UnsupportedNetworkError(networkName);
         }
 
@@ -637,8 +637,8 @@ export class LedgerMethods extends ClientCore implements ILedgerMethods, IClient
         }
 
         const network = getNetwork((await signer.provider.getNetwork()).chainId);
-        const networkName = network.name as SupportedNetworks;
-        if (!SupportedNetworksArray.includes(networkName)) {
+        const networkName = network.name as SupportedNetwork;
+        if (!SupportedNetworkArray.includes(networkName)) {
             throw new UnsupportedNetworkError(networkName);
         }
 
@@ -680,8 +680,8 @@ export class LedgerMethods extends ClientCore implements ILedgerMethods, IClient
         }
 
         const network = getNetwork((await signer.provider.getNetwork()).chainId);
-        const networkName = network.name as SupportedNetworks;
-        if (!SupportedNetworksArray.includes(networkName)) {
+        const networkName = network.name as SupportedNetwork;
+        if (!SupportedNetworkArray.includes(networkName)) {
             throw new UnsupportedNetworkError(networkName);
         }
 
@@ -736,8 +736,8 @@ export class LedgerMethods extends ClientCore implements ILedgerMethods, IClient
         }
 
         const network = getNetwork((await signer.provider.getNetwork()).chainId);
-        const networkName = network.name as SupportedNetworks;
-        if (!SupportedNetworksArray.includes(networkName)) {
+        const networkName = network.name as SupportedNetwork;
+        if (!SupportedNetworkArray.includes(networkName)) {
             throw new UnsupportedNetworkError(networkName);
         }
 
@@ -792,8 +792,8 @@ export class LedgerMethods extends ClientCore implements ILedgerMethods, IClient
         if (!provider) throw new NoProviderError();
 
         const network = getNetwork((await provider.getNetwork()).chainId);
-        const networkName = network.name as SupportedNetworks;
-        if (!SupportedNetworksArray.includes(networkName)) {
+        const networkName = network.name as SupportedNetwork;
+        if (!SupportedNetworkArray.includes(networkName)) {
             throw new UnsupportedNetworkError(networkName);
         }
 
@@ -815,8 +815,8 @@ export class LedgerMethods extends ClientCore implements ILedgerMethods, IClient
         }
 
         const network = getNetwork((await signer.provider.getNetwork()).chainId);
-        const networkName = network.name as SupportedNetworks;
-        if (!SupportedNetworksArray.includes(networkName)) {
+        const networkName = network.name as SupportedNetwork;
+        if (!SupportedNetworkArray.includes(networkName)) {
             throw new UnsupportedNetworkError(networkName);
         }
 
@@ -974,8 +974,8 @@ export class LedgerMethods extends ClientCore implements ILedgerMethods, IClient
         }
 
         const network = getNetwork((await signer.provider.getNetwork()).chainId);
-        const networkName = network.name as SupportedNetworks;
-        if (!SupportedNetworksArray.includes(networkName)) {
+        const networkName = network.name as SupportedNetwork;
+        if (!SupportedNetworkArray.includes(networkName)) {
             throw new UnsupportedNetworkError(networkName);
         }
 
@@ -1040,7 +1040,6 @@ export class LedgerMethods extends ClientCore implements ILedgerMethods, IClient
         return res.data;
     }
 
-
     public async getTemporaryAccount(): Promise<string> {
         const signer = this.web3.getConnectedSigner();
         if (!signer) {
@@ -1050,8 +1049,8 @@ export class LedgerMethods extends ClientCore implements ILedgerMethods, IClient
         }
 
         const network = getNetwork((await signer.provider.getNetwork()).chainId);
-        const networkName = network.name as SupportedNetworks;
-        if (!SupportedNetworksArray.includes(networkName)) {
+        const networkName = network.name as SupportedNetwork;
+        if (!SupportedNetworkArray.includes(networkName)) {
             throw new UnsupportedNetworkError(networkName);
         }
 

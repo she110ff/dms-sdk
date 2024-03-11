@@ -18,6 +18,9 @@ export const QueryUserTradeHistory = gql`
             amountPoint
             amountToken
             amountValue
+            feePoint
+            feeToken
+            feeValue
             balancePoint
             balanceToken
             purchaseId

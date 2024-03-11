@@ -1,7 +1,15 @@
 import * as dotenv from "dotenv";
 import { JsonRpcProvider, Networkish } from "@ethersproject/providers";
 import { Wallet } from "@ethersproject/wallet";
-import { Amount, ContractUtils, GasPriceManager, LIVE_CONTRACTS, NonceManager } from "../../src";
+import {
+    Amount,
+    ContractUtils,
+    GasPriceManager,
+    LIVE_CONTRACTS,
+    NonceManager,
+    SupportedNetwork,
+    SupportedNetworkArray
+} from "../../src";
 import {
     CurrencyRate,
     CurrencyRate__factory,
@@ -27,6 +35,11 @@ import {
 import { PhoneLinkCollection, PhoneLinkCollection__factory } from "del-osx-lib";
 import { IShopData } from "./types";
 import { Signer } from "@ethersproject/abstract-signer";
+import { Network } from "@ethersproject/networks";
+import { getNetwork } from "../../src/utils/Utilty";
+import { InvalidAddressError, UnsupportedNetworkError } from "dms-sdk-common";
+import { isAddress } from "@ethersproject/address";
+import { AddressZero } from "@ethersproject/constants";
 
 dotenv.config({ path: "env/.env" });
 
@@ -105,7 +118,7 @@ export class NodeInfo {
     public static GRAPHQL_END_POINT = process.env.GRAPHQL_END_POINT_FOR_TEST || "";
     public static RELAY_END_POINT = process.env.RELAY_END_POINT_FOR_TEST || "";
 
-    public static CHAIN_ID = 24680;
+    public static CHAIN_ID: number = Number(process.env.CHAIN_ID || "24680");
 
     public static CreateInitialAccounts(): any[] {
         const accounts: string[] = [];
@@ -453,15 +466,47 @@ export class NodeInfo {
         );
     }
 
+    // INTERNAL HELPERS
+    private static resolveNetwork(networkish: Networkish, ensRegistryAddress?: string): Network {
+        const network = getNetwork(networkish);
+        const networkName = network.name as SupportedNetwork;
+        if (!SupportedNetworkArray.includes(networkName)) {
+            throw new UnsupportedNetworkError(networkName);
+        }
+
+        if (ensRegistryAddress) {
+            if (!isAddress(ensRegistryAddress)) {
+                throw new InvalidAddressError();
+            } else {
+                network.ensAddress = ensRegistryAddress;
+            }
+        }
+
+        if (!network.ensAddress) {
+            network.ensAddress = AddressZero;
+        }
+        return network;
+    }
+
+    private static resolveWeb3Providers(endpoints: string | JsonRpcProvider, network: Networkish): JsonRpcProvider {
+        if (typeof endpoints === "string") {
+            const url = new URL(endpoints);
+            return new JsonRpcProvider(url.href, this.resolveNetwork(network));
+        } else {
+            return endpoints;
+        }
+    }
+
     public static createProvider(): JsonRpcProvider {
-        return new JsonRpcProvider(NodeInfo.NODE_END_POINT, NodeInfo.CHAIN_ID);
+        return this.resolveWeb3Providers(NodeInfo.NODE_END_POINT, NodeInfo.CHAIN_ID);
     }
 
     public static getContextParams(): IContextParams {
         const accounts = NodeInfo.accounts();
         const network = "bosagora_devnet";
+
         const contexts: IContextParams = {
-            network: 24680,
+            network: LIVE_CONTRACTS[network].network,
             signer: accounts[0],
             tokenAddress: LIVE_CONTRACTS[network].LoyaltyTokenAddress,
             phoneLinkAddress: LIVE_CONTRACTS[network].PhoneLinkCollectionAddress,

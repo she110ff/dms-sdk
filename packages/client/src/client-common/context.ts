@@ -1,9 +1,15 @@
 import { ContextParams, ContextState } from "./interfaces/context";
-import { JsonRpcProvider, Networkish } from "@ethersproject/providers";
-import { UnsupportedProtocolError } from "dms-sdk-common";
+import { SupportedNetwork, SupportedNetworkArray } from "./interfaces/common";
+import { InvalidAddressError, UnsupportedProtocolError, UnsupportedNetworkError } from "dms-sdk-common";
 import { GraphQLClient } from "graphql-request";
+import { getNetwork } from "../utils/Utilty";
 
 export { ContextParams } from "./interfaces/context";
+
+import { isAddress } from "@ethersproject/address";
+import { Network } from "@ethersproject/networks";
+import { JsonRpcProvider, Networkish } from "@ethersproject/providers";
+import { AddressZero } from "@ethersproject/constants";
 
 const supportedProtocols = ["https:", "http:"];
 // if (typeof process !== "undefined" && process.env?.TESTING) {
@@ -12,7 +18,10 @@ const supportedProtocols = ["https:", "http:"];
 
 // State
 const defaultState: ContextState = {
-    network: "mainnet",
+    network: {
+        name: "kios_mainnet",
+        chainId: 215110
+    },
     web3Providers: [],
     relayEndpoint: undefined
 };
@@ -138,6 +147,28 @@ export class Context {
         return defaultState;
     }
 
+    // INTERNAL HELPERS
+    private static resolveNetwork(networkish: Networkish, ensRegistryAddress?: string): Network {
+        const network = getNetwork(networkish);
+        const networkName = network.name as SupportedNetwork;
+        if (!SupportedNetworkArray.includes(networkName)) {
+            throw new UnsupportedNetworkError(networkName);
+        }
+
+        if (ensRegistryAddress) {
+            if (!isAddress(ensRegistryAddress)) {
+                throw new InvalidAddressError();
+            } else {
+                network.ensAddress = ensRegistryAddress;
+            }
+        }
+
+        if (!network.ensAddress) {
+            network.ensAddress = AddressZero;
+        }
+        return network;
+    }
+
     private static resolveWeb3Providers(
         endpoints: string | JsonRpcProvider | (string | JsonRpcProvider)[],
         network: Networkish
@@ -149,7 +180,7 @@ export class Context {
                     if (!supportedProtocols.includes(url.protocol)) {
                         throw new UnsupportedProtocolError(url.protocol);
                     }
-                    return new JsonRpcProvider(url.href, network);
+                    return new JsonRpcProvider(url.href, this.resolveNetwork(network));
                 }
                 return item;
             });
@@ -158,7 +189,7 @@ export class Context {
             if (!supportedProtocols.includes(url.protocol)) {
                 throw new UnsupportedProtocolError(url.protocol);
             }
-            return [new JsonRpcProvider(url.href, network)];
+            return [new JsonRpcProvider(url.href, this.resolveNetwork(network))];
         } else {
             return [endpoints];
         }

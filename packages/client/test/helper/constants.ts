@@ -16,7 +16,7 @@ export const web3EndpointsDevnet = {
 
 export const TEST_WALLET = "d09672244a06a32f74d051e5adbbb62ae0eda27832a973159d475da6d53ba5c0";
 
-const grapqhlEndpoints = {
+const grapqlEndpoints = {
     working: [
         {
             url: "http://subgraph.devnet.bosagora.org:8000/subgraphs/name/bosagora/dms-osx-devnet"
@@ -45,7 +45,7 @@ export const contextParamsMainnet: ContextParams = {
     network: 2151,
     signer: new Wallet(TEST_WALLET),
     web3Providers: web3EndpointsMainnet.working,
-    graphqlNodes: grapqhlEndpoints.working
+    graphqlNodes: grapqlEndpoints.working
 };
 
 export const contextParamsDevnet: ContextParams = {
@@ -53,7 +53,7 @@ export const contextParamsDevnet: ContextParams = {
     signer: new Wallet(TEST_WALLET),
     web3Providers: web3EndpointsDevnet.working,
     relayEndpoint: relayEndpointsDevnet.working,
-    graphqlNodes: grapqhlEndpoints.working
+    graphqlNodes: grapqlEndpoints.working
 };
 
 export const contextParamsLocalChain: ContextParams = {
@@ -61,12 +61,12 @@ export const contextParamsLocalChain: ContextParams = {
     signer: new Wallet(TEST_WALLET),
     web3Providers: ["http://localhost:8545"],
     relayEndpoint: "http://localhost:7070",
-    graphqlNodes: grapqhlEndpoints.working
+    graphqlNodes: grapqlEndpoints.working
 };
 
 export const contextParamsFailing: ContextParams = {
     network: "mainnet",
     signer: new Wallet(TEST_WALLET),
     web3Providers: web3EndpointsMainnet.failing,
-    graphqlNodes: grapqhlEndpoints.working
+    graphqlNodes: grapqlEndpoints.working
 };

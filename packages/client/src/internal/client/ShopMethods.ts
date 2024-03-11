@@ -3,8 +3,8 @@ import {
     Context,
     IClientHttpCore,
     LIVE_CONTRACTS,
-    SupportedNetworks,
-    SupportedNetworksArray
+    SupportedNetwork,
+    SupportedNetworkArray
 } from "../../client-common";
 import { Shop, Shop__factory } from "dms-osx-lib";
 import { Provider } from "@ethersproject/providers";
@@ -30,10 +30,10 @@ import {
 import { FailedAddShopError, FailedApprovePayment, InternalServerError, NoHttpModuleError } from "../../utils/errors";
 import { Network } from "../../client-common/interfaces/network";
 import { findLog } from "../../client-common/utils";
+import { getNetwork } from "../../utils/Utilty";
 
 import { BigNumber, BigNumberish } from "@ethersproject/bignumber";
 import { ContractTransaction } from "@ethersproject/contracts";
-import { getNetwork } from "@ethersproject/networks";
 import { IShopMethods } from "../../interface/IShop";
 import { BytesLike } from "@ethersproject/bytes";
 
@@ -83,8 +83,8 @@ export class ShopMethods extends ClientCore implements IShopMethods, IClientHttp
             if (!provider) throw new NoProviderError();
 
             const network = await provider.getNetwork();
-            const networkName = network.name as SupportedNetworks;
-            if (!SupportedNetworksArray.includes(networkName)) {
+            const networkName = network.name as SupportedNetwork;
+            if (!SupportedNetworkArray.includes(networkName)) {
                 throw new UnsupportedNetworkError(networkName);
             }
             endpoint = LIVE_CONTRACTS[networkName].relayEndpoint;
@@ -109,8 +109,8 @@ export class ShopMethods extends ClientCore implements IShopMethods, IClientHttp
         if (!provider) throw new NoProviderError();
 
         const network = getNetwork((await provider.getNetwork()).chainId);
-        const networkName = network.name as SupportedNetworks;
-        if (!SupportedNetworksArray.includes(networkName)) {
+        const networkName = network.name as SupportedNetwork;
+        if (!SupportedNetworkArray.includes(networkName)) {
             throw new UnsupportedNetworkError(networkName);
         }
 
@@ -123,8 +123,8 @@ export class ShopMethods extends ClientCore implements IShopMethods, IClientHttp
         if (!provider) throw new NoProviderError();
 
         const network = getNetwork((await provider.getNetwork()).chainId);
-        const networkName = network.name as SupportedNetworks;
-        if (!SupportedNetworksArray.includes(networkName)) {
+        const networkName = network.name as SupportedNetwork;
+        if (!SupportedNetworkArray.includes(networkName)) {
             throw new UnsupportedNetworkError(networkName);
         }
 
@@ -141,8 +141,8 @@ export class ShopMethods extends ClientCore implements IShopMethods, IClientHttp
         }
 
         const network = getNetwork((await signer.provider.getNetwork()).chainId);
-        const networkName = network.name as SupportedNetworks;
-        if (!SupportedNetworksArray.includes(networkName)) {
+        const networkName = network.name as SupportedNetwork;
+        if (!SupportedNetworkArray.includes(networkName)) {
             throw new UnsupportedNetworkError(networkName);
         }
 
@@ -160,8 +160,8 @@ export class ShopMethods extends ClientCore implements IShopMethods, IClientHttp
         }
 
         const network = getNetwork((await signer.provider.getNetwork()).chainId);
-        const networkName = network.name as SupportedNetworks;
-        if (!SupportedNetworksArray.includes(networkName)) {
+        const networkName = network.name as SupportedNetwork;
+        if (!SupportedNetworkArray.includes(networkName)) {
             throw new UnsupportedNetworkError(networkName);
         }
 
@@ -180,8 +180,8 @@ export class ShopMethods extends ClientCore implements IShopMethods, IClientHttp
         if (!provider) throw new NoProviderError();
 
         const network = getNetwork((await provider.getNetwork()).chainId);
-        const networkName = network.name as SupportedNetworks;
-        if (!SupportedNetworksArray.includes(networkName)) {
+        const networkName = network.name as SupportedNetwork;
+        if (!SupportedNetworkArray.includes(networkName)) {
             throw new UnsupportedNetworkError(networkName);
         }
 
@@ -218,8 +218,8 @@ export class ShopMethods extends ClientCore implements IShopMethods, IClientHttp
         }
 
         const network = getNetwork((await signer.provider.getNetwork()).chainId);
-        const networkName = network.name as SupportedNetworks;
-        if (!SupportedNetworksArray.includes(networkName)) {
+        const networkName = network.name as SupportedNetwork;
+        if (!SupportedNetworkArray.includes(networkName)) {
             throw new UnsupportedNetworkError(networkName);
         }
 
@@ -284,8 +284,8 @@ export class ShopMethods extends ClientCore implements IShopMethods, IClientHttp
         }
 
         const network = getNetwork((await signer.provider.getNetwork()).chainId);
-        const networkName = network.name as SupportedNetworks;
-        if (!SupportedNetworksArray.includes(networkName)) {
+        const networkName = network.name as SupportedNetwork;
+        if (!SupportedNetworkArray.includes(networkName)) {
             throw new UnsupportedNetworkError(networkName);
         }
 
@@ -378,8 +378,8 @@ export class ShopMethods extends ClientCore implements IShopMethods, IClientHttp
         }
 
         const network = getNetwork((await signer.provider.getNetwork()).chainId);
-        const networkName = network.name as SupportedNetworks;
-        if (!SupportedNetworksArray.includes(networkName)) {
+        const networkName = network.name as SupportedNetwork;
+        if (!SupportedNetworkArray.includes(networkName)) {
             throw new UnsupportedNetworkError(networkName);
         }
 
@@ -445,8 +445,8 @@ export class ShopMethods extends ClientCore implements IShopMethods, IClientHttp
         }
 
         const network = getNetwork((await signer.provider.getNetwork()).chainId);
-        const networkName = network.name as SupportedNetworks;
-        if (!SupportedNetworksArray.includes(networkName)) {
+        const networkName = network.name as SupportedNetwork;
+        if (!SupportedNetworkArray.includes(networkName)) {
             throw new UnsupportedNetworkError(networkName);
         }
 
@@ -518,8 +518,8 @@ export class ShopMethods extends ClientCore implements IShopMethods, IClientHttp
         }
 
         const network = getNetwork((await signer.provider.getNetwork()).chainId);
-        const networkName = network.name as SupportedNetworks;
-        if (!SupportedNetworksArray.includes(networkName)) {
+        const networkName = network.name as SupportedNetwork;
+        if (!SupportedNetworkArray.includes(networkName)) {
             throw new UnsupportedNetworkError(networkName);
         }
 
@@ -692,8 +692,8 @@ export class ShopMethods extends ClientCore implements IShopMethods, IClientHttp
         }
 
         const network = getNetwork((await signer.provider.getNetwork()).chainId);
-        const networkName = network.name as SupportedNetworks;
-        if (!SupportedNetworksArray.includes(networkName)) {
+        const networkName = network.name as SupportedNetwork;
+        if (!SupportedNetworkArray.includes(networkName)) {
             throw new UnsupportedNetworkError(networkName);
         }
 
@@ -772,8 +772,8 @@ export class ShopMethods extends ClientCore implements IShopMethods, IClientHttp
         }
 
         const network = getNetwork((await signer.provider.getNetwork()).chainId);
-        const networkName = network.name as SupportedNetworks;
-        if (!SupportedNetworksArray.includes(networkName)) {
+        const networkName = network.name as SupportedNetwork;
+        if (!SupportedNetworkArray.includes(networkName)) {
             throw new UnsupportedNetworkError(networkName);
         }
 

@@ -1,11 +1,11 @@
-import { ClientCore, Context, SupportedNetworks, SupportedNetworksArray } from "../../client-common";
+import { ClientCore, Context, SupportedNetwork, SupportedNetworkArray } from "../../client-common";
 import { ICurrencyMethods } from "../../interface/ICurrency";
 import { CurrencyRate, CurrencyRate__factory, LoyaltyToken, LoyaltyToken__factory } from "dms-osx-lib";
 import { Provider } from "@ethersproject/providers";
 import { NoProviderError, UnsupportedNetworkError } from "dms-sdk-common";
 import { BigNumber } from "@ethersproject/bignumber";
-import { getNetwork } from "@ethersproject/networks";
 import { ContractUtils } from "../../utils/ContractUtils";
+import { getNetwork } from "../../utils/Utilty";
 
 /**
  * 환률정보를 제공하고, 통화량을 환산하는 기능이 포함된 클래스이다.
@@ -29,8 +29,8 @@ export class CurrencyMethods extends ClientCore implements ICurrencyMethods {
             if (!provider) throw new NoProviderError();
 
             const network = getNetwork((await provider.getNetwork()).chainId);
-            const networkName = network.name as SupportedNetworks;
-            if (!SupportedNetworksArray.includes(networkName)) {
+            const networkName = network.name as SupportedNetwork;
+            if (!SupportedNetworkArray.includes(networkName)) {
                 throw new UnsupportedNetworkError(networkName);
             }
 
@@ -46,8 +46,8 @@ export class CurrencyMethods extends ClientCore implements ICurrencyMethods {
             if (!provider) throw new NoProviderError();
 
             const network = getNetwork((await provider.getNetwork()).chainId);
-            const networkName = network.name as SupportedNetworks;
-            if (!SupportedNetworksArray.includes(networkName)) {
+            const networkName = network.name as SupportedNetwork;
+            if (!SupportedNetworkArray.includes(networkName)) {
                 throw new UnsupportedNetworkError(networkName);
             }
 
@@ -64,8 +64,8 @@ export class CurrencyMethods extends ClientCore implements ICurrencyMethods {
             if (!provider) throw new NoProviderError();
 
             const network = getNetwork((await provider.getNetwork()).chainId);
-            const networkName = network.name as SupportedNetworks;
-            if (!SupportedNetworksArray.includes(networkName)) {
+            const networkName = network.name as SupportedNetwork;
+            if (!SupportedNetworkArray.includes(networkName)) {
                 throw new UnsupportedNetworkError(networkName);
             }
 

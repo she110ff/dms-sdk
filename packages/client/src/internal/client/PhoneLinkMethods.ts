@@ -3,8 +3,8 @@ import {
     Context,
     findLog,
     IClientHttpCore,
-    SupportedNetworks,
-    SupportedNetworksArray
+    SupportedNetwork,
+    SupportedNetworkArray
 } from "../../client-common";
 import { PhoneLinkCollection, PhoneLinkCollection__factory } from "del-osx-lib";
 import { NoProviderError, NoSignerError, UnsupportedNetworkError } from "dms-sdk-common";
@@ -18,11 +18,11 @@ import {
     RemovePhoneInfoStepValue
 } from "../../interfaces";
 import { ContractUtils } from "../../utils/ContractUtils";
+import { getNetwork } from "../../utils/Utilty";
 
 import { IPhoneLinkMethods } from "../../interface/IPhoneLink";
 import { Network } from "../../client-common/interfaces/network";
 
-import { getNetwork } from "@ethersproject/networks";
 import { BytesLike } from "@ethersproject/bytes";
 
 import { FailedRemovePhoneInfoError, InternalServerError, NoValidator } from "../../utils/errors";
@@ -73,8 +73,8 @@ export class PhoneLinkMethods extends ClientCore implements IPhoneLinkMethods, I
         }
 
         const network = getNetwork((await provider.getNetwork()).chainId);
-        const networkName = network.name as SupportedNetworks;
-        if (!SupportedNetworksArray.includes(networkName)) {
+        const networkName = network.name as SupportedNetwork;
+        if (!SupportedNetworkArray.includes(networkName)) {
             throw new UnsupportedNetworkError(networkName);
         }
 
@@ -103,8 +103,8 @@ export class PhoneLinkMethods extends ClientCore implements IPhoneLinkMethods, I
         }
 
         const network = getNetwork((await signer.provider.getNetwork()).chainId);
-        const networkName = network.name as SupportedNetworks;
-        if (!SupportedNetworksArray.includes(networkName)) {
+        const networkName = network.name as SupportedNetwork;
+        if (!SupportedNetworkArray.includes(networkName)) {
             throw new UnsupportedNetworkError(networkName);
         }
 
@@ -183,8 +183,8 @@ export class PhoneLinkMethods extends ClientCore implements IPhoneLinkMethods, I
         }
 
         const network = getNetwork((await signer.provider.getNetwork()).chainId);
-        const networkName = network.name as SupportedNetworks;
-        if (!SupportedNetworksArray.includes(networkName)) {
+        const networkName = network.name as SupportedNetwork;
+        if (!SupportedNetworkArray.includes(networkName)) {
             throw new UnsupportedNetworkError(networkName);
         }
 
@@ -244,8 +244,8 @@ export class PhoneLinkMethods extends ClientCore implements IPhoneLinkMethods, I
         }
 
         const network = getNetwork((await provider.getNetwork()).chainId);
-        const networkName = network.name as SupportedNetworks;
-        if (!SupportedNetworksArray.includes(networkName)) {
+        const networkName = network.name as SupportedNetwork;
+        if (!SupportedNetworkArray.includes(networkName)) {
             throw new UnsupportedNetworkError(networkName);
         }
 
@@ -261,8 +261,8 @@ export class PhoneLinkMethods extends ClientCore implements IPhoneLinkMethods, I
         }
 
         const network = getNetwork((await provider.getNetwork()).chainId);
-        const networkName = network.name as SupportedNetworks;
-        if (!SupportedNetworksArray.includes(networkName)) {
+        const networkName = network.name as SupportedNetwork;
+        if (!SupportedNetworkArray.includes(networkName)) {
             throw new UnsupportedNetworkError(networkName);
         }
 
@@ -278,8 +278,8 @@ export class PhoneLinkMethods extends ClientCore implements IPhoneLinkMethods, I
         }
 
         const network = getNetwork((await provider.getNetwork()).chainId);
-        const networkName = network.name as SupportedNetworks;
-        if (!SupportedNetworksArray.includes(networkName)) {
+        const networkName = network.name as SupportedNetwork;
+        if (!SupportedNetworkArray.includes(networkName)) {
             throw new UnsupportedNetworkError(networkName);
         }
 
@@ -300,8 +300,8 @@ export class PhoneLinkMethods extends ClientCore implements IPhoneLinkMethods, I
         }
 
         const network = getNetwork((await signer.provider.getNetwork()).chainId);
-        const networkName = network.name as SupportedNetworks;
-        if (!SupportedNetworksArray.includes(networkName)) {
+        const networkName = network.name as SupportedNetwork;
+        if (!SupportedNetworkArray.includes(networkName)) {
             throw new UnsupportedNetworkError(networkName);
         }
 
