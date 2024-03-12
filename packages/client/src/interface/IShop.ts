@@ -40,4 +40,6 @@ export interface IShopMethods extends IClientCore, IClientHttpCore {
 
     createDelegate: (shopId: BytesLike) => AsyncGenerator<CreateDelegateStepValue>;
     removeDelegate: (shopId: BytesLike) => AsyncGenerator<RemoveDelegateStepValue>;
+
+    makeShopId: (account: string) => Promise<string>;
 }

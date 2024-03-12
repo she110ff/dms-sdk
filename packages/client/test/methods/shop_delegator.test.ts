@@ -77,7 +77,7 @@ describe("Shop Withdrawal", () => {
         );
 
         for (const elem of shopData) {
-            elem.shopId = ContractUtils.getShopId(elem.wallet.address);
+            elem.shopId = await client.shop.makeShopId(elem.wallet.address);
         }
         await NodeInfo.addShopData(contractInfo, shopData);
     });

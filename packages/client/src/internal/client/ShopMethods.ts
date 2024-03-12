@@ -39,6 +39,9 @@ import { BytesLike } from "@ethersproject/bytes";
 
 import { QueryShopTradeHistory } from "../graphql-queries/shop/history";
 import { AddressZero } from "@ethersproject/constants";
+import { defaultAbiCoder } from "@ethersproject/abi";
+import { randomBytes } from "@ethersproject/random";
+import { keccak256 } from "@ethersproject/keccak256";
 
 /**
  * 상점의 정보를 추가/수정하는 기능과 정산의 요청/확인이 포함된 클래스이다.
@@ -827,5 +830,21 @@ export class ShopMethods extends ClientCore implements IShopMethods, IClientHttp
             account,
             delegator
         };
+    }
+
+    public async makeShopId(account: string): Promise<string> {
+        const provider = this.web3.getProvider() as Provider;
+        if (!provider) throw new NoProviderError();
+
+        const network = getNetwork((await provider.getNetwork()).chainId);
+
+        const encodedResult = defaultAbiCoder.encode(["address", "bytes32"], [account, randomBytes(32)]);
+        const networkId = Buffer.alloc(4);
+        networkId.writeUInt32BE(network.chainId);
+        const data = Buffer.from([
+            ...networkId,
+            ...ContractUtils.StringToBuffer(keccak256(encodedResult)).subarray(0, 28)
+        ]);
+        return ContractUtils.BufferToString(data);
     }
 }
