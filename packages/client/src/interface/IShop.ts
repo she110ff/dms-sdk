@@ -9,7 +9,8 @@ import {
     QueryOption,
     ShopDetailData,
     CreateDelegateStepValue,
-    RemoveDelegateStepValue
+    RemoveDelegateStepValue,
+    LoyaltyNetworkID
 } from "../interfaces";
 import { BytesLike } from "@ethersproject/bytes";
 
@@ -41,5 +42,5 @@ export interface IShopMethods extends IClientCore, IClientHttpCore {
     createDelegate: (shopId: BytesLike) => AsyncGenerator<CreateDelegateStepValue>;
     removeDelegate: (shopId: BytesLike) => AsyncGenerator<RemoveDelegateStepValue>;
 
-    makeShopId: (account: string) => Promise<string>;
+    makeShopId: (account: string, networkId: LoyaltyNetworkID) => Promise<string>;
 }

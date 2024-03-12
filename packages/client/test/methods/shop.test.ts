@@ -1,4 +1,4 @@
-import { Client, Context, ContractUtils, NormalSteps, ShopStatus } from "../../src";
+import { Client, Context, ContractUtils, LoyaltyNetworkID, NormalSteps, ShopStatus } from "../../src";
 import { Wallet } from "@ethersproject/wallet";
 import { Network } from "../../src/client-common/interfaces/network";
 
@@ -45,7 +45,7 @@ describe("Shop", () => {
     it("Create available ID", async () => {
         // 내부에 랜덤으로 32 Bytes 를 생성하여 ID를 생성하므로 무한반복될 가능성이 극히 낮음
         while (true) {
-            shopData.shopId = await client.shop.makeShopId(shopData.wallet.address);
+            shopData.shopId = await client.shop.makeShopId(shopData.wallet.address, LoyaltyNetworkID.KIOS);
             if (await client.shop.isAvailableId(shopData.shopId)) break;
         }
     });

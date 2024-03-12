@@ -5,6 +5,7 @@ import {
     Context,
     ContractUtils,
     DepositSteps,
+    LoyaltyNetworkID,
     LoyaltyType,
     MobileType,
     NormalSteps,
@@ -16,7 +17,7 @@ import { AddressZero } from "@ethersproject/constants";
 import { Network } from "../../src/client-common/interfaces/network";
 
 import * as assert from "assert";
-import { IShopData, IPurchaseData } from "../helper/types";
+import { IPurchaseData, IShopData } from "../helper/types";
 import { Wallet } from "@ethersproject/wallet";
 
 describe("Ledger", () => {
@@ -148,7 +149,7 @@ describe("Ledger", () => {
         );
 
         for (const elem of shopData) {
-            elem.shopId = await client.shop.makeShopId(elem.wallet.address);
+            elem.shopId = await client.shop.makeShopId(elem.wallet.address, LoyaltyNetworkID.KIOS);
         }
         await NodeInfo.addShopData(contractInfo, shopData);
     });
