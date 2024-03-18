@@ -16,6 +16,7 @@ import { arrayify } from "@ethersproject/bytes";
 import { keccak256 } from "@ethersproject/keccak256";
 import { verifyMessage } from "@ethersproject/wallet";
 import { randomBytes } from "@ethersproject/random";
+import { LoyaltyNetworkID } from "../interfaces";
 
 export class ContractUtils {
     /**
@@ -136,9 +137,9 @@ export class ContractUtils {
         return signer.signMessage(message);
     }
 
-    public static getShopId(account: string): string {
+    public static getShopId(account: string, networkId: LoyaltyNetworkID): string {
         const encodedResult = defaultAbiCoder.encode(["address", "bytes32"], [account, randomBytes(32)]);
-        return keccak256(encodedResult);
+        return "0x" + networkId.toString(16).padStart(4, "0") + keccak256(encodedResult).substring(2, 62);
     }
 
     public static getShopAccountMessage(

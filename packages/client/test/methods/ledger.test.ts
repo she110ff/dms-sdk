@@ -5,6 +5,7 @@ import {
     Context,
     ContractUtils,
     DepositSteps,
+    LoyaltyNetworkID,
     LoyaltyType,
     MobileType,
     NormalSteps,
@@ -148,7 +149,7 @@ describe("Ledger", () => {
         );
 
         for (const elem of shopData) {
-            elem.shopId = ContractUtils.getShopId(elem.wallet.address);
+            elem.shopId = ContractUtils.getShopId(elem.wallet.address, LoyaltyNetworkID.KIOS);
         }
         await NodeInfo.addShopData(contractInfo, shopData);
     });

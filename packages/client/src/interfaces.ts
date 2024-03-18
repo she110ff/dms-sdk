@@ -519,3 +519,8 @@ export enum MobileType {
     USER_APP,
     SHOP_APP
 }
+
+export enum LoyaltyNetworkID {
+    KIOS,
+    PNB
+}

@@ -1,6 +1,15 @@
 import { Network } from "../../src/client-common/interfaces/network";
 import { AccountIndex, NodeInfo } from "../helper/NodeInfo";
-import { Amount, Client, Context, ContractUtils, NormalSteps, ShopWithdrawStatus, NonceManager } from "../../src";
+import {
+    Amount,
+    Client,
+    Context,
+    ContractUtils,
+    NormalSteps,
+    ShopWithdrawStatus,
+    NonceManager,
+    LoyaltyNetworkID
+} from "../../src";
 
 import { IShopData, IUserData, IPurchaseData } from "../helper/types";
 
@@ -192,7 +201,7 @@ describe("Shop Withdrawal", () => {
         );
 
         for (const elem of shopData) {
-            elem.shopId = ContractUtils.getShopId(elem.wallet.address);
+            elem.shopId = ContractUtils.getShopId(elem.wallet.address, LoyaltyNetworkID.KIOS);
         }
         await NodeInfo.addShopData(contractInfo, shopData);
     });
