@@ -25,8 +25,7 @@ import {
     ShopStatusEvent,
     ShopPageType,
     CreateDelegateStepValue,
-    RemoveDelegateStepValue,
-    LoyaltyNetworkID
+    RemoveDelegateStepValue
 } from "../../interfaces";
 import { FailedAddShopError, FailedApprovePayment, InternalServerError, NoHttpModuleError } from "../../utils/errors";
 import { Network } from "../../client-common/interfaces/network";
@@ -833,11 +832,19 @@ export class ShopMethods extends ClientCore implements IShopMethods, IClientHttp
         };
     }
 
-    public async makeShopId(account: string, networkId: LoyaltyNetworkID): Promise<string> {
+    public async makeShopId(account: string): Promise<string> {
+        const provider = this.web3.getProvider() as Provider;
+        if (!provider) throw new NoProviderError();
+
+        const network = getNetwork((await provider.getNetwork()).chainId);
+
         const encodedResult = defaultAbiCoder.encode(["address", "bytes32"], [account, randomBytes(32)]);
-        const encodedBuffer = ContractUtils.StringToBuffer(keccak256(encodedResult));
-        const networkIdBuffer = Buffer.allocUnsafe(2);
-        networkIdBuffer.writeUInt16BE(networkId);
-        return ContractUtils.BufferToString(Buffer.from([...networkIdBuffer, ...encodedBuffer.subarray(0, 30)]));
+        const networkId = Buffer.alloc(4);
+        networkId.writeUInt32BE(network.chainId);
+        const data = Buffer.from([
+            ...networkId,
+            ...ContractUtils.StringToBuffer(keccak256(encodedResult)).subarray(0, 28)
+        ]);
+        return ContractUtils.BufferToString(data);
     }
 }

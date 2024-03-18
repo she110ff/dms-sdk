@@ -1,17 +1,8 @@
 import { Network } from "../../src/client-common/interfaces/network";
 import { AccountIndex, NodeInfo } from "../helper/NodeInfo";
-import {
-    Amount,
-    Client,
-    Context,
-    ContractUtils,
-    LoyaltyNetworkID,
-    NonceManager,
-    NormalSteps,
-    ShopWithdrawStatus
-} from "../../src";
+import { Amount, Client, Context, ContractUtils, NormalSteps, ShopWithdrawStatus, NonceManager } from "../../src";
 
-import { IPurchaseData, IShopData, IUserData } from "../helper/types";
+import { IShopData, IUserData, IPurchaseData } from "../helper/types";
 
 import * as assert from "assert";
 
@@ -201,7 +192,7 @@ describe("Shop Withdrawal", () => {
         );
 
         for (const elem of shopData) {
-            elem.shopId = await client.shop.makeShopId(elem.wallet.address, LoyaltyNetworkID.KIOS);
+            elem.shopId = await client.shop.makeShopId(elem.wallet.address);
         }
         await NodeInfo.addShopData(contractInfo, shopData);
     });

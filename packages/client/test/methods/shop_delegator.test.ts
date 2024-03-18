@@ -1,5 +1,5 @@
 import { AccountIndex, NodeInfo } from "../helper/NodeInfo";
-import { Client, Context, LoyaltyNetworkID, NormalSteps } from "../../src";
+import { Client, Context, ContractUtils, NormalSteps } from "../../src";
 
 import { IShopData } from "../helper/types";
 
@@ -77,7 +77,7 @@ describe("Shop Withdrawal", () => {
         );
 
         for (const elem of shopData) {
-            elem.shopId = await client.shop.makeShopId(elem.wallet.address, LoyaltyNetworkID.KIOS);
+            elem.shopId = await client.shop.makeShopId(elem.wallet.address);
         }
         await NodeInfo.addShopData(contractInfo, shopData);
     });
