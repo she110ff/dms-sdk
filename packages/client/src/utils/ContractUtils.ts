@@ -136,6 +136,11 @@ export class ContractUtils {
         return signer.signMessage(message);
     }
 
+    public static getShopId(account: string): string {
+        const encodedResult = defaultAbiCoder.encode(["address", "bytes32"], [account, randomBytes(32)]);
+        return keccak256(encodedResult);
+    }
+
     public static getShopAccountMessage(
         shopId: BytesLike,
         account: string,
