@@ -141,6 +141,18 @@ export class NoLoyaltyExchangerAddress extends Error {
     }
 }
 
+export class NoLoyaltyTransferAddress extends Error {
+    constructor() {
+        super("A loyalty transfer address is needed");
+    }
+}
+
+export class NoLoyaltyBridgeAddress extends Error {
+    constructor() {
+        super("A loyalty bridge address is needed");
+    }
+}
+
 export class FailedDepositError extends Error {
     constructor() {
         super("Failed to deposit");
@@ -198,5 +210,11 @@ export class FailedApprovePayment extends Error {
 export class FailedRemovePhoneInfoError extends Error {
     constructor() {
         super("Failed to remove phone information");
+    }
+}
+
+export class FailedTransactionError extends Error {
+    constructor() {
+        super("Failed to process transaction");
     }
 }

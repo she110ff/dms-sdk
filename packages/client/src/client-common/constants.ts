@@ -4,69 +4,52 @@ import { activeContractsList as delActiveContractList } from "del-osx-lib";
 import { Network } from "@ethersproject/networks";
 
 export const LIVE_CONTRACTS: { [K in SupportedNetwork]: NetworkDeployment } = {
-    bosagora_devnet: {
-        PhoneLinkCollectionAddress: delActiveContractList.bosagora_devnet.PhoneLinkCollection,
-        LoyaltyTokenAddress: dmsActiveContractList.bosagora_devnet.LoyaltyToken,
-        ValidatorAddress: dmsActiveContractList.bosagora_devnet.Validator,
-        CurrencyRateAddress: dmsActiveContractList.bosagora_devnet.CurrencyRate,
-        ShopAddress: dmsActiveContractList.bosagora_devnet.Shop,
-        LedgerAddress: dmsActiveContractList.bosagora_devnet.Ledger,
-        LoyaltyProviderAddress: dmsActiveContractList.bosagora_devnet.LoyaltyProvider,
-        LoyaltyConsumerAddress: dmsActiveContractList.bosagora_devnet.LoyaltyConsumer,
-        LoyaltyExchangerAddress: dmsActiveContractList.bosagora_devnet.LoyaltyExchanger,
-        LoyaltyTransferAddress: dmsActiveContractList.bosagora_devnet.LoyaltyTransfer,
-        LoyaltyBridgeAddress: dmsActiveContractList.bosagora_devnet.LoyaltyBridge,
-        network: 24680,
-        web3Endpoint: "https://rpc.kios.bosagora.org/",
-        relayEndpoint: "https://relay.kios.bosagora.org/",
-        graphqlEndpoint: "https://graph.test.kios.bosagora.org/subgraphs/name/bosagora/dms-osx-side_mainnet"
-    },
-    kios_mainnet: {
-        PhoneLinkCollectionAddress: delActiveContractList.kios_mainnet.PhoneLinkCollection,
-        LoyaltyTokenAddress: dmsActiveContractList.kios_mainnet.LoyaltyToken,
-        ValidatorAddress: dmsActiveContractList.kios_mainnet.Validator,
-        CurrencyRateAddress: dmsActiveContractList.kios_mainnet.CurrencyRate,
-        ShopAddress: dmsActiveContractList.kios_mainnet.Shop,
-        LedgerAddress: dmsActiveContractList.kios_mainnet.Ledger,
-        LoyaltyProviderAddress: dmsActiveContractList.kios_mainnet.LoyaltyProvider,
-        LoyaltyConsumerAddress: dmsActiveContractList.kios_mainnet.LoyaltyConsumer,
-        LoyaltyExchangerAddress: dmsActiveContractList.kios_mainnet.LoyaltyExchanger,
-        LoyaltyTransferAddress: dmsActiveContractList.kios_mainnet.LoyaltyTransfer,
-        LoyaltyBridgeAddress: dmsActiveContractList.kios_mainnet.LoyaltyBridge,
+    loyalty_mainnet: {
+        PhoneLinkCollectionAddress: delActiveContractList.loyalty_mainnet.PhoneLinkCollection,
+        LoyaltyTokenAddress: dmsActiveContractList.loyalty_mainnet.LoyaltyToken,
+        ValidatorAddress: dmsActiveContractList.loyalty_mainnet.Validator,
+        CurrencyRateAddress: dmsActiveContractList.loyalty_mainnet.CurrencyRate,
+        ShopAddress: dmsActiveContractList.loyalty_mainnet.Shop,
+        LedgerAddress: dmsActiveContractList.loyalty_mainnet.Ledger,
+        LoyaltyProviderAddress: dmsActiveContractList.loyalty_mainnet.LoyaltyProvider,
+        LoyaltyConsumerAddress: dmsActiveContractList.loyalty_mainnet.LoyaltyConsumer,
+        LoyaltyExchangerAddress: dmsActiveContractList.loyalty_mainnet.LoyaltyExchanger,
+        LoyaltyTransferAddress: dmsActiveContractList.loyalty_mainnet.LoyaltyTransfer,
+        LoyaltyBridgeAddress: dmsActiveContractList.loyalty_mainnet.LoyaltyBridge,
         network: 215110,
         web3Endpoint: "https://rpc.kios.bosagora.org/",
         relayEndpoint: "https://relay.kios.bosagora.org/",
         graphqlEndpoint: "https://graph.test.kios.bosagora.org/subgraphs/name/bosagora/dms-osx-side_mainnet"
     },
-    kios_testnet: {
-        PhoneLinkCollectionAddress: delActiveContractList.kios_testnet.PhoneLinkCollection,
-        LoyaltyTokenAddress: dmsActiveContractList.kios_testnet.LoyaltyToken,
-        ValidatorAddress: dmsActiveContractList.kios_testnet.Validator,
-        CurrencyRateAddress: dmsActiveContractList.kios_testnet.CurrencyRate,
-        ShopAddress: dmsActiveContractList.kios_testnet.Shop,
-        LedgerAddress: dmsActiveContractList.kios_testnet.Ledger,
-        LoyaltyProviderAddress: dmsActiveContractList.kios_testnet.LoyaltyProvider,
-        LoyaltyConsumerAddress: dmsActiveContractList.kios_testnet.LoyaltyConsumer,
-        LoyaltyExchangerAddress: dmsActiveContractList.kios_testnet.LoyaltyExchanger,
-        LoyaltyTransferAddress: dmsActiveContractList.kios_testnet.LoyaltyTransfer,
-        LoyaltyBridgeAddress: dmsActiveContractList.kios_testnet.LoyaltyBridge,
+    loyalty_testnet: {
+        PhoneLinkCollectionAddress: delActiveContractList.loyalty_testnet.PhoneLinkCollection,
+        LoyaltyTokenAddress: dmsActiveContractList.loyalty_testnet.LoyaltyToken,
+        ValidatorAddress: dmsActiveContractList.loyalty_testnet.Validator,
+        CurrencyRateAddress: dmsActiveContractList.loyalty_testnet.CurrencyRate,
+        ShopAddress: dmsActiveContractList.loyalty_testnet.Shop,
+        LedgerAddress: dmsActiveContractList.loyalty_testnet.Ledger,
+        LoyaltyProviderAddress: dmsActiveContractList.loyalty_testnet.LoyaltyProvider,
+        LoyaltyConsumerAddress: dmsActiveContractList.loyalty_testnet.LoyaltyConsumer,
+        LoyaltyExchangerAddress: dmsActiveContractList.loyalty_testnet.LoyaltyExchanger,
+        LoyaltyTransferAddress: dmsActiveContractList.loyalty_testnet.LoyaltyTransfer,
+        LoyaltyBridgeAddress: dmsActiveContractList.loyalty_testnet.LoyaltyBridge,
         network: 215115,
         web3Endpoint: "https://rpc.test.kios.bosagora.org/",
         relayEndpoint: "https://relay.test.kios.bosagora.org/",
         graphqlEndpoint: "https://graph.test.kios.bosagora.org/subgraphs/name/bosagora/dms-osx-side_testnet"
     },
-    kios_devnet: {
-        PhoneLinkCollectionAddress: delActiveContractList.kios_devnet.PhoneLinkCollection,
-        LoyaltyTokenAddress: dmsActiveContractList.kios_devnet.LoyaltyToken,
-        ValidatorAddress: dmsActiveContractList.kios_devnet.Validator,
-        CurrencyRateAddress: dmsActiveContractList.kios_devnet.CurrencyRate,
-        ShopAddress: dmsActiveContractList.kios_devnet.Shop,
-        LedgerAddress: dmsActiveContractList.kios_devnet.Ledger,
-        LoyaltyProviderAddress: dmsActiveContractList.kios_devnet.LoyaltyProvider,
-        LoyaltyConsumerAddress: dmsActiveContractList.kios_devnet.LoyaltyConsumer,
-        LoyaltyExchangerAddress: dmsActiveContractList.kios_devnet.LoyaltyExchanger,
-        LoyaltyTransferAddress: dmsActiveContractList.kios_devnet.LoyaltyTransfer,
-        LoyaltyBridgeAddress: dmsActiveContractList.kios_devnet.LoyaltyBridge,
+    loyalty_devnet: {
+        PhoneLinkCollectionAddress: delActiveContractList.loyalty_devnet.PhoneLinkCollection,
+        LoyaltyTokenAddress: dmsActiveContractList.loyalty_devnet.LoyaltyToken,
+        ValidatorAddress: dmsActiveContractList.loyalty_devnet.Validator,
+        CurrencyRateAddress: dmsActiveContractList.loyalty_devnet.CurrencyRate,
+        ShopAddress: dmsActiveContractList.loyalty_devnet.Shop,
+        LedgerAddress: dmsActiveContractList.loyalty_devnet.Ledger,
+        LoyaltyProviderAddress: dmsActiveContractList.loyalty_devnet.LoyaltyProvider,
+        LoyaltyConsumerAddress: dmsActiveContractList.loyalty_devnet.LoyaltyConsumer,
+        LoyaltyExchangerAddress: dmsActiveContractList.loyalty_devnet.LoyaltyExchanger,
+        LoyaltyTransferAddress: dmsActiveContractList.loyalty_devnet.LoyaltyTransfer,
+        LoyaltyBridgeAddress: dmsActiveContractList.loyalty_devnet.LoyaltyBridge,
         network: 24680,
         web3Endpoint: '"http://rpc.devnet.bosagora.org:8545/',
         relayEndpoint: "http://relay.devnet.bosagora.org:7070/",
@@ -93,19 +76,15 @@ export const LIVE_CONTRACTS: { [K in SupportedNetwork]: NetworkDeployment } = {
 
 export const ADDITIONAL_NETWORKS: Network[] = [
     {
-        name: SupportedNetwork.BOSAGORA_DEVNET,
-        chainId: 24680
-    },
-    {
-        name: SupportedNetwork.KIOS_MAINNET,
+        name: SupportedNetwork.LOYALTY_MAINNET,
         chainId: 215110
     },
     {
-        name: SupportedNetwork.KIOS_TESTNET,
+        name: SupportedNetwork.LOYALTY_TESTNET,
         chainId: 215115
     },
     {
-        name: SupportedNetwork.KIOS_DEVNET,
+        name: SupportedNetwork.LOYALTY_DEVNET,
         chainId: 24680
     }
 ];

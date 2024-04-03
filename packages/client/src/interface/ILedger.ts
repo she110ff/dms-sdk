@@ -4,7 +4,10 @@ import {
     ApproveNewPaymentValue,
     ChangeLoyaltyTypeStepValue,
     ChangeToPayablePointStepValue,
+    DelegatedTransferStepValue,
     DepositStepValue,
+    DepositViaBridgeStepValue,
+    IChainInfo,
     LoyaltyType,
     MobileType,
     PaymentDetailData,
@@ -12,10 +15,13 @@ import {
     RemovePhoneInfoStepValue,
     UpdateAllowanceParams,
     UpdateAllowanceStepValue,
-    WithdrawStepValue
+    WaiteBridgeStepValue,
+    WithdrawStepValue,
+    WithdrawViaBridgeStepValue
 } from "../interfaces";
 import { BigNumber } from "@ethersproject/bignumber";
 import { BytesLike } from "@ethersproject/bytes";
+import { JsonRpcProvider } from "@ethersproject/providers";
 
 export interface ILedger {
     ledger: ILedgerMethods;
@@ -65,4 +71,26 @@ export interface ILedgerMethods extends IClientCore, IClientHttpCore {
     removePhoneInfo: () => AsyncGenerator<RemovePhoneInfoStepValue>;
 
     getTemporaryAccount: () => Promise<string>;
+
+    getNonceOfLedger: (account: string) => Promise<BigNumber>;
+
+    transfer: (to: string, amount: BigNumber) => AsyncGenerator<DelegatedTransferStepValue>;
+
+    depositViaBridge: (amount: BigNumber) => AsyncGenerator<DepositViaBridgeStepValue>;
+    withdrawViaBridge: (amount: BigNumber) => AsyncGenerator<WithdrawViaBridgeStepValue>;
+
+    waiteDepositViaBridge: (depositId: string, timeout?: number) => AsyncGenerator<WaiteBridgeStepValue>;
+    waiteWithdrawViaBridge: (depositId: string, timeout?: number) => AsyncGenerator<WaiteBridgeStepValue>;
+
+    // token
+    getMainChainBalance: (account: string) => Promise<BigNumber>;
+    getSideChainBalance: (account: string) => Promise<BigNumber>;
+    getNonceOfMainChainToken: (account: string) => Promise<BigNumber>;
+    getNonceOfSideChainToken: (account: string) => Promise<BigNumber>;
+
+    // chain
+    getChainInfoOfMainChain: () => Promise<IChainInfo>;
+    getChainInfoOfSideChain: () => Promise<IChainInfo>;
+    getProviderOfMainChain: () => Promise<JsonRpcProvider>;
+    getProviderOfSideChain: () => Promise<JsonRpcProvider>;
 }

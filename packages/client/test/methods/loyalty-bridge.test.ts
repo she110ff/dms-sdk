@@ -1,5 +1,5 @@
 import { AccountIndex, NodeInfo } from "../helper/NodeInfo";
-import { Amount, Client, Context, ContractUtils } from "../../src";
+import { Amount, Client, Context, ContractUtils, NormalSteps, WaiteBridgeSteps } from "../../src";
 
 import * as fs from "fs";
 import { Wallet } from "@ethersproject/wallet";
@@ -35,14 +35,6 @@ describe("LoyaltyBridge", () => {
         accounts[AccountIndex.VALIDATOR16]
     ];
 
-    const bridgeValidatorWallets = [
-        accounts[AccountIndex.BRIDGE_VALIDATOR1],
-        accounts[AccountIndex.BRIDGE_VALIDATOR2],
-        accounts[AccountIndex.BRIDGE_VALIDATOR3],
-        accounts[AccountIndex.BRIDGE_VALIDATOR4],
-        accounts[AccountIndex.BRIDGE_VALIDATOR5]
-    ];
-
     let client: Client;
     const users: IUserData[] = (JSON.parse(fs.readFileSync("test/helper/users.json", "utf8")) as IUserData[]).filter(
         (m) => m.loyaltyType === 1
@@ -66,39 +58,137 @@ describe("LoyaltyBridge", () => {
         await NodeInfo.setExchangeRate(contractInfo.currencyRate, validatorWallets);
     });
 
-    it("Test of the deposit to bridge", async () => {
-        const tokenId = ContractUtils.getTokenId(await contractInfo.token.name(), await contractInfo.token.symbol());
-        for (let idx = 0; idx < users.length - 1; idx++) {
-            console.log(`${users[idx].address}`);
-            const amount = Amount.make(100, 18).value;
-            const wallet = new Wallet(users[idx].privateKey, NodeInfo.createProvider());
-            const depositId = ContractUtils.getRandomId(users[idx].address);
-            const nonce = await contractInfo.ledger.nonceOf(users[idx].address);
-            const message = ContractUtils.getTransferMessage(
-                users[idx].address,
-                contractInfo.loyaltyBridge.address,
-                amount,
-                +nonce,
-                NodeInfo.CHAIN_ID
-            );
-            const signature = ContractUtils.signMessage(wallet, message);
-            await contractInfo.loyaltyBridge
-                .connect(wallet)
-                .depositToBridge(tokenId, depositId, users[idx].address, amount, signature);
-        }
-    });
-
-    it("Test of the withdraw from bridge", async () => {
-        const tokenId = ContractUtils.getTokenId(await contractInfo.token.name(), await contractInfo.token.symbol());
-        for (let idx = 0; idx < users.length - 1; idx++) {
-            console.log(`${users[idx].address}`);
-            const amount = Amount.make(100, 18).value;
-            const withdrawId = ContractUtils.getRandomId(users[idx].address);
-            for (const validator of bridgeValidatorWallets) {
-                await contractInfo.loyaltyBridge
-                    .connect(validator)
-                    .withdrawFromBridge(tokenId, withdrawId, users[idx].address, amount);
+    it("Test of the deposit via bridge", async () => {
+        const userIdx = 2;
+        const sideChainInfo = await client.ledger.getChainInfoOfSideChain();
+        const fee = sideChainInfo.network.bridgeFee;
+        const amount = Amount.make(100, 18).value;
+        const oldBalanceMainChain = await client.ledger.getMainChainBalance(users[userIdx].address);
+        const oldBalanceLedger = await client.ledger.getTokenBalance(users[userIdx].address);
+        client.useSigner(new Wallet(users[userIdx].privateKey, NodeInfo.createProvider()));
+        let depositId: string = "";
+        for await (const step of client.ledger.depositViaBridge(amount)) {
+            switch (step.key) {
+                case NormalSteps.PREPARED:
+                    expect(step.account).toEqual(users[userIdx].address);
+                    expect(step.amount).toEqual(amount);
+                    expect(step.signature).toMatch(/^0x[A-Fa-f0-9]{130}$/i);
+                    break;
+                case NormalSteps.SENT:
+                    expect(step.account).toEqual(users[userIdx].address);
+                    expect(step.amount).toEqual(amount);
+                    expect(step.signature).toMatch(/^0x[A-Fa-f0-9]{130}$/i);
+                    expect(step.tokenId).toMatch(/^0x[A-Fa-f0-9]{64}$/i);
+                    expect(step.depositId).toMatch(/^0x[A-Fa-f0-9]{64}$/i);
+                    expect(step.txHash).toMatch(/^0x[A-Fa-f0-9]{64}$/i);
+                    break;
+                case NormalSteps.DONE:
+                    expect(step.account).toEqual(users[userIdx].address);
+                    expect(step.amount).toEqual(amount);
+                    expect(step.signature).toMatch(/^0x[A-Fa-f0-9]{130}$/i);
+                    expect(step.tokenId).toMatch(/^0x[A-Fa-f0-9]{64}$/i);
+                    expect(step.depositId).toMatch(/^0x[A-Fa-f0-9]{64}$/i);
+                    depositId = step.depositId;
+                    break;
+                default:
+                    throw new Error("Unexpected bridge step: " + JSON.stringify(step, null, 2));
             }
         }
+
+        for await (const step of client.ledger.waiteDepositViaBridge(depositId, 30)) {
+            switch (step.key) {
+                case WaiteBridgeSteps.CREATED:
+                    console.log("WaiteBridgeSteps.CREATED");
+                    expect(step.account).toEqual(users[userIdx].address);
+                    expect(step.amount).toEqual(amount);
+                    expect(step.tokenId).toMatch(/^0x[A-Fa-f0-9]{64}$/i);
+                    break;
+                case WaiteBridgeSteps.EXECUTED:
+                    console.log("WaiteBridgeSteps.EXECUTED");
+                    expect(step.account).toEqual(users[userIdx].address);
+                    expect(step.amount).toEqual(amount);
+                    expect(step.tokenId).toMatch(/^0x[A-Fa-f0-9]{64}$/i);
+                    break;
+                case WaiteBridgeSteps.DONE:
+                    console.log("WaiteBridgeSteps.DONE");
+                    break;
+                default:
+                    throw new Error("Unexpected watch bridge step: " + JSON.stringify(step, null, 2));
+            }
+        }
+
+        const newBalanceMainChain = await client.ledger.getMainChainBalance(users[userIdx].address);
+        const newBalanceLedger = await client.ledger.getTokenBalance(users[userIdx].address);
+        expect(newBalanceMainChain).toEqual(oldBalanceMainChain.sub(amount));
+        expect(newBalanceLedger).toEqual(oldBalanceLedger.add(amount).sub(fee));
+    });
+
+    it("Waiting...", async () => {
+        await ContractUtils.delay(5000);
+    });
+
+    it("Test of the withdraw via bridge", async () => {
+        const userIdx = 5;
+        const mainChainInfo = await client.ledger.getChainInfoOfMainChain();
+        const fee = mainChainInfo.network.bridgeFee;
+        const amount = Amount.make(100, 18).value;
+        const oldBalanceMainChain = await client.ledger.getMainChainBalance(users[userIdx].address);
+        const oldBalanceLedger = await client.ledger.getTokenBalance(users[userIdx].address);
+        client.useSigner(new Wallet(users[userIdx].privateKey, NodeInfo.createProvider()));
+        let depositId: string = "";
+        for await (const step of client.ledger.withdrawViaBridge(amount)) {
+            switch (step.key) {
+                case NormalSteps.PREPARED:
+                    expect(step.account).toEqual(users[userIdx].address);
+                    expect(step.amount).toEqual(amount);
+                    expect(step.signature).toMatch(/^0x[A-Fa-f0-9]{130}$/i);
+                    break;
+                case NormalSteps.SENT:
+                    expect(step.account).toEqual(users[userIdx].address);
+                    expect(step.amount).toEqual(amount);
+                    expect(step.signature).toMatch(/^0x[A-Fa-f0-9]{130}$/i);
+                    expect(step.tokenId).toMatch(/^0x[A-Fa-f0-9]{64}$/i);
+                    expect(step.depositId).toMatch(/^0x[A-Fa-f0-9]{64}$/i);
+                    expect(step.txHash).toMatch(/^0x[A-Fa-f0-9]{64}$/i);
+                    break;
+                case NormalSteps.DONE:
+                    expect(step.account).toEqual(users[userIdx].address);
+                    expect(step.amount).toEqual(amount);
+                    expect(step.signature).toMatch(/^0x[A-Fa-f0-9]{130}$/i);
+                    expect(step.tokenId).toMatch(/^0x[A-Fa-f0-9]{64}$/i);
+                    expect(step.depositId).toMatch(/^0x[A-Fa-f0-9]{64}$/i);
+                    depositId = step.depositId;
+                    break;
+                default:
+                    throw new Error("Unexpected bridge step: " + JSON.stringify(step, null, 2));
+            }
+        }
+
+        for await (const step of client.ledger.waiteWithdrawViaBridge(depositId, 60)) {
+            switch (step.key) {
+                case WaiteBridgeSteps.CREATED:
+                    console.log("WaiteBridgeSteps.CREATED");
+                    expect(step.account).toEqual(users[userIdx].address);
+                    expect(step.amount).toEqual(amount);
+                    expect(step.tokenId).toMatch(/^0x[A-Fa-f0-9]{64}$/i);
+                    break;
+                case WaiteBridgeSteps.EXECUTED:
+                    console.log("WaiteBridgeSteps.EXECUTED");
+                    expect(step.account).toEqual(users[userIdx].address);
+                    expect(step.amount).toEqual(amount);
+                    expect(step.tokenId).toMatch(/^0x[A-Fa-f0-9]{64}$/i);
+                    break;
+                case WaiteBridgeSteps.DONE:
+                    console.log("WaiteBridgeSteps.DONE");
+                    break;
+                default:
+                    throw new Error("Unexpected watch bridge step: " + JSON.stringify(step, null, 2));
+            }
+        }
+
+        const newBalanceMainChain = await client.ledger.getMainChainBalance(users[userIdx].address);
+        const newBalanceLedger = await client.ledger.getTokenBalance(users[userIdx].address);
+        expect(newBalanceMainChain).toEqual(oldBalanceMainChain.add(amount).sub(fee));
+        expect(newBalanceLedger).toEqual(oldBalanceLedger.sub(amount));
     });
 });

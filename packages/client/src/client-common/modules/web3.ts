@@ -13,7 +13,9 @@ import {
     NoValidatorCollectionAddress,
     NoLoyaltyProviderAddress,
     NoLoyaltyConsumerAddress,
-    NoLoyaltyExchangerAddress
+    NoLoyaltyExchangerAddress,
+    NoLoyaltyTransferAddress,
+    NoLoyaltyBridgeAddress
 } from "../../utils/errors";
 
 const providersMap = new Map<Web3Module, JsonRpcProvider[]>();
@@ -29,6 +31,8 @@ const ledgerAddressMap = new Map<Web3Module, string>();
 const providerAddressMap = new Map<Web3Module, string>();
 const consumerAddressMap = new Map<Web3Module, string>();
 const exchangerAddressMap = new Map<Web3Module, string>();
+const transferAddressMap = new Map<Web3Module, string>();
+const bridgeAddressMap = new Map<Web3Module, string>();
 
 export class Web3Module implements IClientWeb3Core {
     constructor(context: Context) {
@@ -79,6 +83,14 @@ export class Web3Module implements IClientWeb3Core {
             exchangerAddressMap.set(this, context.loyaltyExchangerAddress);
         }
 
+        if (context.loyaltyTransferAddress) {
+            transferAddressMap.set(this, context.loyaltyTransferAddress);
+        }
+
+        if (context.loyaltyBridgeAddress) {
+            bridgeAddressMap.set(this, context.loyaltyBridgeAddress);
+        }
+
         Object.freeze(Web3Module.prototype);
         Object.freeze(this);
     }
@@ -117,6 +129,14 @@ export class Web3Module implements IClientWeb3Core {
 
     private get loyaltyExchangerAddress(): string {
         return exchangerAddressMap.get(this) || "";
+    }
+
+    private get loyaltyTransferAddress(): string {
+        return transferAddressMap.get(this) || "";
+    }
+
+    private get loyaltyBridgeAddress(): string {
+        return bridgeAddressMap.get(this) || "";
     }
 
     private get providers(): JsonRpcProvider[] {
@@ -292,5 +312,19 @@ export class Web3Module implements IClientWeb3Core {
             throw new NoLoyaltyExchangerAddress();
         }
         return this.loyaltyExchangerAddress;
+    }
+
+    public getLoyaltyTransferAddress(): string {
+        if (!this.loyaltyTransferAddress) {
+            throw new NoLoyaltyTransferAddress();
+        }
+        return this.loyaltyTransferAddress;
+    }
+
+    public getLoyaltyBridgeAddress(): string {
+        if (!this.loyaltyBridgeAddress) {
+            throw new NoLoyaltyBridgeAddress();
+        }
+        return this.loyaltyBridgeAddress;
     }
 }

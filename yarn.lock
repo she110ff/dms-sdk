@@ -1150,6 +1150,13 @@
   resolved "https://registry.npmjs.org/@ethersproject/logger/-/logger-5.7.0.tgz"
   integrity sha512-0odtFdXu/XHtjQXJYA3u9G0G8btm0ND5Cu8M7i5vhEcE8/HmF4Lbdqanwyv4uQTr2tx6b7fQRmgLrsnpQlmnig==
 
+"@ethersproject/networks@5.7.0":
+  version "5.7.0"
+  resolved "https://registry.yarnpkg.com/@ethersproject/networks/-/networks-5.7.0.tgz#df72a392f1a63a57f87210515695a31a245845ad"
+  integrity sha512-MG6oHSQHd4ebvJrleEQQ4HhVu8Ichr0RDYEfHzsVAVjHNM+w36x9wp9r+hf1JstMXtseXDtkiVoARAG6M959AA==
+  dependencies:
+    "@ethersproject/logger" "^5.7.0"
+
 "@ethersproject/networks@5.7.1", "@ethersproject/networks@^5.7.0":
   version "5.7.1"
   resolved "https://registry.npmjs.org/@ethersproject/networks/-/networks-5.7.1.tgz"
@@ -1159,7 +1166,7 @@
 
 "@ethersproject/networks@npm:boa-networks@5.7.2":
   version "5.7.2"
-  resolved "https://registry.npmjs.org/boa-networks/-/boa-networks-5.7.2.tgz"
+  resolved "https://registry.yarnpkg.com/boa-networks/-/boa-networks-5.7.2.tgz#eb8f8c1d27f10f1bfd987c25898116376d85e44f"
   integrity sha512-vIowYIROUFXTjSB2W+ouxVCHtLAbe/w1Aff314rGtgIZgPcsmSLP056RWi5Iu0jyX/fU6YDs9w5lJ+rNCsmbgQ==
   dependencies:
     "@ethersproject/logger" "^5.7.0"
@@ -1178,6 +1185,32 @@
   integrity sha512-J87jy8suntrAkIZtecpxEPxY//szqr1mlBaYlQ0r4RCaiD2hjheqF9s1LVE8vVuJCXisjIP+JgtK/Do54ej4Sw==
   dependencies:
     "@ethersproject/logger" "^5.7.0"
+
+"@ethersproject/providers@5.7.0":
+  version "5.7.0"
+  resolved "https://registry.yarnpkg.com/@ethersproject/providers/-/providers-5.7.0.tgz#a885cfc7650a64385e7b03ac86fe9c2d4a9c2c63"
+  integrity sha512-+TTrrINMzZ0aXtlwO/95uhAggKm4USLm1PbeCBR/3XZ7+Oey+3pMyddzZEyRhizHpy1HXV0FRWRMI1O3EGYibA==
+  dependencies:
+    "@ethersproject/abstract-provider" "^5.7.0"
+    "@ethersproject/abstract-signer" "^5.7.0"
+    "@ethersproject/address" "^5.7.0"
+    "@ethersproject/base64" "^5.7.0"
+    "@ethersproject/basex" "^5.7.0"
+    "@ethersproject/bignumber" "^5.7.0"
+    "@ethersproject/bytes" "^5.7.0"
+    "@ethersproject/constants" "^5.7.0"
+    "@ethersproject/hash" "^5.7.0"
+    "@ethersproject/logger" "^5.7.0"
+    "@ethersproject/networks" "^5.7.0"
+    "@ethersproject/properties" "^5.7.0"
+    "@ethersproject/random" "^5.7.0"
+    "@ethersproject/rlp" "^5.7.0"
+    "@ethersproject/sha2" "^5.7.0"
+    "@ethersproject/strings" "^5.7.0"
+    "@ethersproject/transactions" "^5.7.0"
+    "@ethersproject/web" "^5.7.0"
+    bech32 "1.1.4"
+    ws "7.4.6"
 
 "@ethersproject/providers@5.7.2", "@ethersproject/providers@^5.7.0":
   version "5.7.2"
@@ -1307,6 +1340,17 @@
     "@ethersproject/signing-key" "^5.7.0"
     "@ethersproject/transactions" "^5.7.0"
     "@ethersproject/wordlists" "^5.7.0"
+
+"@ethersproject/web@5.7.0":
+  version "5.7.0"
+  resolved "https://registry.yarnpkg.com/@ethersproject/web/-/web-5.7.0.tgz#40850c05260edad8b54827923bbad23d96aac0bc"
+  integrity sha512-ApHcbbj+muRASVDSCl/tgxaH2LBkRMEYfLOLVa0COipx0+nlu0QKet7U2lEg0vdkh8XRSLf2nd1f1Uk9SrVSGA==
+  dependencies:
+    "@ethersproject/base64" "^5.7.0"
+    "@ethersproject/bytes" "^5.7.0"
+    "@ethersproject/logger" "^5.7.0"
+    "@ethersproject/properties" "^5.7.0"
+    "@ethersproject/strings" "^5.7.0"
 
 "@ethersproject/web@5.7.1", "@ethersproject/web@^5.7.0":
   version "5.7.1"
@@ -2821,10 +2865,10 @@ define-property@^2.0.2:
     is-descriptor "^1.0.2"
     isobject "^3.0.1"
 
-del-osx-lib@^2.3.0:
-  version "2.3.0"
-  resolved "https://registry.yarnpkg.com/del-osx-lib/-/del-osx-lib-2.3.0.tgz#800321f8fc3174b901f4bce2d97f08026ef87443"
-  integrity sha512-I1I4IlfnFcaSZTQU+7axtAu+NpkKHj++8AD0Cvx2Rs7Vx+GqpKEL+Tpq2w+Y3XuCtV5ZPp7KuhvgKZmtk17yRg==
+del-osx-lib@^2.4.0:
+  version "2.4.0"
+  resolved "https://registry.yarnpkg.com/del-osx-lib/-/del-osx-lib-2.4.0.tgz#82b22e6040538f9340499a0e91325cc35143cbd0"
+  integrity sha512-AYN7B2DDKHTlh6dcJJBs85GG37QwE4CexWk9oFKlINyzvavbG3DsvakrPikTe2T53WC0nvzOp1osOklOFT+XKw==
   dependencies:
     ethers "npm:boa-ethers2@^5.7.9"
 
@@ -2855,12 +2899,12 @@ dir-glob@^3.0.1:
   dependencies:
     path-type "^4.0.0"
 
-dms-osx-lib@^2.10.0:
-  version "2.10.0"
-  resolved "https://registry.yarnpkg.com/dms-osx-lib/-/dms-osx-lib-2.10.0.tgz#d0b4c83f869ab33e53d8148769a216bb73d560d3"
-  integrity sha512-fLb6j7KW8kDbC1VSiop59LUmnsbIdXjBMK3WShvisKqkWkQKnQZ52+K2UAlSs8+Lro0pRnyQVEZJ+fh//yeurQ==
+dms-osx-lib@^2.11.0:
+  version "2.11.0"
+  resolved "https://registry.yarnpkg.com/dms-osx-lib/-/dms-osx-lib-2.11.0.tgz#40c3adb3505eb943ed26d051efc0b74c859c2a45"
+  integrity sha512-da20US/dBhdu7aY5s+5QQGtHPCeXyASykmfZ8EjKsqWa/Kgx0vnJPLyHgLJdvZdu6dgi2egcegZatgYVd8OhfA==
   dependencies:
-    ethers "npm:boa-ethers2@^5.7.9"
+    ethers "5.7.0"
 
 doctrine@^2.1.0:
   version "2.1.0"
@@ -3434,6 +3478,42 @@ esutils@^2.0.2:
   resolved "https://registry.npmjs.org/esutils/-/esutils-2.0.3.tgz"
   integrity sha512-kVscqXk4OCp68SZ0dkgEKVi6/8ij300KBWTJq32P/dYeWTSwK41WyTxalN1eRmA5Z9UU/LX9D7FWSmV9SAYx6g==
 
+ethers@5.7.0:
+  version "5.7.0"
+  resolved "https://registry.yarnpkg.com/ethers/-/ethers-5.7.0.tgz#0055da174b9e076b242b8282638bc94e04b39835"
+  integrity sha512-5Xhzp2ZQRi0Em+0OkOcRHxPzCfoBfgtOQA+RUylSkuHbhTEaQklnYi2hsWbRgs3ztJsXVXd9VKBcO1ScWL8YfA==
+  dependencies:
+    "@ethersproject/abi" "5.7.0"
+    "@ethersproject/abstract-provider" "5.7.0"
+    "@ethersproject/abstract-signer" "5.7.0"
+    "@ethersproject/address" "5.7.0"
+    "@ethersproject/base64" "5.7.0"
+    "@ethersproject/basex" "5.7.0"
+    "@ethersproject/bignumber" "5.7.0"
+    "@ethersproject/bytes" "5.7.0"
+    "@ethersproject/constants" "5.7.0"
+    "@ethersproject/contracts" "5.7.0"
+    "@ethersproject/hash" "5.7.0"
+    "@ethersproject/hdnode" "5.7.0"
+    "@ethersproject/json-wallets" "5.7.0"
+    "@ethersproject/keccak256" "5.7.0"
+    "@ethersproject/logger" "5.7.0"
+    "@ethersproject/networks" "5.7.0"
+    "@ethersproject/pbkdf2" "5.7.0"
+    "@ethersproject/properties" "5.7.0"
+    "@ethersproject/providers" "5.7.0"
+    "@ethersproject/random" "5.7.0"
+    "@ethersproject/rlp" "5.7.0"
+    "@ethersproject/sha2" "5.7.0"
+    "@ethersproject/signing-key" "5.7.0"
+    "@ethersproject/solidity" "5.7.0"
+    "@ethersproject/strings" "5.7.0"
+    "@ethersproject/transactions" "5.7.0"
+    "@ethersproject/units" "5.7.0"
+    "@ethersproject/wallet" "5.7.0"
+    "@ethersproject/web" "5.7.0"
+    "@ethersproject/wordlists" "5.7.0"
+
 ethers@^5.7.0:
   version "5.7.2"
   resolved "https://registry.yarnpkg.com/ethers/-/ethers-5.7.2.tgz#3a7deeabbb8c030d4126b24f84e525466145872e"
@@ -3472,7 +3552,7 @@ ethers@^5.7.0:
 
 "ethers@npm:boa-ethers2@^5.7.9":
   version "5.7.9"
-  resolved "https://registry.npmjs.org/boa-ethers2/-/boa-ethers2-5.7.9.tgz"
+  resolved "https://registry.yarnpkg.com/boa-ethers2/-/boa-ethers2-5.7.9.tgz#b84ecd2d9370918a700d16dea35533740ca96d71"
   integrity sha512-TWmkAAwQuFjxSSJpbDgOIqpMS5EuCwNIsSxxPF31DxQnle1jX98UoAcEt2++/sLD3Zy2fB2pyhseD1e6zATClg==
   dependencies:
     "@ethersproject/abi" "5.7.0"

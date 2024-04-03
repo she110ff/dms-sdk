@@ -23,6 +23,8 @@ export interface IClientWeb3Core {
     getLoyaltyProviderAddress: () => string;
     getLoyaltyConsumerAddress: () => string;
     getLoyaltyExchangerAddress: () => string;
+    getLoyaltyTransferAddress: () => string;
+    getLoyaltyBridgeAddress: () => string;
 }
 
 export interface IClientHttpCore {

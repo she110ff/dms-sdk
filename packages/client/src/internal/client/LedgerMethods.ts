@@ -10,14 +10,18 @@ import { ILedgerMethods } from "../../interface/ILedger";
 import {
     Ledger,
     Ledger__factory,
+    IBridge,
+    IBridge__factory,
     LoyaltyConsumer,
     LoyaltyConsumer__factory,
     LoyaltyExchanger,
     LoyaltyExchanger__factory,
     LoyaltyToken,
-    LoyaltyToken__factory
+    LoyaltyToken__factory,
+    LoyaltyTransfer,
+    LoyaltyTransfer__factory
 } from "dms-osx-lib";
-import { Provider } from "@ethersproject/providers";
+import { JsonRpcProvider, Provider } from "@ethersproject/providers";
 import { NoProviderError, NoSignerError, UnsupportedNetworkError, UpdateAllowanceError } from "dms-sdk-common";
 import { ContractUtils } from "../../utils/ContractUtils";
 import { GasPriceManager } from "../../utils/GasPriceManager";
@@ -43,7 +47,12 @@ import {
     LedgerPageType,
     PaymentDetailTaskStatus,
     MobileType,
-    RemovePhoneInfoStepValue
+    RemovePhoneInfoStepValue,
+    DelegatedTransferStepValue,
+    DepositViaBridgeStepValue,
+    IChainInfo,
+    WaiteBridgeStepValue,
+    WaiteBridgeSteps
 } from "../../interfaces";
 import {
     AmountMismatchError,
@@ -51,6 +60,7 @@ import {
     FailedDepositError,
     FailedPayTokenError,
     FailedRemovePhoneInfoError,
+    FailedTransactionError,
     FailedWithdrawError,
     InsufficientBalanceError,
     InternalServerError,
@@ -74,14 +84,16 @@ import { BytesLike } from "@ethersproject/bytes";
  */
 export class LedgerMethods extends ClientCore implements ILedgerMethods, IClientHttpCore {
     private relayEndpoint: string | URL | undefined;
+    private mainChainInfo: IChainInfo | undefined;
+    private sideChainInfo: IChainInfo | undefined;
 
     constructor(context: Context) {
         super(context);
         if (context.relayEndpoint) {
             this.relayEndpoint = context.relayEndpoint;
         }
-        Object.freeze(LedgerMethods.prototype);
-        Object.freeze(this);
+        // Object.freeze(LedgerMethods.prototype);
+        // Object.freeze(this);
     }
 
     /**
@@ -860,7 +872,7 @@ export class LedgerMethods extends ClientCore implements ILedgerMethods, IClient
         const txReceipt = await contractTx.wait();
 
         const exchangerContract: LoyaltyExchanger = LoyaltyExchanger__factory.connect(
-            this.web3.getLedgerAddress(),
+            this.web3.getLoyaltyExchangerAddress(),
             signer
         );
         const log = findLog(txReceipt, exchangerContract.interface, "ChangedToPayablePoint");
@@ -1072,5 +1084,436 @@ export class LedgerMethods extends ClientCore implements ILedgerMethods, IClient
         }
 
         return res.data.temporaryAccount;
+    }
+
+    public async getNonceOfMainChainToken(account: string): Promise<BigNumber> {
+        const res = await Network.get(await this.getEndpoint(`/v1/token/main/nonce/${account}`));
+        if (res.code !== 0) {
+            throw new InternalServerError(res?.error?.message ?? "");
+        }
+
+        return BigNumber.from(res.data.nonce);
+    }
+
+    public async getNonceOfSideChainToken(account: string): Promise<BigNumber> {
+        const res = await Network.get(await this.getEndpoint(`/v1/token/side/nonce/${account}`));
+        if (res.code !== 0) {
+            throw new InternalServerError(res?.error?.message ?? "");
+        }
+
+        return BigNumber.from(res.data.nonce);
+    }
+
+    public async getNonceOfLedger(account: string): Promise<BigNumber> {
+        const res = await Network.get(await this.getEndpoint(`/v1/ledger/nonce/${account}`));
+        if (res.code !== 0) {
+            throw new InternalServerError(res?.error?.message ?? "");
+        }
+
+        return BigNumber.from(res.data.nonce);
+    }
+
+    public async getChainInfoOfMainChain(): Promise<IChainInfo> {
+        if (this.mainChainInfo !== undefined) return this.mainChainInfo;
+        const res = await Network.get(await this.getEndpoint(`/v1/chain/main/info`));
+        if (res.code !== 0) {
+            throw new InternalServerError(res?.error?.message ?? "");
+        }
+        this.mainChainInfo = {
+            url: res.data.url,
+            network: {
+                name: res.data.network.name,
+                chainId: res.data.network.chainId,
+                ensAddress: res.data.network.ensAddress,
+                transferFee: BigNumber.from(res.data.network.transferFee),
+                bridgeFee: BigNumber.from(res.data.network.bridgeFee)
+            },
+            contract: {
+                token: res.data.contract.token,
+                chainBridge: res.data.contract.chainBridge,
+                loyaltyBridge: res.data.contract.loyaltyBridge
+            }
+        };
+
+        return this.mainChainInfo;
+    }
+
+    public async getChainInfoOfSideChain(): Promise<IChainInfo> {
+        if (this.sideChainInfo !== undefined) return this.sideChainInfo;
+        const res = await Network.get(await this.getEndpoint(`/v1/chain/side/info`));
+        if (res.code !== 0) {
+            throw new InternalServerError(res?.error?.message ?? "");
+        }
+        this.sideChainInfo = {
+            url: res.data.url,
+            network: {
+                name: res.data.network.name,
+                chainId: res.data.network.chainId,
+                ensAddress: res.data.network.ensAddress,
+                transferFee: BigNumber.from(res.data.network.transferFee),
+                bridgeFee: BigNumber.from(res.data.network.bridgeFee)
+            },
+            contract: {
+                token: res.data.contract.token,
+                chainBridge: res.data.contract.chainBridge,
+                loyaltyBridge: res.data.contract.loyaltyBridge
+            }
+        };
+        return this.sideChainInfo;
+    }
+
+    public async getChainIdOfMainChain(): Promise<number> {
+        const chainInfo = await this.getChainInfoOfMainChain();
+        return Number(chainInfo.network.chainId);
+    }
+
+    public async getChainIdOfSideChain(): Promise<number> {
+        const chainInfo = await this.getChainInfoOfSideChain();
+        return Number(chainInfo.network.chainId);
+    }
+
+    public async getProviderOfMainChain(): Promise<JsonRpcProvider> {
+        const chainInfo = await this.getChainInfoOfMainChain();
+        const url = new URL(chainInfo.url);
+        return new JsonRpcProvider(url.href, {
+            name: chainInfo.network.name,
+            chainId: chainInfo.network.chainId,
+            ensAddress: chainInfo.network.ensAddress
+        });
+    }
+
+    public async getProviderOfSideChain(): Promise<JsonRpcProvider> {
+        const chainInfo = await this.getChainInfoOfSideChain();
+        const url = new URL(chainInfo.url);
+        return new JsonRpcProvider(url.href, {
+            name: chainInfo.network.name,
+            chainId: chainInfo.network.chainId,
+            ensAddress: chainInfo.network.ensAddress
+        });
+    }
+
+    public async getMainChainBalance(account: string): Promise<BigNumber> {
+        const res = await Network.get(await this.getEndpoint(`/v1/token/main/balance/${account}`));
+        if (res.code !== 0) {
+            throw new InternalServerError(res?.error?.message ?? "");
+        }
+        return BigNumber.from(res.data.balance);
+    }
+
+    public async getSideChainBalance(account: string): Promise<BigNumber> {
+        const res = await Network.get(await this.getEndpoint(`/v1/token/side/balance/${account}`));
+        if (res.code !== 0) {
+            throw new InternalServerError(res?.error?.message ?? "");
+        }
+        return BigNumber.from(res.data.balance);
+    }
+
+    /**
+     * 토큰을 다른 주소로 전송한다.
+     * @param to 이체할 주소
+     * @param amount 금액
+     * @return {AsyncGenerator<DelegatedTransferStepValue>}
+     */
+    public async *transfer(to: string, amount: BigNumber): AsyncGenerator<DelegatedTransferStepValue> {
+        const signer = this.web3.getConnectedSigner();
+        if (!signer) {
+            throw new NoSignerError();
+        } else if (!signer.provider) {
+            throw new NoProviderError();
+        }
+
+        const network = getNetwork((await signer.provider.getNetwork()).chainId);
+        const networkName = network.name as SupportedNetwork;
+        if (!SupportedNetworkArray.includes(networkName)) {
+            throw new UnsupportedNetworkError(networkName);
+        }
+
+        const account = await signer.getAddress();
+        const adjustedAmount = ContractUtils.zeroGWEI(amount);
+
+        let contractTx: ContractTransaction;
+        const nonce = await this.getNonceOfLedger(account);
+        const message = await ContractUtils.getTransferMessage(account, to, adjustedAmount, nonce, network.chainId);
+        const signature = await ContractUtils.signMessage(signer, message);
+
+        const param = {
+            from: account,
+            to,
+            amount: adjustedAmount.toString(),
+            signature
+        };
+
+        yield { key: NormalSteps.PREPARED, from: account, to, amount: adjustedAmount, signature };
+
+        const res = await Network.post(await this.getEndpoint("/v1/ledger/transfer"), param);
+        if (res.code !== 0) {
+            throw new InternalServerError(res?.error?.message ?? "");
+        }
+
+        contractTx = (await signer.provider.getTransaction(res.data.txHash)) as ContractTransaction;
+
+        yield { key: NormalSteps.SENT, from: account, to, amount: adjustedAmount, signature, txHash: res.data.txHash };
+        const txReceipt = await contractTx.wait();
+
+        const transferContract: LoyaltyTransfer = LoyaltyTransfer__factory.connect(
+            this.web3.getLoyaltyTransferAddress(),
+            signer
+        );
+        const log = findLog(txReceipt, transferContract.interface, "TransferredLoyaltyToken");
+        if (!log) {
+            throw new FailedTransactionError();
+        }
+
+        yield {
+            key: NormalSteps.DONE,
+            from: account,
+            to,
+            amount: adjustedAmount,
+            signature
+        };
+    }
+
+    /**
+     * 토큰을 브릿지를 경유해서 입금한다
+     * @param amount 금액
+     * @return {AsyncGenerator<DepositViaBridgeStepValue>}
+     */
+    public async *depositViaBridge(amount: BigNumber): AsyncGenerator<DepositViaBridgeStepValue> {
+        const signer = this.web3.getConnectedSigner();
+        if (!signer) {
+            throw new NoSignerError();
+        } else if (!signer.provider) {
+            throw new NoProviderError();
+        }
+
+        const chainInfo = await this.getChainInfoOfMainChain();
+        const account = await signer.getAddress();
+        const adjustedAmount = ContractUtils.zeroGWEI(amount);
+
+        const nonce = await this.getNonceOfMainChainToken(account);
+        const message = await ContractUtils.getTransferMessage(
+            account,
+            chainInfo.contract.loyaltyBridge,
+            adjustedAmount,
+            nonce,
+            chainInfo.network.chainId
+        );
+        const signature = await ContractUtils.signMessage(signer, message);
+
+        const param = {
+            account,
+            amount: adjustedAmount.toString(),
+            signature
+        };
+
+        yield { key: NormalSteps.PREPARED, account, amount: adjustedAmount, signature };
+
+        const res = await Network.post(await this.getEndpoint("/v1/ledger/deposit_via_bridge"), param);
+        if (res.code !== 0) {
+            throw new InternalServerError(res?.error?.message ?? "");
+        }
+
+        yield {
+            key: NormalSteps.SENT,
+            account,
+            amount: adjustedAmount,
+            signature,
+            tokenId: res.data.tokenId,
+            depositId: res.data.depositId,
+            txHash: res.data.txHash
+        };
+
+        const provider = await this.getProviderOfMainChain();
+
+        const contractTx = (await provider.getTransaction(res.data.txHash)) as ContractTransaction;
+        const txReceipt = await contractTx.wait();
+
+        const bridgeContract: IBridge = IBridge__factory.connect(chainInfo.contract.loyaltyBridge, provider);
+
+        const log = findLog(txReceipt, bridgeContract.interface, "BridgeDeposited");
+        if (!log) {
+            throw new FailedTransactionError();
+        }
+
+        yield {
+            key: NormalSteps.DONE,
+            account,
+            tokenId: res.data.tokenId,
+            depositId: res.data.depositId,
+            amount: adjustedAmount,
+            signature
+        };
+    }
+
+    public async *waiteDepositViaBridge(depositId: string, timeout: number = 30): AsyncGenerator<WaiteBridgeStepValue> {
+        const chainInfo = await this.getChainInfoOfSideChain();
+        const provider = await this.getProviderOfSideChain();
+        const bridgeContract: IBridge = IBridge__factory.connect(chainInfo.contract.loyaltyBridge, provider);
+
+        const start = ContractUtils.getTimeStamp();
+        while (true) {
+            const withdrawInfo = await bridgeContract.getWithdrawInfo(depositId);
+            if (withdrawInfo.account !== AddressZero) {
+                yield {
+                    key: WaiteBridgeSteps.CREATED,
+                    account: withdrawInfo.account,
+                    amount: withdrawInfo.amount,
+                    tokenId: withdrawInfo.tokenId
+                };
+                break;
+            }
+            if (ContractUtils.getTimeStamp() - start > timeout) {
+                yield { key: WaiteBridgeSteps.TIMEOUT };
+                return;
+            }
+            await ContractUtils.delay(1000);
+        }
+
+        while (true) {
+            const withdrawInfo = await bridgeContract.getWithdrawInfo(depositId);
+            if (withdrawInfo.executed) {
+                yield {
+                    key: WaiteBridgeSteps.EXECUTED,
+                    account: withdrawInfo.account,
+                    amount: withdrawInfo.amount,
+                    tokenId: withdrawInfo.tokenId
+                };
+                break;
+            }
+            if (ContractUtils.getTimeStamp() - start > timeout) {
+                yield { key: WaiteBridgeSteps.TIMEOUT };
+                return;
+            }
+            await ContractUtils.delay(1000);
+        }
+        await ContractUtils.delay(1000);
+        yield { key: WaiteBridgeSteps.DONE };
+    }
+
+    /**
+     * 토큰을 브릿지를 경유해서 출금한다
+     * @param amount 금액
+     * @return {AsyncGenerator<DepositViaBridgeStepValue>}
+     */
+    public async *withdrawViaBridge(amount: BigNumber): AsyncGenerator<DepositViaBridgeStepValue> {
+        const signer = this.web3.getConnectedSigner();
+        if (!signer) {
+            throw new NoSignerError();
+        } else if (!signer.provider) {
+            throw new NoProviderError();
+        }
+
+        const chainInfo = await this.getChainInfoOfSideChain();
+        const account = await signer.getAddress();
+        const adjustedAmount = ContractUtils.zeroGWEI(amount);
+
+        const nonce = await this.getNonceOfLedger(account);
+        const message = await ContractUtils.getTransferMessage(
+            account,
+            chainInfo.contract.loyaltyBridge,
+            adjustedAmount,
+            nonce,
+            chainInfo.network.chainId
+        );
+        const signature = await ContractUtils.signMessage(signer, message);
+
+        const param = {
+            account,
+            amount: adjustedAmount.toString(),
+            signature
+        };
+
+        yield { key: NormalSteps.PREPARED, account, amount: adjustedAmount, signature };
+
+        const res = await Network.post(await this.getEndpoint("/v1/ledger/withdraw_via_bridge"), param);
+        if (res.code !== 0) {
+            throw new InternalServerError(res?.error?.message ?? "");
+        }
+
+        yield {
+            key: NormalSteps.SENT,
+            account,
+            amount: adjustedAmount,
+            signature,
+            tokenId: res.data.tokenId,
+            depositId: res.data.depositId,
+            txHash: res.data.txHash
+        };
+        const provider = await this.getProviderOfSideChain();
+        const contractTx = (await provider.getTransaction(res.data.txHash)) as ContractTransaction;
+        const txReceipt = await contractTx.wait();
+
+        const bridgeContract: IBridge = IBridge__factory.connect(chainInfo.contract.loyaltyBridge, provider);
+
+        const log = findLog(txReceipt, bridgeContract.interface, "BridgeDeposited");
+        if (!log) {
+            throw new FailedTransactionError();
+        }
+
+        yield {
+            key: NormalSteps.DONE,
+            account,
+            tokenId: res.data.tokenId,
+            depositId: res.data.depositId,
+            amount: adjustedAmount,
+            signature
+        };
+    }
+
+    public async *waiteWithdrawViaBridge(
+        depositId: string,
+        timeout: number = 30
+    ): AsyncGenerator<WaiteBridgeStepValue> {
+        const chainInfo = await this.getChainInfoOfMainChain();
+        const provider = await this.getProviderOfMainChain();
+        const bridgeContract: IBridge = IBridge__factory.connect(chainInfo.contract.loyaltyBridge, provider);
+
+        const start = ContractUtils.getTimeStamp();
+        while (true) {
+            const withdrawInfo = await bridgeContract.getWithdrawInfo(depositId);
+            if (withdrawInfo.account !== AddressZero) {
+                yield {
+                    key: WaiteBridgeSteps.CREATED,
+                    account: withdrawInfo.account,
+                    amount: withdrawInfo.amount,
+                    tokenId: withdrawInfo.tokenId
+                };
+                break;
+            }
+            if (ContractUtils.getTimeStamp() - start > timeout) {
+                yield { key: WaiteBridgeSteps.TIMEOUT };
+                return;
+            }
+            await ContractUtils.delay(1000);
+        }
+
+        while (true) {
+            const withdrawInfo = await bridgeContract.getWithdrawInfo(depositId);
+            if (withdrawInfo.executed) {
+                yield {
+                    key: WaiteBridgeSteps.EXECUTED,
+                    account: withdrawInfo.account,
+                    amount: withdrawInfo.amount,
+                    tokenId: withdrawInfo.tokenId
+                };
+                break;
+            }
+            if (ContractUtils.getTimeStamp() - start > timeout) {
+                yield { key: WaiteBridgeSteps.TIMEOUT };
+                return;
+            }
+            await ContractUtils.delay(1000);
+        }
+        const block1 = await provider.getBlock("latest");
+        while (true) {
+            const block2 = await provider.getBlock("latest");
+            if (block2.number > block1.number) break;
+            if (ContractUtils.getTimeStamp() - start > timeout) {
+                yield { key: WaiteBridgeSteps.TIMEOUT };
+                return;
+            }
+            await ContractUtils.delay(1000);
+        }
+        yield { key: WaiteBridgeSteps.DONE };
     }
 }

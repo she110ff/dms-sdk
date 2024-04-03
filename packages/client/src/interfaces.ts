@@ -461,6 +461,110 @@ export type PhoneLinkSubmitStepValue =
           requestId: BytesLike;
       };
 
+// Delegated Transfer
+export type DelegatedTransferStepValue =
+    | {
+          key: NormalSteps.PREPARED;
+          from: string;
+          to: string;
+          amount: BigNumber;
+          signature: BytesLike;
+      }
+    | {
+          key: NormalSteps.SENT;
+          from: string;
+          to: string;
+          amount: BigNumber;
+          signature: BytesLike;
+          txHash: BytesLike;
+      }
+    | {
+          key: NormalSteps.DONE;
+          from: string;
+          to: string;
+          amount: BigNumber;
+          signature: BytesLike;
+      };
+
+// Withdraw Bridge
+export type DepositViaBridgeStepValue =
+    | {
+          key: NormalSteps.PREPARED;
+          account: string;
+          amount: BigNumber;
+          signature: BytesLike;
+      }
+    | {
+          key: NormalSteps.SENT;
+          account: string;
+          amount: BigNumber;
+          signature: BytesLike;
+          tokenId: string;
+          depositId: string;
+          txHash: BytesLike;
+      }
+    | {
+          key: NormalSteps.DONE;
+          account: string;
+          amount: BigNumber;
+          tokenId: string;
+          depositId: string;
+          signature: BytesLike;
+      };
+
+// Withdraw Bridge
+export type WithdrawViaBridgeStepValue =
+    | {
+          key: NormalSteps.PREPARED;
+          account: string;
+          amount: BigNumber;
+          signature: BytesLike;
+      }
+    | {
+          key: NormalSteps.SENT;
+          account: string;
+          amount: BigNumber;
+          signature: BytesLike;
+          tokenId: string;
+          depositId: string;
+          txHash: BytesLike;
+      }
+    | {
+          key: NormalSteps.DONE;
+          account: string;
+          amount: BigNumber;
+          signature: BytesLike;
+          tokenId: string;
+          depositId: string;
+      };
+
+export enum WaiteBridgeSteps {
+    CREATED = "created",
+    EXECUTED = "executed",
+    DONE = "done",
+    TIMEOUT = "timeout"
+}
+
+export type WaiteBridgeStepValue =
+    | {
+          key: WaiteBridgeSteps.CREATED;
+          account: string;
+          amount: BigNumber;
+          tokenId: string;
+      }
+    | {
+          key: WaiteBridgeSteps.EXECUTED;
+          account: string;
+          amount: BigNumber;
+          tokenId: string;
+      }
+    | {
+          key: WaiteBridgeSteps.DONE;
+      }
+    | {
+          key: WaiteBridgeSteps.TIMEOUT;
+      };
+
 export enum SortDirection {
     ASC = "asc",
     DESC = "desc"
@@ -523,4 +627,20 @@ export enum MobileType {
 export enum LoyaltyNetworkID {
     KIOS,
     PNB
+}
+
+export interface IChainInfo {
+    url: string;
+    network: {
+        name: string;
+        chainId: number;
+        ensAddress: string;
+        transferFee: BigNumber;
+        bridgeFee: BigNumber;
+    };
+    contract: {
+        token: string;
+        chainBridge: string;
+        loyaltyBridge: string;
+    };
 }

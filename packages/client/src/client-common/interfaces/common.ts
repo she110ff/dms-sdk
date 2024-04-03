@@ -1,10 +1,9 @@
 import { Networkish } from "@ethersproject/providers";
 
 export enum SupportedNetwork {
-    BOSAGORA_DEVNET = "bosagora_devnet",
-    KIOS_MAINNET = "kios_mainnet",
-    KIOS_TESTNET = "kios_testnet",
-    KIOS_DEVNET = "kios_devnet",
+    LOYALTY_MAINNET = "loyalty_mainnet",
+    LOYALTY_TESTNET = "loyalty_testnet",
+    LOYALTY_DEVNET = "loyalty_devnet",
     BOSAGORA_LOCAL = "localhost"
 }
 

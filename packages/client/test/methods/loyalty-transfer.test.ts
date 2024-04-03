@@ -1,5 +1,5 @@
 import { AccountIndex, NodeInfo } from "../helper/NodeInfo";
-import { Amount, Client, Context, ContractUtils } from "../../src";
+import { Amount, Client, Context, NormalSteps } from "../../src";
 
 import * as fs from "fs";
 import { Wallet } from "@ethersproject/wallet";
@@ -59,22 +59,40 @@ describe("LoyaltyTransfer", () => {
     });
 
     it("Test of the transfer", async () => {
-        for (let idx = 0; idx < users.length - 1; idx++) {
-            console.log(`${users[idx].address} -> ${users[idx + 1].address}`);
-            const amount = Amount.make(100, 18).value;
-            const wallet = new Wallet(users[idx].privateKey, NodeInfo.createProvider());
-            const nonce = await contractInfo.ledger.nonceOf(users[idx].address);
-            const message = ContractUtils.getTransferMessage(
-                users[idx].address,
-                users[idx + 1].address,
-                amount,
-                nonce,
-                NodeInfo.CHAIN_ID
-            );
-            const signature = ContractUtils.signMessage(wallet, message);
-            await contractInfo.loyaltyTransfer
-                .connect(wallet)
-                .transferToken(users[idx].address, users[idx + 1].address, amount, signature);
+        const chainInfo = await client.ledger.getChainInfoOfSideChain();
+        const fee = chainInfo.network.transferFee;
+        const amount = Amount.make(100, 18).value;
+        const oldBalance0 = await client.ledger.getTokenBalance(users[0].address);
+        const oldBalance1 = await client.ledger.getTokenBalance(users[1].address);
+        client.useSigner(new Wallet(users[0].privateKey, NodeInfo.createProvider()));
+        for await (const step of client.ledger.transfer(users[1].address, amount)) {
+            switch (step.key) {
+                case NormalSteps.PREPARED:
+                    expect(step.from).toEqual(users[0].address);
+                    expect(step.to).toEqual(users[1].address);
+                    expect(step.amount).toEqual(amount);
+                    expect(step.signature).toMatch(/^0x[A-Fa-f0-9]{130}$/i);
+                    break;
+                case NormalSteps.SENT:
+                    expect(step.from).toEqual(users[0].address);
+                    expect(step.to).toEqual(users[1].address);
+                    expect(step.amount).toEqual(amount);
+                    expect(step.signature).toMatch(/^0x[A-Fa-f0-9]{130}$/i);
+                    expect(step.txHash).toMatch(/^0x[A-Fa-f0-9]{64}$/i);
+                    break;
+                case NormalSteps.DONE:
+                    expect(step.from).toEqual(users[0].address);
+                    expect(step.to).toEqual(users[1].address);
+                    expect(step.amount).toEqual(amount);
+                    expect(step.signature).toMatch(/^0x[A-Fa-f0-9]{130}$/i);
+                    break;
+                default:
+                    throw new Error("Unexpected transfer step: " + JSON.stringify(step, null, 2));
+            }
         }
+        const newBalance0 = await client.ledger.getTokenBalance(users[0].address);
+        const newBalance1 = await client.ledger.getTokenBalance(users[1].address);
+        expect(newBalance0).toEqual(oldBalance0.sub(amount).sub(fee));
+        expect(newBalance1).toEqual(oldBalance1.add(amount));
     });
 });

@@ -503,7 +503,7 @@ export class NodeInfo {
 
     public static getContextParams(): IContextParams {
         const accounts = NodeInfo.accounts();
-        const network = "bosagora_devnet";
+        const network = "loyalty_devnet";
 
         const contexts: IContextParams = {
             network: LIVE_CONTRACTS[network].network,

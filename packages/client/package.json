@@ -1,6 +1,6 @@
 {
   "name": "dms-sdk-client",
-  "version": "2.9.3",
+  "version": "2.10.0",
   "author": "BOSagora Foundation",
   "license": "AGPL-3.0-or-later",
   "main": "dist/index.js",
@@ -80,8 +80,8 @@
     "@ethersproject/providers": "^5.7.0",
     "@ethersproject/random": "^5.7.0",
     "@ethersproject/wallet": "^5.7.0",
-    "del-osx-lib": "^2.3.0",
-    "dms-osx-lib": "^2.10.0",
+    "del-osx-lib": "^2.4.0",
+    "dms-osx-lib": "^2.11.0",
     "dms-sdk-common": "^1.1.0",
     "graphql": "^16.5.0",
     "graphql-request": "^4.3.0",
@@ -89,6 +89,6 @@
   },
   "jest": {
     "testEnvironment": "../../test-environment.js",
-    "testTimeout": 180000
+    "testTimeout": 180000000
   }
 }
