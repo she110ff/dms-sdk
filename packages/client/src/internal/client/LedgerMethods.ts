@@ -938,6 +938,30 @@ export class LedgerMethods extends ClientCore implements ILedgerMethods, IClient
     }
 
     /**
+     * 사용자의 이체 내역을 제공한다.
+     * @param account 사용자의 지갑주소
+     * @param limit
+     * @param skip
+     * @param sortDirection
+     * @param sortBy
+     */
+    public async getTransferHistory(
+        account: string,
+        { limit, skip, sortDirection, sortBy }: QueryOption = {
+            limit: 10,
+            skip: 0,
+            sortDirection: SortDirection.DESC,
+            sortBy: SortByBlock.BLOCK_NUMBER
+        }
+    ): Promise<any> {
+        const query = QueryUserTradeHistory;
+        const where = { account: account, pageType: LedgerPageType.TRANSFER };
+        const params = { where, limit, skip, direction: sortDirection, sortBy };
+        const name = "user trade history";
+        return await this.graphql.request({ query, params, name });
+    }
+
+    /**
      * 사용자의 내역을 제공한다.
      * @param token
      * @param language

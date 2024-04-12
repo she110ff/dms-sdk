@@ -590,7 +590,8 @@ export enum SortBy {
 export enum LedgerPageType {
     NONE = 0,
     SAVE_USE = 1,
-    DEPOSIT_WITHDRAW = 2
+    DEPOSIT_WITHDRAW = 2,
+    TRANSFER = 3
 }
 
 export enum LedgerAction {
