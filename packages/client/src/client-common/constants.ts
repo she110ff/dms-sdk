@@ -19,7 +19,7 @@ export const LIVE_CONTRACTS: { [K in SupportedNetwork]: NetworkDeployment } = {
         network: 215110,
         web3Endpoint: "https://rpc.kios.bosagora.org/",
         relayEndpoint: "https://relay.kios.bosagora.org/",
-        graphqlEndpoint: "https://graph.test.kios.bosagora.org/subgraphs/name/bosagora/dms-osx-side_mainnet"
+        graphqlEndpoint: "https://graph.kios.bosagora.org/subgraphs/name/bosagora/dms-osx-sidemainnet"
     },
     loyalty_testnet: {
         PhoneLinkCollectionAddress: delActiveContractList.loyalty_testnet.PhoneLinkCollection,
@@ -36,7 +36,7 @@ export const LIVE_CONTRACTS: { [K in SupportedNetwork]: NetworkDeployment } = {
         network: 215115,
         web3Endpoint: "https://rpc.test.kios.bosagora.org/",
         relayEndpoint: "https://relay.test.kios.bosagora.org/",
-        graphqlEndpoint: "https://graph.test.kios.bosagora.org/subgraphs/name/bosagora/dms-osx-side_testnet"
+        graphqlEndpoint: "https://graph.test.kios.bosagora.org/subgraphs/name/bosagora/dms-osx-sidetestnet"
     },
     loyalty_devnet: {
         PhoneLinkCollectionAddress: delActiveContractList.loyalty_devnet.PhoneLinkCollection,
