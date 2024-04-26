@@ -618,6 +618,10 @@ export class NodeInfo {
                     rate: multiple.mul(150)
                 },
                 {
+                    symbol: "KRW",
+                    rate: multiple.mul(1)
+                },
+                {
                     symbol: "USD",
                     rate: multiple.mul(1000)
                 },
@@ -628,6 +632,10 @@ export class NodeInfo {
                 {
                     symbol: "kios",
                     rate: multiple.mul(150)
+                },
+                {
+                    symbol: "krw",
+                    rate: multiple.mul(1)
                 },
                 {
                     symbol: "usd",
