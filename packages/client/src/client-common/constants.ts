@@ -53,7 +53,7 @@ export const LIVE_CONTRACTS: { [K in SupportedNetwork]: NetworkDeployment } = {
         network: 24680,
         web3Endpoint: '"http://rpc.devnet.bosagora.org:8545/',
         relayEndpoint: "http://relay.devnet.bosagora.org:7070/",
-        graphqlEndpoint: "http://subgraph.devnet.bosagora.org:8000/subgraphs/name/bosagora/dms-osx-devnet"
+        graphqlEndpoint: "http://subgraph.devnet.bosagora.org:8000/subgraphs/name/bosagora/dms-osx-sidechain"
     },
     localhost: {
         PhoneLinkCollectionAddress: "",

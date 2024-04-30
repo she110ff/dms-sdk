@@ -890,78 +890,6 @@ export class LedgerMethods extends ClientCore implements ILedgerMethods, IClient
     }
 
     /**
-     * 사용자의 적립/사용 내역을 제공한다.
-     * @param account 사용자의 지갑주소
-     * @param limit
-     * @param skip
-     * @param sortDirection
-     * @param sortBy
-     */
-    public async getSaveAndUseHistory(
-        account: string,
-        { limit, skip, sortDirection, sortBy }: QueryOption = {
-            limit: 10,
-            skip: 0,
-            sortDirection: SortDirection.DESC,
-            sortBy: SortByBlock.BLOCK_NUMBER
-        }
-    ): Promise<any> {
-        const query = QueryUserTradeHistory;
-        const where = { account: account, pageType: LedgerPageType.SAVE_USE };
-        const params = { where, limit, skip, direction: sortDirection, sortBy };
-        const name = "user trade history";
-        return await this.graphql.request({ query, params, name });
-    }
-
-    /**
-     * 사용자의 충전/인출 내역을 제공한다.
-     * @param account 사용자의 지갑주소
-     * @param limit
-     * @param skip
-     * @param sortDirection
-     * @param sortBy
-     */
-    public async getDepositAndWithdrawHistory(
-        account: string,
-        { limit, skip, sortDirection, sortBy }: QueryOption = {
-            limit: 10,
-            skip: 0,
-            sortDirection: SortDirection.DESC,
-            sortBy: SortByBlock.BLOCK_NUMBER
-        }
-    ): Promise<any> {
-        const query = QueryUserTradeHistory;
-        const where = { account: account, pageType: LedgerPageType.DEPOSIT_WITHDRAW };
-        const params = { where, limit, skip, direction: sortDirection, sortBy };
-        const name = "user trade history";
-        return await this.graphql.request({ query, params, name });
-    }
-
-    /**
-     * 사용자의 이체 내역을 제공한다.
-     * @param account 사용자의 지갑주소
-     * @param limit
-     * @param skip
-     * @param sortDirection
-     * @param sortBy
-     */
-    public async getTransferHistory(
-        account: string,
-        { limit, skip, sortDirection, sortBy }: QueryOption = {
-            limit: 10,
-            skip: 0,
-            sortDirection: SortDirection.DESC,
-            sortBy: SortByBlock.BLOCK_NUMBER
-        }
-    ): Promise<any> {
-        const query = QueryUserTradeHistory;
-        const where = { account: account, pageType: LedgerPageType.TRANSFER };
-        const params = { where, limit, skip, direction: sortDirection, sortBy };
-        const name = "user trade history";
-        return await this.graphql.request({ query, params, name });
-    }
-
-    /**
      * 사용자의 내역을 제공한다.
      * @param token
      * @param language
@@ -1540,4 +1468,240 @@ export class LedgerMethods extends ClientCore implements ILedgerMethods, IClient
         }
         yield { key: WaiteBridgeSteps.DONE };
     }
+
+    /**
+     * 메인체인에서 토큰을 다른 주소로 전송한다.
+     * @param to 이체할 주소
+     * @param amount 금액
+     * @return {AsyncGenerator<DelegatedTransferStepValue>}
+     */
+    public async *transferInMainChain(to: string, amount: BigNumber): AsyncGenerator<DelegatedTransferStepValue> {
+        const signer = this.web3.getConnectedSigner();
+        if (!signer) {
+            throw new NoSignerError();
+        } else if (!signer.provider) {
+            throw new NoProviderError();
+        }
+
+        const chainInfo = await this.getChainInfoOfMainChain();
+        const account = await signer.getAddress();
+        const adjustedAmount = ContractUtils.zeroGWEI(amount);
+        const nonce = await this.getNonceOfMainChainToken(account);
+        const message = await ContractUtils.getTransferMessage(
+            account,
+            to,
+            adjustedAmount,
+            nonce,
+            chainInfo.network.chainId
+        );
+        const signature = await ContractUtils.signMessage(signer, message);
+
+        const param = {
+            from: account,
+            to,
+            amount: adjustedAmount.toString(),
+            signature
+        };
+
+        yield { key: NormalSteps.PREPARED, from: account, to, amount: adjustedAmount, signature };
+
+        const res = await Network.post(await this.getEndpoint("/v1/token/main/transfer"), param);
+        if (res.code !== 0) {
+            throw new InternalServerError(res?.error?.message ?? "");
+        }
+
+        yield { key: NormalSteps.SENT, from: account, to, amount: adjustedAmount, signature, txHash: res.data.txHash };
+
+        const provider = await this.getProviderOfMainChain();
+        const contractTx = (await provider.getTransaction(res.data.txHash)) as ContractTransaction;
+        const contractReceipt = await contractTx.wait();
+
+        const tokenContract: LoyaltyToken = LoyaltyToken__factory.connect(chainInfo.contract.token, provider);
+        const log = findLog(contractReceipt, tokenContract.interface, "Transfer");
+        if (!log) {
+            throw new FailedTransactionError();
+        }
+
+        yield {
+            key: NormalSteps.DONE,
+            from: account,
+            to,
+            amount: adjustedAmount,
+            signature
+        };
+    }
+
+    /**
+     * 사이드체인에서 토큰을 다른 주소로 전송한다.
+     * @param to 이체할 주소
+     * @param amount 금액
+     * @return {AsyncGenerator<DelegatedTransferStepValue>}
+     */
+    public async *transferInSideChain(to: string, amount: BigNumber): AsyncGenerator<DelegatedTransferStepValue> {
+        const signer = this.web3.getConnectedSigner();
+        if (!signer) {
+            throw new NoSignerError();
+        } else if (!signer.provider) {
+            throw new NoProviderError();
+        }
+
+        const chainInfo = await this.getChainInfoOfSideChain();
+        const account = await signer.getAddress();
+        const adjustedAmount = ContractUtils.zeroGWEI(amount);
+        const nonce = await this.getNonceOfSideChainToken(account);
+        const message = await ContractUtils.getTransferMessage(
+            account,
+            to,
+            adjustedAmount,
+            nonce,
+            chainInfo.network.chainId
+        );
+        const signature = await ContractUtils.signMessage(signer, message);
+
+        const param = {
+            from: account,
+            to,
+            amount: adjustedAmount.toString(),
+            signature
+        };
+
+        yield { key: NormalSteps.PREPARED, from: account, to, amount: adjustedAmount, signature };
+
+        const res = await Network.post(await this.getEndpoint("/v1/token/side/transfer"), param);
+        if (res.code !== 0) {
+            throw new InternalServerError(res?.error?.message ?? "");
+        }
+
+        yield { key: NormalSteps.SENT, from: account, to, amount: adjustedAmount, signature, txHash: res.data.txHash };
+
+        const provider = await this.getProviderOfSideChain();
+        const contractTx = (await provider.getTransaction(res.data.txHash)) as ContractTransaction;
+        const contractReceipt = await contractTx.wait();
+
+        const tokenContract: LoyaltyToken = LoyaltyToken__factory.connect(chainInfo.contract.token, provider);
+        const log = findLog(contractReceipt, tokenContract.interface, "Transfer");
+        if (!log) {
+            throw new FailedTransactionError();
+        }
+
+        yield {
+            key: NormalSteps.DONE,
+            from: account,
+            to,
+            amount: adjustedAmount,
+            signature
+        };
+    }
+
+    // region History
+
+    /**
+     * 사용자의 적립/사용 내역을 제공한다.
+     * @param account 사용자의 지갑주소
+     * @param limit
+     * @param skip
+     * @param sortDirection
+     * @param sortBy
+     */
+    public async getSaveAndUseHistory(
+        account: string,
+        { limit, skip, sortDirection, sortBy }: QueryOption = {
+            limit: 10,
+            skip: 0,
+            sortDirection: SortDirection.DESC,
+            sortBy: SortByBlock.BLOCK_NUMBER
+        }
+    ): Promise<any> {
+        const query = QueryUserTradeHistory;
+        const where = { account: account, pageType: LedgerPageType.SAVE_USE };
+        const params = { where, limit, skip, direction: sortDirection, sortBy };
+        const name = "user trade history";
+        return await this.graphql.request({ query, params, name });
+    }
+
+    /**
+     * 사용자의 충전/인출 내역을 제공한다.
+     * @param account 사용자의 지갑주소
+     * @param limit
+     * @param skip
+     * @param sortDirection
+     * @param sortBy
+     */
+    public async getDepositAndWithdrawHistory(
+        account: string,
+        { limit, skip, sortDirection, sortBy }: QueryOption = {
+            limit: 10,
+            skip: 0,
+            sortDirection: SortDirection.DESC,
+            sortBy: SortByBlock.BLOCK_NUMBER
+        }
+    ): Promise<any> {
+        const query = QueryUserTradeHistory;
+        const where = { account: account, pageType: LedgerPageType.DEPOSIT_WITHDRAW };
+        const params = { where, limit, skip, direction: sortDirection, sortBy };
+        const name = "user trade history";
+        return await this.graphql.request({ query, params, name });
+    }
+
+    /**
+     * 사용자의 이체 내역을 제공한다.
+     * @param account 사용자의 지갑주소
+     * @param limit
+     * @param skip
+     * @param sortDirection
+     * @param sortBy
+     */
+    public async getTransferHistory(
+        account: string,
+        { limit, skip, sortDirection, sortBy }: QueryOption = {
+            limit: 10,
+            skip: 0,
+            sortDirection: SortDirection.DESC,
+            sortBy: SortByBlock.BLOCK_NUMBER
+        }
+    ): Promise<any> {
+        const query = QueryUserTradeHistory;
+        const where = { account: account, pageType: LedgerPageType.TRANSFER };
+        const params = { where, limit, skip, direction: sortDirection, sortBy };
+        const name = "user trade history";
+        return await this.graphql.request({ query, params, name });
+    }
+
+    /**
+     * 메인체인에서 사용자의 이체 내역을 제공한다.
+     * @param account 사용자의 지갑주소
+     * @param pageNumber 페이지번호 1부터 시작됨
+     * @param pageSize 페이지당 항목의 갯수
+     */
+    public async getTransferHistoryInMainChain(account: string, pageNumber: number, pageSize: number): Promise<any> {
+        const params = {
+            pageNumber,
+            pageSize
+        };
+        const res = await Network.get(await this.getEndpoint(`/v1/token/main/history/${account}`), params);
+        if (res.code !== 0) {
+            throw new InternalServerError(res?.error?.message ?? "");
+        }
+        return res.data;
+    }
+
+    /**
+     * 사이드체인에서 사용자의 이체 내역을 제공한다.
+     * @param account 사용자의 지갑주소
+     * @param pageNumber 페이지번호 1부터 시작됨
+     * @param pageSize 페이지당 항목의 갯수
+     */
+    public async getTransferHistoryInSideChain(account: string, pageNumber: number, pageSize: number): Promise<any> {
+        const params = {
+            pageNumber,
+            pageSize
+        };
+        const res = await Network.get(await this.getEndpoint(`/v1/token/side/history/${account}`), params);
+        if (res.code !== 0) {
+            throw new InternalServerError(res?.error?.message ?? "");
+        }
+        return res.data;
+    }
+
+    // endregion
 }

@@ -89,9 +89,15 @@ export interface ILedgerMethods extends IClientCore, IClientHttpCore {
     getNonceOfMainChainToken: (account: string) => Promise<BigNumber>;
     getNonceOfSideChainToken: (account: string) => Promise<BigNumber>;
 
-    // chain
+    // mainchain
     getChainInfoOfMainChain: () => Promise<IChainInfo>;
-    getChainInfoOfSideChain: () => Promise<IChainInfo>;
     getProviderOfMainChain: () => Promise<JsonRpcProvider>;
+    transferInMainChain: (to: string, amount: BigNumber) => AsyncGenerator<DelegatedTransferStepValue>;
+    getTransferHistoryInMainChain: (account: string, pageNumber: number, pageSize: number) => Promise<any>;
+
+    // sidechain
+    getChainInfoOfSideChain: () => Promise<IChainInfo>;
     getProviderOfSideChain: () => Promise<JsonRpcProvider>;
+    transferInSideChain: (to: string, amount: BigNumber) => AsyncGenerator<DelegatedTransferStepValue>;
+    getTransferHistoryInSideChain: (account: string, pageNumber: number, pageSize: number) => Promise<any>;
 }
