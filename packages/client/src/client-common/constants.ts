@@ -51,9 +51,9 @@ export const LIVE_CONTRACTS: { [K in SupportedNetwork]: NetworkDeployment } = {
         LoyaltyTransferAddress: dmsActiveContractList.loyalty_devnet.LoyaltyTransfer,
         LoyaltyBridgeAddress: dmsActiveContractList.loyalty_devnet.LoyaltyBridge,
         network: 24680,
-        web3Endpoint: '"http://rpc.devnet.bosagora.org:8545/',
-        relayEndpoint: "http://relay.devnet.bosagora.org:7070/",
-        graphqlEndpoint: "http://subgraph.devnet.bosagora.org:8000/subgraphs/name/bosagora/dms-osx-sidechain"
+        web3Endpoint: '"http://rpc-side.dev.lyt.bosagora.org:8545/',
+        relayEndpoint: "http://relay.dev.lyt.bosagora.org:7070/",
+        graphqlEndpoint: "http://subgraph.dev.lyt.bosagora.org:8000/subgraphs/name/bosagora/dms-osx-sidechain"
     },
     localhost: {
         PhoneLinkCollectionAddress: "",
